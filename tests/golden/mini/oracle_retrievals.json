@@ -1,0 +1,32 @@
+{
+  "direct-001": [
+    "evt-001"
+  ],
+  "episodic-001": [
+    "evt-005"
+  ],
+  "assoc-001": [
+    "evt-006"
+  ],
+  "update-001": [
+    "evt-008"
+  ],
+  "temporal-hist-001": [
+    "evt-003"
+  ],
+  "learn-pre-001": [
+    "evt-008"
+  ],
+  "learn-post-001": [
+    "evt-008"
+  ],
+  "temporal-curr-001": [
+    "evt-012"
+  ],
+  "wm-001": [
+    "evt-012"
+  ],
+  "forget-001": [
+    "evt-008"
+  ]
+}

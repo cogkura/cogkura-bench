@@ -1,0 +1,15 @@
+---
+description: Python package conventions for CogKuraBench
+globs: src/**/*.py,tests/**/*.py
+alwaysApply: false
+---
+
+# Python conventions
+
+- Typed Python with explicit return types.
+- Frozen dataclasses for benchmark models where appropriate.
+- Use `typing.Protocol` for backend boundaries.
+- Async interfaces where implementations may perform I/O.
+- Strict MyPy; Ruff formatting and linting.
+- Minimal runtime dependencies.
+- Avoid hidden global state.

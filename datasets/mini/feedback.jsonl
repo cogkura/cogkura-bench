@@ -1,0 +1,2 @@
+{"id": "fb-001", "timestamp": "2026-01-14T11:00:00+00:00", "query_id": "learn-pre-001", "outcome": "helpful", "target_event_ids": ["evt-008"]}
+{"id": "fb-002", "timestamp": "2026-01-14T11:30:00+00:00", "query_id": "learn-pre-001", "outcome": "unhelpful", "target_event_ids": ["evt-003"]}

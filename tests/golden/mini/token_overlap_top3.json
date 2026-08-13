@@ -1,0 +1,52 @@
+{
+  "direct-001": [
+    "evt-001"
+  ],
+  "episodic-001": [
+    "evt-005",
+    "evt-001",
+    "evt-002"
+  ],
+  "assoc-001": [
+    "evt-001",
+    "evt-002",
+    "evt-003"
+  ],
+  "update-001": [
+    "evt-001",
+    "evt-003",
+    "evt-008"
+  ],
+  "temporal-hist-001": [
+    "evt-003",
+    "evt-008",
+    "evt-006"
+  ],
+  "learn-pre-001": [],
+  "learn-post-001": [
+    "evt-003",
+    "evt-008",
+    "evt-001"
+  ],
+  "temporal-curr-001": [
+    "evt-010",
+    "evt-012",
+    "evt-001"
+  ],
+  "meta-001": [],
+  "wm-001": [
+    "evt-012",
+    "evt-005",
+    "evt-001"
+  ],
+  "leak-001": [
+    "evt-012",
+    "evt-001",
+    "evt-002"
+  ],
+  "forget-001": [
+    "evt-001",
+    "evt-003",
+    "evt-008"
+  ]
+}

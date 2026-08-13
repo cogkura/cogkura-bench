@@ -1,0 +1,15 @@
+---
+description: Design note alignment — extend existing benchmark models and protocols
+alwaysApply: true
+---
+
+# Benchmark alignment
+
+When implementing from a design note or PRD:
+
+- Use the document for **concept, behavior, and acceptance criteria**.
+- Use the **existing repository** for naming, layout, protocols, and API shape.
+- Extend existing benchmark models and protocols; do not create parallel event/model abstractions.
+- Do not add backend-specific fields to neutral benchmark models.
+- Do not change released dataset semantics without explicit intent.
+- Update documentation after implementation.

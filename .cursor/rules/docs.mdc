@@ -1,0 +1,14 @@
+---
+description: Protect README, docs, and changelog from collateral rewrites
+globs: README.md,docs/**/*.md,CHANGELOG.md,AGENTS.md,CLAUDE.md
+alwaysApply: false
+---
+
+# Docs
+
+- Prefer additive or surgical edits over full-file rewrites.
+- Documentation must describe shipped behaviour.
+- Measured results must identify benchmark, dataset, and backend versions.
+- Illustrative numbers must never be presented as benchmark results.
+- Keep `CLAUDE.md` a thin pointer to `AGENTS.md`.
+- Preserve historical CHANGELOG entries.

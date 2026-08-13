@@ -1,0 +1,17 @@
+{
+  "name": "mini",
+  "schema_version": 1,
+  "events": 15,
+  "queries": 12,
+  "feedback": 2,
+  "description": "Small golden dataset proving benchmark correctness for Project Atlas seed scenarios.",
+  "required_capabilities": [
+    "direct_recall",
+    "episodic_recall",
+    "associative_recall",
+    "temporal_recall",
+    "knowledge_update",
+    "forgetting",
+    "metamemory"
+  ]
+}

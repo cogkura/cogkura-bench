@@ -1,0 +1,101 @@
+[build-system]
+requires = ["hatchling>=1.31.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cogkurabench"
+version = "0.1.0"
+description = "Deterministic benchmark for evaluating long-term AI memory systems."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+  { name = "George Paterson", email = "paterson.george@gmail.com" },
+]
+keywords = ["ai", "memory", "benchmark", "cognitive", "evaluation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Typing :: Typed",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.optional-dependencies]
+cogkura = [
+  "cogkura>=0.10.0,<0.11.0",
+]
+
+[project.scripts]
+cogkura-bench = "cogkurabench.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/cogkura/cogkura-bench"
+Repository = "https://github.com/cogkura/cogkura-bench"
+Issues = "https://github.com/cogkura/cogkura-bench/issues"
+
+[dependency-groups]
+dev = [
+  "mypy>=2.3.0",
+  "pytest>=9.1.1",
+  "pytest-asyncio>=1.4.0",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.16.1",
+  "twine>=7.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cogkurabench"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/cogkurabench/py.typed" = "cogkurabench/py.typed"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  ".github/workflows/*.yml",
+  "CHANGELOG.md",
+  "LICENSE",
+  "README.md",
+  "SECURITY.md",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "docs/*.md",
+  "datasets/**",
+  "src/cogkurabench/**/*.py",
+  "src/cogkurabench/py.typed",
+  "tests/**/*.py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+packages = ["cogkurabench"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=cogkurabench --cov-report=term-missing"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["cogkurabench"]

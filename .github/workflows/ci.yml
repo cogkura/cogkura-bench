@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: uv sync --dev --locked
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: MyPy
+        run: uv run mypy src
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Validate mini dataset
+        run: uv run cogkura-bench validate-dataset mini
+
+      - name: Run mini benchmark (oracle)
+        run: uv run cogkura-bench run --dataset mini --backend oracle --quiet
+
+      - name: Run mini benchmark (token-overlap)
+        run: uv run cogkura-bench run --dataset mini --backend token-overlap --quiet

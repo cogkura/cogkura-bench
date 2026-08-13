@@ -1,0 +1,14 @@
+---
+description: Core CogKuraBench agent habits — AGENTS.md, validation, no collateral damage
+alwaysApply: true
+---
+
+# CogKuraBench agent core
+
+- Read [AGENTS.md](AGENTS.md) before making structural, schema or public-API changes.
+- After substantive edits, run repository validation (see AGENTS.md).
+- Prefer surgical changes. Do not rewrite datasets or documentation wholesale unless asked.
+- Do not modify expected results merely to make a backend pass.
+- Do not commit or push unless the user asks.
+- Keep deterministic execution independent of external APIs.
+- Isolate backend-specific dependencies.
