@@ -143,6 +143,9 @@ class BenchmarkQuery:
     prompt_budget_tokens: int | None = None
     related_query_id: str | None = None
     tags: tuple[str, ...] = ()
+    entity_ids: tuple[str, ...] = ()
+    predicate: str | None = None
+    object_value: str | None = None
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -215,6 +218,9 @@ class RetrievalRequest:
     limit: int
     goal: str | None = None
     valid_at: datetime | None = None
+    entity_ids: tuple[str, ...] = ()
+    predicate: str | None = None
+    object_value: str | None = None
 
     def __post_init__(self) -> None:
         if not self.query_id.strip():
@@ -269,6 +275,9 @@ class ContextRequest:
     goal: str | None = None
     valid_at: datetime | None = None
     prompt_budget_tokens: int | None = None
+    entity_ids: tuple[str, ...] = ()
+    predicate: str | None = None
+    object_value: str | None = None
 
     def __post_init__(self) -> None:
         if not self.query_id.strip():
@@ -305,6 +314,9 @@ class AssessmentRequest:
     goal: str | None = None
     valid_at: datetime | None = None
     should_abstain: bool = False
+    entity_ids: tuple[str, ...] = ()
+    predicate: str | None = None
+    object_value: str | None = None
 
     def __post_init__(self) -> None:
         if not self.query_id.strip():

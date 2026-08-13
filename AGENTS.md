@@ -77,6 +77,8 @@ uv run cogkura-bench run --dataset mini --backend oracle --quiet
 uv run cogkura-bench run --dataset mini --backend token-overlap --quiet
 uv run cogkura-bench validate-dataset software_project_v1
 uv run cogkura-bench run --dataset software_project_v1 --backend oracle --quiet
+uv run cogkura-bench validate-dataset helios_v1
+uv run cogkura-bench run --dataset helios_v1 --backend oracle --quiet
 uv run cogkura-bench run --dataset mini --backend cogkura --quiet
 ```
 

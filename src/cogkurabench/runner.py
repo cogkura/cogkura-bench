@@ -101,6 +101,9 @@ class BenchmarkRunner:
                         limit=query.retrieval_limit,
                         goal=query.goal,
                         valid_at=query.valid_at,
+                        entity_ids=query.entity_ids,
+                        predicate=query.predicate,
+                        object_value=query.object_value,
                     )
                     response = await backend.retrieve(request)
                     ranked_ids = retrieved_event_ids(
@@ -120,6 +123,9 @@ class BenchmarkRunner:
                             goal=query.goal,
                             valid_at=query.valid_at,
                             prompt_budget_tokens=query.prompt_budget_tokens,
+                            entity_ids=query.entity_ids,
+                            predicate=query.predicate,
+                            object_value=query.object_value,
                         )
                         context_response = await backend.select_context(context_request)
 
@@ -134,6 +140,9 @@ class BenchmarkRunner:
                             goal=query.goal,
                             valid_at=query.valid_at,
                             should_abstain=query.should_abstain,
+                            entity_ids=query.entity_ids,
+                            predicate=query.predicate,
+                            object_value=query.object_value,
                         )
                         assessment_response = await backend.assess(assessment_request)
 

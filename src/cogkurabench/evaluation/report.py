@@ -11,7 +11,10 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, cast
 
-from cogkurabench.evaluation.evaluator import aggregate_capability_results
+from cogkurabench.evaluation.evaluator import (
+    aggregate_capability_results,
+    finalize_metamemory_metrics,
+)
 from cogkurabench.evaluation.result import BenchmarkResult, CapabilityResult
 from cogkurabench.models import Capability
 
@@ -143,6 +146,17 @@ def format_result_tables(result: BenchmarkResult) -> str:
     ]
     core_results = aggregate_capability_results(result.query_results, tags={"core"})
     if core_results:
+        core_query_results = [
+            query_result for query_result in result.query_results if "core" in query_result.tags
+        ]
+        core_metamemory = finalize_metamemory_metrics(core_query_results)
+        if core_metamemory and Capability.METAMEMORY.value in core_results:
+            existing = core_results[Capability.METAMEMORY.value]
+            core_results[Capability.METAMEMORY.value] = CapabilityResult(
+                capability=existing.capability,
+                query_count=existing.query_count,
+                metrics={**dict(existing.metrics), **core_metamemory},
+            )
         sections.append("")
         sections.append(format_capability_table(core_results, title="## Core queries"))
     return "\n".join(sections)

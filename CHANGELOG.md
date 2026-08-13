@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CogKura 0.11.x backend adapter with provenance mapping; prepare uses native `as_of` on encode/consolidate.
 - Specialized cognitive metrics (temporal, updating, forgetting, working memory, learning, metamemory, efficiency).
 - Project Atlas dataset (`software_project_v1`: 61 events, 24 queries) with distinct noise distractors and `core`-tagged story queries.
+- Project Helios dataset (`helios_v1`: 550 events, 49 queries) with paraphrase queries and messy-history interference.
 - Query `tags` field; core-subset capability tables in `compare` and summary reports.
 - Temporal reporting shows both current and historical accuracy; abstain queries excluded from retrieval averages.
 - CLI `run` prints each capability's primary metric; `demo` defaults to `software_project_v1`.
@@ -23,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `related_query_id` on queries for learning pre/post pairs.
 
 ### Changed
+
+- CogKura adapter writes `metadata["entity_ids"]` on ingest, stops auto-`record_access` on retrieve, and passes structured `RetrievalCue` when queries/requests include optional cue fields.
+- Optional query/request fields: `entity_ids`, `predicate`, `object_value` (Helios core cues; mini and Atlas omit them).
+- Helios distractors are distinct authored lines (no numbered template mill); story slots `helios-005` / `helios-016` carry entity and semantic-fact structure for spreading and current-state recall.
+- Core capability tables merge metamemory F1 from aggregated counts instead of averaging per-query F1.
 
 - CogKura extra requires `>=0.11.0,<0.12.0`. Custom simulated-time stores were removed; encode and consolidate now receive the benchmark clock via CogKura's public `as_of` argument.
 - CogKura backend reports the installed distribution version from package metadata (CogKura 0.11.0 still exports `__version__ = "0.10.0"`).

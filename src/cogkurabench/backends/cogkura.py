@@ -51,6 +51,34 @@ def _installed_cogkura_version(cogkura: Any) -> str:
         return str(cogkura.__version__)
 
 
+def _has_structured_cue(
+    entity_ids: tuple[str, ...],
+    predicate: str | None,
+    object_value: str | None,
+) -> bool:
+    return bool(entity_ids) or predicate is not None or object_value is not None
+
+
+def _build_retrieval_cue(
+    *,
+    query: str,
+    entity_ids: tuple[str, ...] = (),
+    predicate: str | None = None,
+    object_value: str | None = None,
+) -> str | Any:
+    if not _has_structured_cue(entity_ids, predicate, object_value):
+        return query
+    _require_cogkura()
+    from cogkura.models import RetrievalCue  # noqa: PLC0415
+
+    return RetrievalCue(
+        text=query,
+        entity_ids=entity_ids,
+        predicate=predicate,
+        object_value=object_value,
+    )
+
+
 def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[str, object]]:
     payload: list[dict[str, object]] = []
     for fact in facts:
@@ -126,7 +154,7 @@ class CogKuraBackend:
             if event.tags:
                 metadata["tags"] = list(event.tags)
             if event.entities:
-                metadata["entities"] = list(event.entities)
+                metadata["entity_ids"] = list(event.entities)
             await memory.observe(
                 ObservationInput(
                     tenant_id=TENANT_ID,
@@ -150,19 +178,19 @@ class CogKuraBackend:
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:
         start = time.perf_counter()
         memory = self._require_memory()
+        cue = _build_retrieval_cue(
+            query=request.query,
+            entity_ids=request.entity_ids,
+            predicate=request.predicate,
+            object_value=request.object_value,
+        )
         results = await memory.recall(
-            request.query,
+            cue,
             tenant_id=TENANT_ID,
             limit=request.limit,
             as_of=request.as_of,
             valid_at=request.valid_at,
         )
-        if results:
-            await memory.record_access(
-                results,
-                tenant_id=TENANT_ID,
-                referenced_at=request.as_of,
-            )
         items = self._results_to_items(results)
         latency_ms = (time.perf_counter() - start) * 1000.0
         return RetrievalResponse(items=tuple(items), latency_ms=latency_ms)
@@ -172,8 +200,14 @@ class CogKuraBackend:
             return None
         start = time.perf_counter()
         memory = self._require_memory()
+        cue = _build_retrieval_cue(
+            query=request.query,
+            entity_ids=request.entity_ids,
+            predicate=request.predicate,
+            object_value=request.object_value,
+        )
         snapshot = await memory.select_working_memory(
-            request.query,
+            cue,
             tenant_id=TENANT_ID,
             goal=request.goal,
             prompt_budget_tokens=request.prompt_budget_tokens,
@@ -191,8 +225,14 @@ class CogKuraBackend:
     async def assess(self, request: AssessmentRequest) -> AssessmentResponse | None:
         start = time.perf_counter()
         memory = self._require_memory()
+        cue = _build_retrieval_cue(
+            query=request.query,
+            entity_ids=request.entity_ids,
+            predicate=request.predicate,
+            object_value=request.object_value,
+        )
         assessment = await memory.assess_memory(
-            request.query,
+            cue,
             tenant_id=TENANT_ID,
             goal=request.goal,
             as_of=request.as_of,

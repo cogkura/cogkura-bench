@@ -1,0 +1,19 @@
+{
+  "name": "helios-v1",
+  "schema_version": 1,
+  "events": 550,
+  "queries": 49,
+  "feedback": 3,
+  "description": "Longitudinal billing platform memory benchmark for Project Helios over ~180 simulated days.",
+  "required_capabilities": [
+    "direct_recall",
+    "episodic_recall",
+    "associative_recall",
+    "temporal_recall",
+    "knowledge_update",
+    "forgetting",
+    "working_memory",
+    "learning",
+    "metamemory"
+  ]
+}

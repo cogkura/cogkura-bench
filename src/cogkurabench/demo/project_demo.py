@@ -29,6 +29,17 @@ _DEMO_QUERY_IDS: dict[str, tuple[str, ...]] = {
         "atlas-learn-post-001",
         "atlas-meta-001",
     ),
+    "helios_v1": (
+        "helios-direct-001",
+        "helios-episodic-001",
+        "helios-assoc-001",
+        "helios-update-001",
+        "helios-temporal-hist-001",
+        "helios-forget-001",
+        "helios-wm-001",
+        "helios-learn-post-001",
+        "helios-meta-001",
+    ),
 }
 
 

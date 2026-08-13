@@ -7,6 +7,7 @@
 - [x] CogKura backend adapter
 - [x] Specialized cognitive metrics
 - [x] Project Atlas (`software_project_v1`)
+- [x] Project Helios (`helios_v1`) messy-history stress dataset
 - [x] Demo, inspect, compare commands
 
 ## Future

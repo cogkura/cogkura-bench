@@ -129,3 +129,46 @@ def test_format_result_tables_includes_core_section() -> None:
     tables = format_result_tables(result)
     assert "## All queries" in tables
     assert "## Core queries" in tables
+
+
+def test_core_metamemory_f1_uses_finalize_not_per_query_average() -> None:
+    result = BenchmarkResult(
+        benchmark_version="0.1.0",
+        dataset_version="helios_v1",
+        backend_name="oracle",
+        backend_version=None,
+        started_at=datetime(2026, 1, 1, tzinfo=UTC),
+        duration_ms=1.0,
+        capability_results={
+            "metamemory": CapabilityResult(
+                capability=Capability.METAMEMORY,
+                query_count=1,
+                metrics={"missing_knowledge_f1": 0.0},
+            )
+        },
+        query_results=(
+            _result(
+                query_id="helios-meta-001",
+                capability=Capability.METAMEMORY,
+                metrics={
+                    "missing_knowledge_tp": 1.0,
+                    "missing_knowledge_fp": 0.0,
+                    "missing_knowledge_fn": 0.0,
+                    "missing_knowledge_tn": 0.0,
+                    "missing_knowledge_f1": 0.0,
+                },
+                tags=("core",),
+                should_abstain=True,
+            ),
+        ),
+        environment=EnvironmentInfo(
+            python_version="3.12.0",
+            platform="test",
+            git_commit=None,
+        ),
+    )
+    tables = format_result_tables(result)
+    core_section = tables.split("## Core queries", maxsplit=1)[1]
+    assert "metamemory" in core_section
+    assert "missing_knowledge_f1" in core_section
+    assert "| 1.000 |" in core_section

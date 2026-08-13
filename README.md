@@ -37,7 +37,9 @@ uv run cogkura-bench run --dataset mini --backend oracle
 uv run cogkura-bench run --dataset mini --backend token-overlap
 uv run cogkura-bench run --dataset mini --backend cogkura   # requires --extra cogkura
 uv run cogkura-bench compare cogkura token-overlap --dataset software_project_v1
+uv run cogkura-bench compare cogkura token-overlap --dataset helios_v1
 uv run cogkura-bench demo --backend cogkura   # defaults to software_project_v1
+uv run cogkura-bench demo --dataset helios_v1 --backend cogkura
 uv run cogkura-bench inspect atlas-direct-001 --backend cogkura --dataset software_project_v1
 ```
 

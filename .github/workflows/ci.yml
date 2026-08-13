@@ -56,5 +56,11 @@ jobs:
       - name: Run Atlas benchmark (oracle)
         run: uv run cogkura-bench run --dataset software_project_v1 --backend oracle --quiet
 
+      - name: Validate helios_v1 dataset
+        run: uv run cogkura-bench validate-dataset helios_v1
+
+      - name: Run Helios benchmark (oracle)
+        run: uv run cogkura-bench run --dataset helios_v1 --backend oracle --quiet
+
       - name: Run mini benchmark (cogkura)
         run: uv run cogkura-bench run --dataset mini --backend cogkura --quiet
