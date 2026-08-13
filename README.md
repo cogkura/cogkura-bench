@@ -35,6 +35,10 @@ uv run cogkura-bench datasets
 uv run cogkura-bench validate-dataset mini
 uv run cogkura-bench run --dataset mini --backend oracle
 uv run cogkura-bench run --dataset mini --backend token-overlap
+uv run cogkura-bench run --dataset mini --backend cogkura   # requires --extra cogkura
+uv run cogkura-bench compare cogkura token-overlap --dataset mini
+uv run cogkura-bench demo --backend cogkura
+uv run cogkura-bench inspect direct-001 --backend cogkura --dataset mini
 ```
 
 ## Documentation

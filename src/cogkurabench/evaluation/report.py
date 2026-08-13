@@ -1,4 +1,4 @@
-"""Benchmark result persistence and reporting."""
+"""Expanded benchmark reporting."""
 
 from __future__ import annotations
 
@@ -12,6 +12,35 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from cogkurabench.evaluation.result import BenchmarkResult
+from cogkurabench.models import Capability
+
+_CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
+    Capability.DIRECT_RECALL: ("recall@5", "mrr"),
+    Capability.EPISODIC_RECALL: ("recall@5", "mrr"),
+    Capability.ASSOCIATIVE_RECALL: ("recall@5", "mrr"),
+    Capability.TEMPORAL_RECALL: (
+        "temporal_current_accuracy",
+        "temporal_historical_accuracy",
+        "recall@5",
+    ),
+    Capability.KNOWLEDGE_UPDATE: (
+        "updated_evidence_recall",
+        "stale_intrusion_rate",
+        "current_state_ranking",
+    ),
+    Capability.FORGETTING: (
+        "stale_suppression_rate",
+        "relevant_long_term_retention",
+        "noise_intrusion_rate",
+    ),
+    Capability.WORKING_MEMORY: (
+        "evidence_coverage_at_budget",
+        "context_precision",
+        "token_efficiency",
+    ),
+    Capability.LEARNING: ("delta_recall@5", "delta_mrr", "delta_first_relevant_rank"),
+    Capability.METAMEMORY: ("missing_knowledge_f1", "conflict_f1", "recall@5"),
+}
 
 
 class _JsonEncoder(json.JSONEncoder):
@@ -65,27 +94,43 @@ def write_result_json(result: BenchmarkResult, path: Path) -> None:
         handle.write("\n")
 
 
+def format_capability_table(result: BenchmarkResult) -> str:
+    """Render a capability comparison table."""
+    lines = ["| Capability | Queries | Primary | Value |", "| --- | ---: | --- | ---: |"]
+    for capability_name, capability_result in sorted(result.capability_results.items()):
+        primary = _primary_metric_name(capability_result.capability)
+        value = capability_result.metrics.get(primary, 0.0)
+        lines.append(
+            f"| {capability_name} | {capability_result.query_count} | {primary} | {value:.3f} |"
+        )
+    return "\n".join(lines)
+
+
+def _primary_metric_name(capability: Capability) -> str:
+    keys = _CAPABILITY_METRIC_KEYS.get(capability, ("recall@5",))
+    return keys[0]
+
+
 def write_summary_markdown(result: BenchmarkResult, path: Path) -> None:
-    """Write a short human-readable summary."""
+    """Write a human-readable summary."""
     lines = [
         "# CogKuraBench summary",
         "",
         f"- Benchmark: {result.benchmark_version}",
         f"- Dataset: {result.dataset_version}",
         f"- Backend: {result.backend_name}",
+        f"- Backend version: {result.backend_version}",
         f"- Duration: {result.duration_ms:.1f} ms",
-        "",
-        "## Capability scores",
-        "",
-        "| Capability | Queries | Recall@5 | MRR |",
-        "| --- | ---: | ---: | ---: |",
+        f"- Python: {result.environment.python_version}",
+        f"- Platform: {result.environment.platform}",
     ]
-    for capability_name, capability_result in sorted(result.capability_results.items()):
-        recall = capability_result.metrics.get("recall@5", 0.0)
-        mrr = capability_result.metrics.get("mrr", 0.0)
-        lines.append(
-            f"| {capability_name} | {capability_result.query_count} | {recall:.3f} | {mrr:.3f} |"
-        )
+    if result.environment.git_commit:
+        lines.append(f"- Git commit: {result.environment.git_commit}")
+    if result.environment.backend_configuration:
+        for key, value in result.environment.backend_configuration.items():
+            lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Capability scores", ""])
+    lines.append(format_capability_table(result))
     lines.append("")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")

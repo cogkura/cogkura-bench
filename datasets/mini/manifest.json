@@ -12,6 +12,8 @@
     "temporal_recall",
     "knowledge_update",
     "forgetting",
-    "metamemory"
+    "metamemory",
+    "learning",
+    "working_memory"
   ]
 }

@@ -1,6 +1,6 @@
 # Metrics
 
-## Retrieval (0.1.0)
+## Retrieval (all queries)
 
 - Recall@K (1, 3, 5, 10)
 - Precision@K
@@ -8,14 +8,18 @@
 - nDCG (expected=2, acceptable=1, else=0)
 - Forbidden intrusion rate
 
-## Cognitive capabilities (future phases)
+## Cognitive capabilities
 
-- Temporal current vs historical accuracy
-- Knowledge update: stale intrusion, current-state ranking
-- Forgetting: stale suppression, long-term retention, noise intrusion
-- Working memory: evidence coverage, context precision, token efficiency
-- Learning: delta Recall@K, delta MRR
-- Metamemory: missing-knowledge and conflict detection
-- Efficiency: latency, token counts
+| Capability | Primary metrics |
+|------------|-----------------|
+| Temporal recall | `temporal_current_accuracy`, `temporal_historical_accuracy` |
+| Knowledge update | `updated_evidence_recall`, `stale_intrusion_rate`, `current_state_ranking` |
+| Forgetting | `stale_suppression_rate`, `relevant_long_term_retention`, `noise_intrusion_rate` |
+| Working memory | `evidence_coverage_at_budget`, `context_precision`, `token_efficiency` |
+| Learning | `delta_recall@5`, `delta_mrr`, `delta_first_relevant_rank` |
+| Metamemory | `missing_knowledge_f1`, `conflict_f1` |
+| Efficiency | `retrieval_latency_ms`, `memories_retrieved`, `memories_selected`, `total_context_tokens` |
 
-Each metric has hand-calculated unit tests.
+Metrics operate on benchmark event IDs and neutral `QueryResult` fields (`context_event_ids`, `indicates_missing_knowledge`, `indicates_conflict`). Unsupported backend capabilities are omitted.
+
+Each specialized metric module has hand-calculated unit tests in `tests/unit/test_specialized_metrics.py`.

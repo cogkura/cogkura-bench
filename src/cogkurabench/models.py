@@ -141,6 +141,7 @@ class BenchmarkQuery:
     should_abstain: bool = False
     retrieval_limit: int = 5
     prompt_budget_tokens: int | None = None
+    related_query_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.id.strip():

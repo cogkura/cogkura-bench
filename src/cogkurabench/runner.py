@@ -13,14 +13,25 @@ from pathlib import Path
 from cogkurabench import __version__
 from cogkurabench.backends.base import MemoryBackend
 from cogkurabench.clock import BenchmarkClock
-from cogkurabench.evaluation.evaluator import aggregate_capability_results, evaluate_query
+from cogkurabench.evaluation.evaluator import (
+    aggregate_capability_results,
+    apply_learning_deltas,
+    evaluate_query,
+    finalize_metamemory_metrics,
+)
 from cogkurabench.evaluation.report import write_result_json, write_summary_markdown
-from cogkurabench.evaluation.result import BenchmarkResult, EnvironmentInfo, QueryResult
+from cogkurabench.evaluation.result import (
+    BenchmarkResult,
+    CapabilityResult,
+    EnvironmentInfo,
+    QueryResult,
+)
 from cogkurabench.metrics.retrieval import retrieved_event_ids
 from cogkurabench.models import (
     AssessmentRequest,
     BenchmarkAction,
     BenchmarkDataset,
+    Capability,
     ContextRequest,
     FeedbackAction,
     ProjectEvent,
@@ -49,6 +60,8 @@ class BenchmarkRunner:
         ingested_ids: set[str] = set()
         pending_events: list[ProjectEvent] = list(dataset.events)
         pending_events.sort(key=lambda event: (event.timestamp, event.sequence, event.id))
+        events_by_id = dataset.event_by_id()
+        queries_by_id = dataset.query_by_id()
 
         query_results: list[QueryResult] = []
         actions_by_time: dict[datetime, list[BenchmarkAction]] = defaultdict(list)
@@ -93,16 +106,13 @@ class BenchmarkRunner:
                     ranked_ids = retrieved_event_ids(
                         [event_id for item in response.items for event_id in item.source_event_ids]
                     )
-                    query_results.append(
-                        evaluate_query(
-                            query,
-                            ranked_ids,
-                            latency_ms=response.latency_ms,
-                            backend_metadata=dict(response.backend_metadata),
-                        )
-                    )
 
-                    if backend.capabilities.select_context and query.prompt_budget_tokens:
+                    context_response = None
+                    should_select_context = (
+                        backend.capabilities.select_context
+                        and query.prompt_budget_tokens is not None
+                    )
+                    if should_select_context:
                         context_request = ContextRequest(
                             query_id=query.id,
                             query=query.query,
@@ -111,9 +121,12 @@ class BenchmarkRunner:
                             valid_at=query.valid_at,
                             prompt_budget_tokens=query.prompt_budget_tokens,
                         )
-                        await backend.select_context(context_request)
+                        context_response = await backend.select_context(context_request)
 
-                    if backend.capabilities.assess:
+                    assessment_response = None
+                    if backend.capabilities.assess and (
+                        query.should_abstain or query.capability is Capability.METAMEMORY
+                    ):
                         assessment_request = AssessmentRequest(
                             query_id=query.id,
                             query=query.query,
@@ -122,19 +135,52 @@ class BenchmarkRunner:
                             valid_at=query.valid_at,
                             should_abstain=query.should_abstain,
                         )
-                        await backend.assess(assessment_request)
+                        assessment_response = await backend.assess(assessment_request)
+
+                    query_results.append(
+                        evaluate_query(
+                            query,
+                            ranked_ids,
+                            latency_ms=response.latency_ms,
+                            events_by_id=events_by_id,
+                            context_response=context_response,
+                            assessment_response=assessment_response,
+                            backend_metadata=dict(response.backend_metadata),
+                        )
+                    )
 
                 elif isinstance(action, FeedbackAction):
                     if backend.capabilities.learn:
                         await backend.apply_feedback(action.feedback)
 
+        query_results = apply_learning_deltas(query_results, queries_by_id)
         duration_ms = (time.perf_counter() - start_time) * 1000.0
         capability_results = aggregate_capability_results(query_results)
+        metamemory_metrics = finalize_metamemory_metrics(query_results)
+        if metamemory_metrics and Capability.METAMEMORY.value in capability_results:
+            existing = capability_results[Capability.METAMEMORY.value]
+            capability_results[Capability.METAMEMORY.value] = type(existing)(
+                capability=existing.capability,
+                query_count=existing.query_count,
+                metrics={**dict(existing.metrics), **metamemory_metrics},
+            )
+        elif metamemory_metrics:
+            capability_results[Capability.METAMEMORY.value] = CapabilityResult(
+                capability=Capability.METAMEMORY,
+                query_count=0,
+                metrics=metamemory_metrics,
+            )
+
+        backend_version = backend.version
+        environment_metadata: dict[str, object] = {}
+        if backend.name == "cogkura" and backend_version is not None:
+            environment_metadata["cogkura_version"] = backend_version
+
         result = BenchmarkResult(
             benchmark_version=__version__,
             dataset_version=dataset.manifest.name,
             backend_name=backend.name,
-            backend_version=backend.version,
+            backend_version=backend_version,
             started_at=started_at,
             duration_ms=duration_ms,
             capability_results=capability_results,
@@ -143,6 +189,7 @@ class BenchmarkRunner:
                 python_version=sys.version.split()[0],
                 platform=platform.platform(),
                 git_commit=_git_commit(),
+                backend_configuration=environment_metadata,
             ),
         )
 

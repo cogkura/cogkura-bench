@@ -6,6 +6,7 @@ import time
 from collections.abc import Sequence
 from datetime import datetime
 
+from cogkurabench.backends.visibility import visible_events
 from cogkurabench.models import (
     AssessmentRequest,
     AssessmentResponse,
@@ -50,7 +51,7 @@ class FullHistoryBackend:
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:
         start = time.perf_counter()
-        visible = [event for event in self._events if event.timestamp <= request.as_of]
+        visible = visible_events(self._events, as_of=request.as_of, valid_at=request.valid_at)
         items: list[RetrievedItem] = []
         for rank, event in enumerate(visible[: request.limit], start=1):
             items.append(

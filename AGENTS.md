@@ -66,7 +66,7 @@ These are hard constraints:
 ## Commands (match CI)
 
 ```bash
-uv sync --dev --locked
+uv sync --extra cogkura --dev --locked
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
@@ -75,6 +75,9 @@ uv run pytest
 uv run cogkura-bench validate-dataset mini
 uv run cogkura-bench run --dataset mini --backend oracle --quiet
 uv run cogkura-bench run --dataset mini --backend token-overlap --quiet
+uv run cogkura-bench validate-dataset software_project_v1
+uv run cogkura-bench run --dataset software_project_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset mini --backend cogkura --quiet
 ```
 
 ## Agent completion contract

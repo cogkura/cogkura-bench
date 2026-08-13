@@ -7,11 +7,11 @@ import asyncio
 import sys
 from pathlib import Path
 
-from cogkurabench.backends.base import MemoryBackend
-from cogkurabench.backends.full_history import FullHistoryBackend
-from cogkurabench.backends.oracle import OracleBackend
-from cogkurabench.backends.token_overlap import TokenOverlapBackend
+from cogkurabench.backends.registry import available_backends, create_backend
+from cogkurabench.compare import compare_backends
 from cogkurabench.dataset import ensure_valid_dataset, list_datasets, validate_dataset
+from cogkurabench.demo.project_demo import run_demo
+from cogkurabench.inspect import inspect_query
 from cogkurabench.runner import BenchmarkRunner
 
 
@@ -30,12 +30,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command")
 
     datasets_parser = subparsers.add_parser("datasets", help="List available datasets")
-    datasets_parser.add_argument(
-        "--datasets-root",
-        type=Path,
-        default=None,
-        help="Override datasets directory",
-    )
+    datasets_parser.add_argument("--datasets-root", type=Path, default=None)
 
     validate_parser = subparsers.add_parser("validate-dataset", help="Validate a dataset")
     validate_parser.add_argument("dataset", help="Dataset name")
@@ -43,24 +38,31 @@ def _build_parser() -> argparse.ArgumentParser:
 
     run_parser = subparsers.add_parser("run", help="Run a benchmark")
     run_parser.add_argument("--dataset", default="mini", help="Dataset name")
-    run_parser.add_argument(
-        "--backend",
-        required=True,
-        choices=["oracle", "token-overlap", "full-history"],
-        help="Memory backend to evaluate",
-    )
+    run_parser.add_argument("--backend", required=True, choices=available_backends())
     run_parser.add_argument("--datasets-root", type=Path, default=None)
     run_parser.add_argument("--results-dir", type=Path, default=Path("results"))
-    run_parser.add_argument("--quiet", action="store_true", help="Suppress summary output")
-    run_parser.add_argument("--no-write", action="store_true", help="Do not write result files")
+    run_parser.add_argument("--quiet", action="store_true")
+    run_parser.add_argument("--no-write", action="store_true")
+
+    demo_parser = subparsers.add_parser("demo", help="Narrated benchmark demo")
+    demo_parser.add_argument("--dataset", default="mini")
+    demo_parser.add_argument("--backend", default="cogkura", choices=available_backends())
+
+    inspect_parser = subparsers.add_parser("inspect", help="Inspect one query")
+    inspect_parser.add_argument("query_id")
+    inspect_parser.add_argument("--dataset", default="mini")
+    inspect_parser.add_argument("--backend", required=True, choices=available_backends())
+
+    compare_parser = subparsers.add_parser("compare", help="Compare backends")
+    compare_parser.add_argument("backends", nargs="+", choices=available_backends())
+    compare_parser.add_argument("--dataset", default="mini")
 
     return parser
 
 
 async def _dispatch(args: argparse.Namespace) -> int:
     if args.command == "datasets":
-        names = list_datasets(args.datasets_root)
-        for name in names:
+        for name in list_datasets(args.datasets_root):
             print(name)
         return 0
 
@@ -75,9 +77,8 @@ async def _dispatch(args: argparse.Namespace) -> int:
 
     if args.command == "run":
         dataset = ensure_valid_dataset(args.dataset, root=args.datasets_root)
-        backend = _create_backend(args.backend, dataset)
-        runner = BenchmarkRunner()
-        result = await runner.run(
+        backend = create_backend(args.backend, dataset)
+        result = await BenchmarkRunner().run(
             dataset,
             backend,
             results_dir=args.results_dir,
@@ -93,21 +94,20 @@ async def _dispatch(args: argparse.Namespace) -> int:
                 print(f"  {capability_name}: recall@5={recall:.3f}")
         return 0
 
+    if args.command == "demo":
+        return await run_demo(dataset_name=args.dataset, backend_name=args.backend)
+
+    if args.command == "inspect":
+        return await inspect_query(
+            args.query_id,
+            dataset_name=args.dataset,
+            backend_name=args.backend,
+        )
+
+    if args.command == "compare":
+        return await compare_backends(args.backends, dataset_name=args.dataset)
+
     return 1
-
-
-def _create_backend(name: str, dataset: object) -> MemoryBackend:
-    from cogkurabench.models import BenchmarkDataset
-
-    if not isinstance(dataset, BenchmarkDataset):
-        raise TypeError("dataset must be a BenchmarkDataset")
-    if name == "oracle":
-        return OracleBackend(dataset.queries, dataset.events)
-    if name == "token-overlap":
-        return TokenOverlapBackend()
-    if name == "full-history":
-        return FullHistoryBackend()
-    raise ValueError(f"Unsupported backend: {name}")
 
 
 if __name__ == "__main__":

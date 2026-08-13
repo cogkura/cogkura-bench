@@ -27,7 +27,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Install dependencies
-        run: uv sync --dev --locked
+        run: uv sync --extra cogkura --dev --locked
 
       - name: Ruff lint
         run: uv run ruff check .
@@ -49,3 +49,12 @@ jobs:
 
       - name: Run mini benchmark (token-overlap)
         run: uv run cogkura-bench run --dataset mini --backend token-overlap --quiet
+
+      - name: Validate software_project_v1 dataset
+        run: uv run cogkura-bench validate-dataset software_project_v1
+
+      - name: Run Atlas benchmark (oracle)
+        run: uv run cogkura-bench run --dataset software_project_v1 --backend oracle --quiet
+
+      - name: Run mini benchmark (cogkura)
+        run: uv run cogkura-bench run --dataset mini --backend cogkura --quiet

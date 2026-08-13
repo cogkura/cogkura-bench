@@ -1,13 +1,13 @@
 # Roadmap
 
-## 0.1.0 (in progress)
+## 0.1.0
 
 - [x] Engineering scaffold
 - [x] Benchmark kernel and mini dataset
-- [ ] CogKura backend adapter
-- [ ] Specialized cognitive metrics
-- [ ] Project Atlas (`software_project_v1`)
-- [ ] Demo, inspect, compare commands
+- [x] CogKura backend adapter
+- [x] Specialized cognitive metrics
+- [x] Project Atlas (`software_project_v1`)
+- [x] Demo, inspect, compare commands
 
 ## Future
 

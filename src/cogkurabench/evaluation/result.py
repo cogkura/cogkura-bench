@@ -39,10 +39,20 @@ class QueryResult:
     metrics: Mapping[str, float]
     latency_ms: float
     context_tokens: int | None
+    context_event_ids: tuple[str, ...] = ()
+    indicates_missing_knowledge: bool | None = None
+    indicates_conflict: bool | None = None
+    assessment_flags: tuple[str, ...] = ()
+    assessment_signals: Mapping[str, float | None] = field(default_factory=dict)
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))
+        object.__setattr__(
+            self,
+            "assessment_signals",
+            MappingProxyType(dict(self.assessment_signals)),
+        )
         object.__setattr__(self, "backend_metadata", MappingProxyType(dict(self.backend_metadata)))
 
 

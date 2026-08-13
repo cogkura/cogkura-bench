@@ -1,0 +1,19 @@
+{
+  "name": "software-project-v1",
+  "schema_version": 1,
+  "events": 250,
+  "queries": 80,
+  "feedback": 3,
+  "description": "Longitudinal software engineering project memory benchmark for Project Atlas.",
+  "required_capabilities": [
+    "direct_recall",
+    "episodic_recall",
+    "associative_recall",
+    "temporal_recall",
+    "knowledge_update",
+    "forgetting",
+    "working_memory",
+    "learning",
+    "metamemory"
+  ]
+}
