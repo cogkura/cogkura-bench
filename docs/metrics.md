@@ -22,4 +22,11 @@
 
 Metrics operate on benchmark event IDs and neutral `QueryResult` fields (`context_event_ids`, `indicates_missing_knowledge`, `indicates_conflict`). Unsupported backend capabilities are omitted.
 
+## Reporting
+
+- Capability tables show each capability's **primary** metric (for example `temporal_current_accuracy` for temporal recall).
+- Temporal recall also reports `temporal_historical_accuracy` as a secondary column.
+- Queries may carry optional `tags`; `compare` and summary Markdown include an **All queries** table and a **Core queries** table (queries tagged `core`).
+- Abstain/leak queries (`should_abstain`) are excluded from retrieval metric averages (Recall@K, MRR, nDCG, precision, forbidden intrusion) but still contribute metamemory counts.
+
 Each specialized metric module has hand-calculated unit tests in `tests/unit/test_specialized_metrics.py`.

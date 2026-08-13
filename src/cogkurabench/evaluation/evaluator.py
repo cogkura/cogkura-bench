@@ -26,13 +26,46 @@ from cogkurabench.models import (
     ProjectEvent,
 )
 
+_RETRIEVAL_AGGREGATE_METRICS = frozenset(
+    {
+        "mrr",
+        "forbidden_intrusion_rate",
+        "recall@1",
+        "recall@3",
+        "recall@5",
+        "recall@10",
+        "precision@1",
+        "precision@3",
+        "precision@5",
+        "precision@10",
+        "ndcg@1",
+        "ndcg@3",
+        "ndcg@5",
+        "ndcg@10",
+    }
+)
+
+
+def _metric_eligible_for_average(result: QueryResult, metric_name: str) -> bool:
+    if result.should_abstain and metric_name in _RETRIEVAL_AGGREGATE_METRICS:
+        return False
+    return True
+
 
 def aggregate_capability_results(
     query_results: Sequence[QueryResult],
+    *,
+    tags: set[str] | None = None,
 ) -> dict[str, CapabilityResult]:
     """Average per-query metrics grouped by capability."""
-    grouped: dict[Capability, list[QueryResult]] = defaultdict(list)
+    filtered: list[QueryResult] = []
     for result in query_results:
+        if tags is not None and not any(tag in result.tags for tag in tags):
+            continue
+        filtered.append(result)
+
+    grouped: dict[Capability, list[QueryResult]] = defaultdict(list)
+    for result in filtered:
         grouped[result.capability].append(result)
 
     capability_results: dict[str, CapabilityResult] = {}
@@ -42,7 +75,11 @@ def aggregate_capability_results(
         metric_names = sorted({name for result in results for name in result.metrics})
         averaged: dict[str, float] = {}
         for name in metric_names:
-            values = [result.metrics[name] for result in results if name in result.metrics]
+            values = [
+                result.metrics[name]
+                for result in results
+                if name in result.metrics and _metric_eligible_for_average(result, name)
+            ]
             if values:
                 averaged[name] = sum(values) / len(values)
         capability_results[capability.value] = CapabilityResult(
@@ -142,6 +179,8 @@ def evaluate_query(
         assessment_flags=assessment_flags,
         assessment_signals=assessment_signals,
         backend_metadata=backend_metadata or {},
+        should_abstain=query.should_abstain,
+        tags=query.tags,
     )
 
 
@@ -177,6 +216,8 @@ def apply_learning_deltas(
                 assessment_flags=result.assessment_flags,
                 assessment_signals=dict(result.assessment_signals),
                 backend_metadata=dict(result.backend_metadata),
+                should_abstain=result.should_abstain,
+                tags=result.tags,
             )
         )
     return updated

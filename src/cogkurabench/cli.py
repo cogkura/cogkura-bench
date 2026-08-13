@@ -11,6 +11,7 @@ from cogkurabench.backends.registry import available_backends, create_backend
 from cogkurabench.compare import compare_backends
 from cogkurabench.dataset import ensure_valid_dataset, list_datasets, validate_dataset
 from cogkurabench.demo.project_demo import run_demo
+from cogkurabench.evaluation.report import _primary_metric_name
 from cogkurabench.inspect import inspect_query
 from cogkurabench.runner import BenchmarkRunner
 
@@ -45,7 +46,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--no-write", action="store_true")
 
     demo_parser = subparsers.add_parser("demo", help="Narrated benchmark demo")
-    demo_parser.add_argument("--dataset", default="mini")
+    demo_parser.add_argument("--dataset", default="software_project_v1")
     demo_parser.add_argument("--backend", default="cogkura", choices=available_backends())
 
     inspect_parser = subparsers.add_parser("inspect", help="Inspect one query")
@@ -90,8 +91,9 @@ async def _dispatch(args: argparse.Namespace) -> int:
                 f"queries={len(result.query_results)} duration_ms={result.duration_ms:.1f}"
             )
             for capability_name, capability_result in sorted(result.capability_results.items()):
-                recall = capability_result.metrics.get("recall@5", 0.0)
-                print(f"  {capability_name}: recall@5={recall:.3f}")
+                primary = _primary_metric_name(capability_result.capability)
+                value = capability_result.metrics.get(primary, 0.0)
+                print(f"  {capability_name}: {primary}={value:.3f}")
         return 0
 
     if args.command == "demo":

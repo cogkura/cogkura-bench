@@ -45,6 +45,8 @@ class QueryResult:
     assessment_flags: tuple[str, ...] = ()
     assessment_signals: Mapping[str, float | None] = field(default_factory=dict)
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
+    should_abstain: bool = False
+    tags: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))

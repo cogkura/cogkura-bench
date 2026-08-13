@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from cogkurabench.backends.registry import create_backend
 from cogkurabench.dataset import load_dataset
-from cogkurabench.evaluation.report import format_capability_table
+from cogkurabench.evaluation.report import format_result_tables
 from cogkurabench.runner import BenchmarkRunner
 
 
@@ -23,6 +23,6 @@ async def compare_backends(
         backend = create_backend(backend_name, dataset)
         result = await BenchmarkRunner().run(dataset, backend, write_results=True)
         print(f"## {backend_name}")
-        print(format_capability_table(result))
+        print(format_result_tables(result))
         print("")
     return 0

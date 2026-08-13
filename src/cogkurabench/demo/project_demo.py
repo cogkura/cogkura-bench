@@ -6,22 +6,48 @@ from cogkurabench.backends.registry import create_backend
 from cogkurabench.dataset import load_dataset
 from cogkurabench.runner import BenchmarkRunner
 
-_DEMO_QUERY_IDS = (
-    "direct-001",
-    "episodic-001",
-    "assoc-001",
-    "update-001",
-    "temporal-hist-001",
-    "forget-001",
-    "wm-001",
-    "learn-post-001",
-    "meta-001",
-)
+_DEMO_QUERY_IDS: dict[str, tuple[str, ...]] = {
+    "mini": (
+        "direct-001",
+        "episodic-001",
+        "assoc-001",
+        "update-001",
+        "temporal-hist-001",
+        "forget-001",
+        "wm-001",
+        "learn-post-001",
+        "meta-001",
+    ),
+    "software_project_v1": (
+        "atlas-direct-001",
+        "atlas-episodic-001",
+        "atlas-assoc-001",
+        "atlas-update-001",
+        "atlas-temporal-hist-001",
+        "atlas-forget-001",
+        "atlas-wm-001",
+        "atlas-learn-post-001",
+        "atlas-meta-001",
+    ),
+}
 
 
-async def run_demo(*, dataset_name: str = "mini", backend_name: str = "cogkura") -> int:
+def demo_query_ids(dataset_name: str) -> tuple[str, ...]:
+    """Return walkthrough query IDs for a dataset."""
+    try:
+        return _DEMO_QUERY_IDS[dataset_name]
+    except KeyError as exc:
+        supported = ", ".join(sorted(_DEMO_QUERY_IDS))
+        raise ValueError(
+            f"No demo walkthrough for dataset {dataset_name!r}. Supported: {supported}"
+        ) from exc
+
+
+async def run_demo(
+    *, dataset_name: str = "software_project_v1", backend_name: str = "cogkura"
+) -> int:
     """Run a narrated walkthrough of key benchmark scenarios."""
-    print("CogKuraBench — Project Atlas demo")
+    print(f"CogKuraBench demo — dataset={dataset_name} backend={backend_name}")
     print("")
     dataset = load_dataset(dataset_name)
     backend = create_backend(backend_name, dataset)
@@ -29,7 +55,7 @@ async def run_demo(*, dataset_name: str = "mini", backend_name: str = "cogkura")
     results_by_id = {item.query_id: item for item in result.query_results}
     events_by_id = dataset.event_by_id()
 
-    for query_id in _DEMO_QUERY_IDS:
+    for query_id in demo_query_ids(dataset_name):
         query = dataset.query_by_id()[query_id]
         query_result = results_by_id[query_id]
         print(f"Query: {query.query}")

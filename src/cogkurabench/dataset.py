@@ -266,6 +266,7 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         retrieval_limit=int(data.get("retrieval_limit", 5)),
         prompt_budget_tokens=data.get("prompt_budget_tokens"),
         related_query_id=data.get("related_query_id"),
+        tags=tuple(str(item) for item in data.get("tags", [])),
     )
 
 

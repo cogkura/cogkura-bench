@@ -11,7 +11,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, cast
 
-from cogkurabench.evaluation.result import BenchmarkResult
+from cogkurabench.evaluation.evaluator import aggregate_capability_results
+from cogkurabench.evaluation.result import BenchmarkResult, CapabilityResult
 from cogkurabench.models import Capability
 
 _CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
@@ -94,21 +95,57 @@ def write_result_json(result: BenchmarkResult, path: Path) -> None:
         handle.write("\n")
 
 
-def format_capability_table(result: BenchmarkResult) -> str:
-    """Render a capability comparison table."""
-    lines = ["| Capability | Queries | Primary | Value |", "| --- | ---: | --- | ---: |"]
-    for capability_name, capability_result in sorted(result.capability_results.items()):
-        primary = _primary_metric_name(capability_result.capability)
-        value = capability_result.metrics.get(primary, 0.0)
-        lines.append(
-            f"| {capability_name} | {capability_result.query_count} | {primary} | {value:.3f} |"
-        )
-    return "\n".join(lines)
-
-
 def _primary_metric_name(capability: Capability) -> str:
     keys = _CAPABILITY_METRIC_KEYS.get(capability, ("recall@5",))
     return keys[0]
+
+
+def _secondary_metric_name(capability: Capability) -> str | None:
+    if capability is Capability.TEMPORAL_RECALL:
+        return "temporal_historical_accuracy"
+    return None
+
+
+def format_capability_table(
+    capability_results: Mapping[str, CapabilityResult],
+    *,
+    title: str | None = None,
+) -> str:
+    """Render a capability comparison table."""
+    lines: list[str] = []
+    if title:
+        lines.extend([title, ""])
+    header = "| Capability | Queries | Primary | Value | Secondary | Value |"
+    separator = "| --- | ---: | --- | ---: | --- | ---: |"
+    lines.extend([header, separator])
+    for capability_name, capability_result in sorted(capability_results.items()):
+        primary = _primary_metric_name(capability_result.capability)
+        secondary = _secondary_metric_name(capability_result.capability)
+        primary_value = capability_result.metrics.get(primary, 0.0)
+        if secondary is not None:
+            secondary_value = capability_result.metrics.get(secondary, 0.0)
+            lines.append(
+                f"| {capability_name} | {capability_result.query_count} | {primary} | "
+                f"{primary_value:.3f} | {secondary} | {secondary_value:.3f} |"
+            )
+        else:
+            lines.append(
+                f"| {capability_name} | {capability_result.query_count} | {primary} | "
+                f"{primary_value:.3f} | | |"
+            )
+    return "\n".join(lines)
+
+
+def format_result_tables(result: BenchmarkResult) -> str:
+    """Render full and core capability tables for a benchmark result."""
+    sections = [
+        format_capability_table(result.capability_results, title="## All queries"),
+    ]
+    core_results = aggregate_capability_results(result.query_results, tags={"core"})
+    if core_results:
+        sections.append("")
+        sections.append(format_capability_table(core_results, title="## Core queries"))
+    return "\n".join(sections)
 
 
 def write_summary_markdown(result: BenchmarkResult, path: Path) -> None:
@@ -129,8 +166,6 @@ def write_summary_markdown(result: BenchmarkResult, path: Path) -> None:
     if result.environment.backend_configuration:
         for key, value in result.environment.backend_configuration.items():
             lines.append(f"- {key}: {value}")
-    lines.extend(["", "## Capability scores", ""])
-    lines.append(format_capability_table(result))
-    lines.append("")
+    lines.extend(["", format_result_tables(result), ""])
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")

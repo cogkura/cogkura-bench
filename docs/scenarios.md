@@ -6,7 +6,7 @@ A small golden fixture (15 events, 12 queries) proving benchmark correctness. Ex
 
 ## Project Atlas (`software_project_v1`)
 
-Fictional software project evolving over ~60 simulated days (250 events, 80 queries, 3 feedback records). Covers all nine capabilities: FastAPI API, Redis→PostgreSQL advisory locks, auth provider choice, caching, CI/CD, observability, bugs, incidents, noise, and deliberate obsolete detail.
+Fictional software project evolving over ~60 simulated days (61 events, 24 queries, 3 feedback records). The story covers FastAPI, Redis→PostgreSQL advisory locks, auth, caching, CI/CD, incidents, and deliberate obsolete detail. Distinct distractor events replace template filler; named story queries are tagged `core` for subset reporting.
 
 Validate and run:
 

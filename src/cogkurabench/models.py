@@ -142,6 +142,7 @@ class BenchmarkQuery:
     retrieval_limit: int = 5
     prompt_budget_tokens: int | None = None
     related_query_id: str | None = None
+    tags: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id.strip():

@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DATASET_DIR = ROOT / "datasets" / "software_project_v1"
 START = datetime(2026, 1, 2, 10, 0, tzinfo=UTC)
 
+LEARN_QUERY_TEXT = "How is background work scheduled across Atlas services?"
+
 
 def iso(day: int, hour: int = 10) -> str:
     return (START + timedelta(days=day - 1, hours=hour - 10)).isoformat()
@@ -60,6 +62,7 @@ def build_events() -> list[dict[str, object]]:
             }
         )
 
+    # Story thread (atlas-001 .. atlas-032)
     add(
         "atlas-001",
         1,
@@ -323,65 +326,44 @@ def build_events() -> list[dict[str, object]]:
         ],
     )
 
-    filler_types = [
-        "implementation",
-        "documentation",
-        "conversation",
-        "dependency",
-        "test_failure",
-        "fix",
-        "noise",
-    ]
-    filler_topics = [
-        "refactored repository layer",
-        "updated onboarding docs",
-        "discussed pagination defaults",
-        "bumped pytest dependency",
-        "flaky integration test on staging",
-        "fixed flaky test by stabilizing clock",
-        "renamed internal service folder",
-        "added request logging middleware",
-        "reviewed error envelope format",
-        "cleaned obsolete feature flags",
-        "updated API examples in README",
-        "discussed blue/green deploy timing",
-        "added database connection pooling",
-        "reviewed queue retry policy",
-        "migrated config to environment variables",
-        "added canary deployment checklist",
-        "reviewed customer support escalations",
-        "added typed response models",
-        "discussed log sampling strategy",
-        "updated local development compose file",
+    # Distinct distractors (no shared "Project Atlas team" template)
+    distractors: list[tuple[int, str, str, list[str]]] = [
+        (5, "test_failure", "Staging integration test flaked on intermittent TLS handshake.", []),
+        (7, "documentation", "Mobile README section documents pagination query parameters.", []),
+        (9, "dependency", "Bumped pytest to 8.x after reviewing plugin compatibility.", []),
+        (11, "fix", "Stabilized clock injection in flaky webhook integration test.", []),
+        (13, "implementation", "Renamed internal billing module folder for clarity.", []),
+        (15, "conversation", "Discussed error envelope shape for public API responses.", []),
+        (19, "implementation", "Removed obsolete feature flags from admin settings page.", []),
+        (21, "documentation", "API examples in developer portal now show async handlers.", []),
+        (23, "conversation", "Blue/green deploy checklist reviewed with platform team.", []),
+        (25, "implementation", "Connection pool sizing tuned for read replica latency.", []),
+        (27, "documentation", "Queue retry policy documented for on-call runbooks.", []),
+        (29, "implementation", "Local compose file now mounts secrets from env files.", []),
+        (32, "documentation", "Canary deployment checklist added to release playbook.", []),
+        (34, "implementation", "Typed response models added for webhook payloads.", []),
+        (36, "conversation", "Log sampling strategy debated for high-volume tenants.", []),
+        (37, "dependency", "Upgraded httpx client for outbound webhook calls.", []),
+        (39, "test_failure", "Contract test failed after OpenAPI schema rename.", []),
+        (41, "fix", "Corrected timezone handling in scheduled job cron parser.", []),
+        (43, "implementation", "Refactored repository layer to split read/write paths.", []),
+        (45, "documentation", "Onboarding guide updated with local database seed steps.", []),
+        (47, "conversation", "Discussed tenant namespace prefix convention for caches.", []),
+        (49, "implementation", "Added request logging middleware with correlation IDs.", []),
+        (51, "noise", "Office plant watering schedule posted in engineering wiki.", ["noise"]),
+        (53, "implementation", "Dashboard chart colors aligned with design system tokens.", []),
+        (55, "documentation", "Runbook for payment provider outage drills expanded.", []),
+        (57, "test_failure", "Load test revealed connection leak in metrics exporter.", []),
+        (59, "fix", "Metrics exporter now closes idle HTTP connections after export.", []),
+        (3, "conversation", "Pagination defaults for list endpoints reviewed in API guild.", []),
+        (61, "noise", "Caterer menu options circulated for quarterly offsite.", ["noise"]),
     ]
     event_num = 33
-    for day in range(3, 61):
-        if any(event["timestamp"].startswith(iso(day)[:10]) for event in events):
-            continue
-        topic = filler_topics[(day + event_num) % len(filler_topics)]
-        event_type = filler_types[(day + event_num) % len(filler_types)]
-        add(
-            f"atlas-{event_num:03d}",
-            day,
-            event_type,
-            f"Project Atlas team {topic}.",
-            tags=["noise"] if event_type == "noise" else [],
-        )
+    for day, event_type, content, tags in distractors:
+        add(f"atlas-{event_num:03d}", day, event_type, content, tags=tags)
         event_num += 1
-        if event_num > 250:
-            break
-    while len(events) < 250:
-        day = 3 + (len(events) % 58)
-        topic = filler_topics[len(events) % len(filler_topics)]
-        event_type = filler_types[len(events) % len(filler_types)]
-        add(
-            f"atlas-{len(events) + 1:03d}",
-            day,
-            event_type,
-            f"Project Atlas follow-up: {topic}.",
-            tags=["noise"] if event_type == "noise" else [],
-        )
-    return events[:250]
+
+    return events
 
 
 def _query_timestamp(
@@ -395,10 +377,13 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
     event_map = {str(event["id"]): event for event in events}
     queries: list[dict[str, object]] = []
 
-    def add_query(**kwargs: object) -> None:
-        evidence = [str(item) for item in kwargs.pop("expected_evidence_ids", [])]
-        acceptable = [str(item) for item in kwargs.pop("acceptable_evidence_ids", [])]
-        forbidden = [str(item) for item in kwargs.pop("forbidden_evidence_ids", [])]
+    def add_query(*, core: bool = False, **kwargs: object) -> None:
+        evidence = [str(item) for item in kwargs.pop("expected_evidence_ids", [])]  # type: ignore[arg-type]
+        acceptable = [str(item) for item in kwargs.pop("acceptable_evidence_ids", [])]  # type: ignore[arg-type]
+        forbidden = [str(item) for item in kwargs.pop("forbidden_evidence_ids", [])]  # type: ignore[arg-type]
+        tags = list(kwargs.pop("tags", []))  # type: ignore[arg-type]
+        if core:
+            tags.append("core")
         if "timestamp" not in kwargs:
             reference_ids = evidence or acceptable or forbidden
             if reference_ids:
@@ -412,16 +397,19 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
                 "forbidden_evidence_ids": forbidden,
                 "should_abstain": False,
                 "retrieval_limit": 5,
+                "tags": tags,
                 **kwargs,
             }
         )
 
+    # Core story queries
     add_query(
         id="atlas-direct-001",
         capability="direct_recall",
         query="Which API framework was selected for Project Atlas?",
         expected_evidence_ids=["atlas-001"],
         timestamp=iso(3),
+        core=True,
     )
     add_query(
         id="atlas-episodic-001",
@@ -429,6 +417,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         query="What caused the failed deployment in the first week?",
         expected_evidence_ids=["atlas-004"],
         timestamp=iso(7),
+        core=True,
     )
     add_query(
         id="atlas-assoc-001",
@@ -437,6 +426,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         expected_evidence_ids=["atlas-005"],
         acceptable_evidence_ids=["atlas-006", "atlas-007"],
         timestamp=iso(13),
+        core=True,
     )
     add_query(
         id="atlas-update-001",
@@ -445,6 +435,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         expected_evidence_ids=["atlas-007"],
         forbidden_evidence_ids=["atlas-002"],
         timestamp=iso(14),
+        core=True,
     )
     add_query(
         id="atlas-temporal-hist-001",
@@ -454,6 +445,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         forbidden_evidence_ids=["atlas-007"],
         valid_at=iso(5),
         timestamp=iso(15),
+        core=True,
     )
     add_query(
         id="atlas-temporal-curr-001",
@@ -463,6 +455,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         acceptable_evidence_ids=["atlas-009"],
         forbidden_evidence_ids=["atlas-010"],
         timestamp=iso(19),
+        core=True,
     )
     add_query(
         id="atlas-leak-001",
@@ -472,6 +465,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         forbidden_evidence_ids=["atlas-032"],
         should_abstain=True,
         timestamp=iso(57),
+        core=True,
     )
     add_query(
         id="atlas-meta-001",
@@ -479,6 +473,7 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         query="Which Kafka topic carries payment events?",
         should_abstain=True,
         timestamp=iso(20),
+        core=True,
     )
     add_query(
         id="atlas-forget-001",
@@ -487,23 +482,26 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         expected_evidence_ids=["atlas-007"],
         forbidden_evidence_ids=["atlas-012", "atlas-002"],
         timestamp=iso(45),
+        core=True,
     )
     add_query(
         id="atlas-learn-pre-001",
         capability="learning",
-        query="How is background work scheduled across Atlas services?",
+        query=LEARN_QUERY_TEXT,
         expected_evidence_ids=["atlas-007"],
         acceptable_evidence_ids=["atlas-002"],
         timestamp=iso(16),
+        core=True,
     )
     add_query(
         id="atlas-learn-post-001",
         capability="learning",
-        query="What coordination approach is now used for scheduled jobs?",
+        query=LEARN_QUERY_TEXT,
         expected_evidence_ids=["atlas-007"],
         forbidden_evidence_ids=["atlas-002"],
         related_query_id="atlas-learn-pre-001",
         timestamp=iso(17),
+        core=True,
     )
     add_query(
         id="atlas-wm-001",
@@ -515,51 +513,107 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
         retrieval_limit=3,
         prompt_budget_tokens=120,
         timestamp=iso(21),
+        core=True,
     )
 
-    capability_cycle = [
-        "direct_recall",
-        "episodic_recall",
-        "associative_recall",
-        "temporal_recall",
-        "knowledge_update",
-        "forgetting",
-        "working_memory",
-        "learning",
-        "metamemory",
-    ]
-    anchor_events = [
-        "atlas-001",
-        "atlas-004",
-        "atlas-005",
-        "atlas-007",
-        "atlas-008",
-        "atlas-011",
-        "atlas-012",
-        "atlas-013",
-        "atlas-015",
-        "atlas-016",
-        "atlas-017",
-        "atlas-018",
-        "atlas-020",
-        "atlas-022",
-        "atlas-023",
-        "atlas-025",
-        "atlas-026",
-        "atlas-027",
-        "atlas-028",
-        "atlas-030",
-    ]
-    for index in range(1, 69):
-        event_id = anchor_events[index % len(anchor_events)]
-        capability = capability_cycle[index % len(capability_cycle)]
-        add_query(
-            id=f"atlas-fill-{index:03d}",
-            capability=capability,
-            query=f"Project Atlas question {index} about event {event_id}?",
-            expected_evidence_ids=[event_id],
-        )
-    return queries[:80]
+    # Additional authored coverage queries (not all tagged core)
+    add_query(
+        id="atlas-direct-002",
+        capability="direct_recall",
+        query="Which authentication provider was chosen for customer login?",
+        expected_evidence_ids=["atlas-008"],
+        timestamp=iso(15),
+    )
+    add_query(
+        id="atlas-episodic-002",
+        capability="episodic_recall",
+        query="What incident involved payment webhook retries flooding the queue?",
+        expected_evidence_ids=["atlas-026"],
+        timestamp=iso(49),
+    )
+    add_query(
+        id="atlas-assoc-002",
+        capability="associative_recall",
+        query="Why was Kafka rejected for asynchronous task delivery?",
+        expected_evidence_ids=["atlas-014"],
+        acceptable_evidence_ids=["atlas-013"],
+        timestamp=iso(25),
+    )
+    add_query(
+        id="atlas-update-002",
+        capability="knowledge_update",
+        query="What caching approach is used for dashboard endpoints now?",
+        expected_evidence_ids=["atlas-025"],
+        forbidden_evidence_ids=["atlas-024"],
+        timestamp=iso(47),
+    )
+    add_query(
+        id="atlas-temporal-hist-002",
+        capability="temporal_recall",
+        query="What audit log retention period was requested initially?",
+        expected_evidence_ids=["atlas-019"],
+        forbidden_evidence_ids=["atlas-020"],
+        valid_at=iso(34),
+        timestamp=iso(36),
+    )
+    add_query(
+        id="atlas-temporal-curr-002",
+        capability="temporal_recall",
+        query="How long are audit logs retained?",
+        expected_evidence_ids=["atlas-020"],
+        forbidden_evidence_ids=["atlas-019"],
+        timestamp=iso(36),
+    )
+    add_query(
+        id="atlas-forget-002",
+        capability="forgetting",
+        query="What observability stack handles production dashboards?",
+        expected_evidence_ids=["atlas-030"],
+        forbidden_evidence_ids=["atlas-029"],
+        timestamp=iso(57),
+    )
+    add_query(
+        id="atlas-wm-002",
+        capability="working_memory",
+        query="Briefly describe the cache invalidation bug and its fix.",
+        expected_evidence_ids=["atlas-018"],
+        acceptable_evidence_ids=["atlas-017"],
+        retrieval_limit=3,
+        prompt_budget_tokens=120,
+        timestamp=iso(32),
+    )
+    add_query(
+        id="atlas-meta-002",
+        capability="metamemory",
+        query="What is the primary Kafka cluster hostname for Atlas?",
+        should_abstain=True,
+        timestamp=iso(25),
+    )
+    add_query(
+        id="atlas-direct-003",
+        capability="direct_recall",
+        query="Which CI/CD platform runs Atlas pipelines?",
+        expected_evidence_ids=["atlas-015"],
+        timestamp=iso(27),
+    )
+    add_query(
+        id="atlas-assoc-003",
+        capability="associative_recall",
+        query="What customer feedback led to rejecting a custom SAML implementation?",
+        expected_evidence_ids=["atlas-022"],
+        acceptable_evidence_ids=["atlas-021"],
+        timestamp=iso(41),
+    )
+    add_query(
+        id="atlas-update-003",
+        capability="knowledge_update",
+        query="What messaging system delivers asynchronous tasks?",
+        expected_evidence_ids=["atlas-013"],
+        forbidden_evidence_ids=["atlas-014"],
+        timestamp=iso(23),
+    )
+
+    return queries
 
 
 def build_feedback() -> list[dict[str, object]]:
@@ -581,9 +635,9 @@ def build_feedback() -> list[dict[str, object]]:
         {
             "id": "atlas-fb-003",
             "timestamp": iso(30, 11),
-            "query_id": "atlas-fill-001",
+            "query_id": "atlas-episodic-002",
             "outcome": "helpful",
-            "target_event_ids": ["atlas-001"],
+            "target_event_ids": ["atlas-026"],
         },
     ]
 
