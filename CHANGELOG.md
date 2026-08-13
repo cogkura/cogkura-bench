@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Neutral benchmark models, dataset loader, runner, and retrieval metrics.
 - Mini golden dataset with Oracle, token-overlap, and full-history backends.
 - CLI: `datasets`, `validate-dataset`, `run`.
-- CogKura 0.10.x backend adapter with provenance mapping and simulated-time stores.
+- CogKura 0.11.x backend adapter with provenance mapping; prepare uses native `as_of` on encode/consolidate.
 - Specialized cognitive metrics (temporal, updating, forgetting, working memory, learning, metamemory, efficiency).
 - Project Atlas dataset (`software_project_v1`: 61 events, 24 queries) with distinct noise distractors and `core`-tagged story queries.
 - Query `tags` field; core-subset capability tables in `compare` and summary reports.
@@ -21,3 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI `run` prints each capability's primary metric; `demo` defaults to `software_project_v1`.
 - `valid_at` filtering on token-overlap and full-history baselines.
 - `related_query_id` on queries for learning pre/post pairs.
+
+### Changed
+
+- CogKura extra requires `>=0.11.0,<0.12.0`. Custom simulated-time stores were removed; encode and consolidate now receive the benchmark clock via CogKura's public `as_of` argument.
+- CogKura backend reports the installed distribution version from package metadata (CogKura 0.11.0 still exports `__version__ = "0.10.0"`).

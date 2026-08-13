@@ -28,7 +28,7 @@ CogKuraBench
               ├── Oracle (validation)
               ├── token overlap
               ├── full history
-              └── CogKura (optional extra, simulated-time stores)
+              └── CogKura (optional extra)
 ```
 
 CogKuraBench is a consumer of memory systems, not part of CogKura.

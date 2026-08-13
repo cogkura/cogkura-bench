@@ -7,10 +7,6 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from cogkurabench.backends.cogkura_stores import (
-    BenchmarkEpisodeStore,
-    BenchmarkSemanticMemoryStore,
-)
 from cogkurabench.models import (
     AssessmentRequest,
     AssessmentResponse,
@@ -46,6 +42,15 @@ def _require_cogkura() -> Any:
     return cogkura
 
 
+def _installed_cogkura_version(cogkura: Any) -> str:
+    from importlib.metadata import PackageNotFoundError, version  # noqa: PLC0415
+
+    try:
+        return version("cogkura")
+    except PackageNotFoundError:
+        return str(cogkura.__version__)
+
+
 def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[str, object]]:
     payload: list[dict[str, object]] = []
     for fact in facts:
@@ -63,7 +68,7 @@ def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[st
 
 
 class CogKuraBackend:
-    """Benchmark adapter for CogKura 0.10.x public memory API."""
+    """Benchmark adapter for CogKura 0.11.x public memory API."""
 
     def __init__(self) -> None:
         self._memory: Memory | None = None
@@ -97,14 +102,12 @@ class CogKuraBackend:
         )
         from cogkura.storage.in_memory_observation import InMemoryObservationStore  # noqa: PLC0415
 
-        self._version = cogkura.__version__
+        self._version = _installed_cogkura_version(cogkura)
         if self._memory is not None:
             await self._memory.clear(tenant_id=TENANT_ID)
         self._observation_store = InMemoryObservationStore()
         self._memory = cogkura.Memory(
             observation_store=self._observation_store,
-            episode_store=BenchmarkEpisodeStore(),
-            semantic_store=BenchmarkSemanticMemoryStore(),
             semantic_consolidator=ComplementaryLearningSemanticConsolidator(
                 minimum_supporting_episodes=1,
             ),
@@ -140,8 +143,8 @@ class CogKuraBackend:
 
     async def prepare(self, *, as_of: datetime) -> None:
         memory = self._require_memory()
-        await memory.encode_episodes(tenant_id=TENANT_ID)
-        await memory.consolidate_semantics(tenant_id=TENANT_ID)
+        await memory.encode_episodes(tenant_id=TENANT_ID, as_of=as_of)
+        await memory.consolidate_semantics(tenant_id=TENANT_ID, as_of=as_of)
         await self._refresh_observation_map()
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:
