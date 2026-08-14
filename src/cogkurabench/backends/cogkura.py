@@ -96,7 +96,7 @@ def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[st
 
 
 class CogKuraBackend:
-    """Benchmark adapter for CogKura 0.12.x public memory API."""
+    """Benchmark adapter for CogKura 0.14.x public memory API."""
 
     def __init__(self) -> None:
         self._memory: Memory | None = None
