@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- CogKura extra requires `>=0.14.0,<0.15.0`. Custom simulated-time stores were removed; encode and consolidate receive the benchmark clock via CogKura's public `as_of` argument.
+- CogKura extra requires `>=0.14.1,<0.15.0`. Custom simulated-time stores were removed; encode and consolidate receive the benchmark clock via CogKura's public `as_of` argument.
 - CogKura adapter writes `metadata["entity_ids"]` on ingest, stops auto-`record_access` on retrieve, and passes structured `RetrievalCue` when queries/requests include optional cue fields.
 - Optional query/request fields: `entity_ids`, `predicate`, `object_value` (Helios core cues; mini and Atlas omit them).
 - Helios distractors are distinct authored lines (no numbered template mill); story slots `helios-005` / `helios-016` carry entity and semantic-fact structure for spreading and current-state recall.
