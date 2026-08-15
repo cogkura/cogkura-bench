@@ -30,6 +30,76 @@ if TYPE_CHECKING:
 TENANT_ID = "benchmark"
 SOURCE_NAMESPACE = "cogkurabench.events"
 
+MISSING_KNOWLEDGE_FLAGS: frozenset[str] = frozenset(
+    {
+        "missing_knowledge",
+        "no_retrieved_memory",
+        "low_cue_coverage",
+        "low_retrieval_strength",
+    }
+)
+
+_OPTIONAL_RECALL_METADATA_FIELDS: tuple[str, ...] = (
+    "rank_activation",
+    "text_coverage",
+    "text_cue_fit",
+    "temporal_mode",
+    "slot_fit",
+    "structured_adjustment",
+    "eligibility",
+    "admission_reason",
+    "support_slot",
+    "support_semantic",
+    "semantic_slot",
+    "semantic_status",
+)
+
+
+def _indicates_missing_knowledge_from_flags(flags: Sequence[str]) -> bool:
+    return any(flag in flags for flag in MISSING_KNOWLEDGE_FLAGS)
+
+
+def _json_safe_metadata_value(value: object) -> object:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if hasattr(value, "value"):
+        return value.value
+    return str(value)
+
+
+def _recall_result_to_metadata(result: RecallResult) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "activation": result.activation,
+        "score": result.score,
+        "latency_seconds": result.latency_seconds,
+        "reason": result.reason,
+    }
+    components = result.components
+    metadata["activation_base_level"] = components.base_level
+    metadata["activation_spreading"] = components.spreading
+    metadata["activation_partial_match"] = components.partial_match
+    metadata["activation_noise"] = components.noise
+    metadata["activation_total"] = components.total
+    metadata["activation_current_state"] = components.current_state
+
+    for field_name in _OPTIONAL_RECALL_METADATA_FIELDS:
+        if hasattr(result, field_name):
+            metadata[field_name] = _json_safe_metadata_value(getattr(result, field_name))
+
+    memory = result.memory
+    if hasattr(memory, "status"):
+        metadata["semantic_status"] = _json_safe_metadata_value(memory.status)
+    if hasattr(memory, "predicate"):
+        metadata["semantic_predicate"] = memory.predicate
+    if hasattr(memory, "subject_entity_id"):
+        metadata["semantic_subject_entity_id"] = memory.subject_entity_id
+    if hasattr(memory, "object_value"):
+        metadata["semantic_object_value"] = memory.object_value
+    if hasattr(memory, "slot_key"):
+        metadata["semantic_slot_key"] = memory.slot_key
+
+    return metadata
+
 
 def _require_cogkura() -> Any:
     try:
@@ -240,10 +310,7 @@ class CogKuraBackend:
         )
         latency_ms = (time.perf_counter() - start) * 1000.0
         flags = tuple(flag.value for flag in assessment.flags)
-        indicates_missing = any(
-            flag in flags
-            for flag in ("no_retrieved_memory", "low_cue_coverage", "low_retrieval_strength")
-        )
+        indicates_missing = _indicates_missing_knowledge_from_flags(flags)
         indicates_conflict = "conflicting_semantic_memory" in flags
         signals = {
             "cue_coverage": assessment.signals.cue_coverage,
@@ -325,6 +392,7 @@ class CogKuraBackend:
                     score=result.score,
                     rank=rank,
                     memory_type=result.memory_kind.value,
+                    metadata=_recall_result_to_metadata(result),
                 )
             )
         return items

@@ -8,7 +8,7 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Any
 
-from cogkurabench.models import Capability
+from cogkurabench.models import Capability, RetrievedItem
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +39,9 @@ class QueryResult:
     metrics: Mapping[str, float]
     latency_ms: float
     context_tokens: int | None
+    retrieved_items: tuple[RetrievedItem, ...] = ()
     context_event_ids: tuple[str, ...] = ()
+    context_items: tuple[RetrievedItem, ...] = ()
     indicates_missing_knowledge: bool | None = None
     indicates_conflict: bool | None = None
     assessment_flags: tuple[str, ...] = ()

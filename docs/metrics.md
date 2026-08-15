@@ -20,7 +20,9 @@
 | Metamemory | `missing_knowledge_f1`, `conflict_f1` |
 | Efficiency | `retrieval_latency_ms`, `memories_retrieved`, `memories_selected`, `total_context_tokens` |
 
-Metrics operate on benchmark event IDs and neutral `QueryResult` fields (`context_event_ids`, `indicates_missing_knowledge`, `indicates_conflict`). Unsupported backend capabilities are omitted.
+Metrics operate on benchmark event IDs and neutral `QueryResult` fields (`context_event_ids`, `indicates_missing_knowledge`, `indicates_conflict`). `RetrievedItem.metadata` and per-item diagnostics do not influence scoring. Unsupported backend capabilities are omitted.
+
+Metamemory results from CogKuraBench 0.1.0 omitted CogKura's explicit `missing_knowledge` flag. Compare metamemory under 0.1.1 against a corrected baseline (same benchmark version), not against raw 0.1.0 metamemory scores.
 
 ## Reporting
 

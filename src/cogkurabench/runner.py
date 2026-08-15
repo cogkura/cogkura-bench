@@ -155,6 +155,10 @@ class BenchmarkRunner:
                             context_response=context_response,
                             assessment_response=assessment_response,
                             backend_metadata=dict(response.backend_metadata),
+                            retrieved_items=response.items,
+                            context_items=(
+                                context_response.items if context_response is not None else ()
+                            ),
                         )
                     )
 

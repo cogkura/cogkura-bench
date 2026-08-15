@@ -10,6 +10,13 @@
 - [x] Project Helios (`helios_v1`) messy-history stress dataset
 - [x] Demo, inspect, compare commands
 
+## 0.1.1
+
+- [x] Correct CogKura `missing_knowledge` metamemory mapping
+- [x] Preserve optional CogKura retrieval diagnostics on `RetrievedItem.metadata`
+- [x] Persist retrieved/context items in results and JSON
+- [x] Richer `inspect` output for query gold, cues, and per-item diagnostics
+
 ## Future
 
 - Vector/RAG baseline

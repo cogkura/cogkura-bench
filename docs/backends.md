@@ -23,6 +23,12 @@ Ingest maps benchmark `entities` to observation `metadata["entity_ids"]` so CogK
 
 Every `RetrievedItem.source_event_ids` value is a benchmark event ID, never a CogKura memory key. CogKura 0.14 stamps durable-memory `created_at` / `updated_at` from `as_of` on encode and consolidate, so the adapter uses CogKura's default in-memory stores. Ranking (gated slot admission, multi-entity association, superseded exclusion, distinctive episodic match) stays inside CogKura; the adapter does not post-filter hits.
 
+The adapter maps CogKura's public `RecallResult` fields into neutral `RetrievedItem.metadata` (activation, activation components, `reason`, and optional typed diagnostics when exposed). Diagnostics are observational only; scoring uses flattened benchmark event IDs.
+
+Assessment maps CogKura flags to neutral booleans, including explicit `missing_knowledge` → `indicates_missing_knowledge`. Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 metamemory scores without an adapter-corrected baseline.
+
+Use `cogkura-bench inspect <query-id> --backend cogkura --dataset helios_v1` to inspect retrieval diagnostics for queries such as `helios-update-001`, `helios-temporal-curr-001`, and `helios-temporal-hist-001`.
+
 ### Known CogKura limitations
 
 - The adapter reports the installed distribution version from package metadata.

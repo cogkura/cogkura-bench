@@ -25,4 +25,7 @@ Validate and run:
 uv run cogkura-bench validate-dataset helios_v1
 uv run cogkura-bench run --dataset helios_v1 --backend oracle --quiet
 uv run cogkura-bench compare cogkura token-overlap --dataset helios_v1
+uv run cogkura-bench inspect helios-update-001 --backend cogkura --dataset helios_v1
+uv run cogkura-bench inspect helios-temporal-curr-001 --backend cogkura --dataset helios_v1
+uv run cogkura-bench inspect helios-temporal-hist-001 --backend cogkura --dataset helios_v1
 ```

@@ -9,12 +9,12 @@ from cogkurabench.evaluation.result import (
     EnvironmentInfo,
     QueryResult,
 )
-from cogkurabench.models import Capability
+from cogkurabench.models import Capability, RetrievedItem
 
 
 def test_result_to_dict_round_trip(tmp_path) -> None:
     result = BenchmarkResult(
-        benchmark_version="0.1.0",
+        benchmark_version="0.1.1",
         dataset_version="mini",
         backend_name="oracle",
         backend_version=None,
@@ -32,6 +32,16 @@ def test_result_to_dict_round_trip(tmp_path) -> None:
                 query_id="direct-001",
                 capability=Capability.DIRECT_RECALL,
                 retrieved_event_ids=("evt-001",),
+                retrieved_items=(
+                    RetrievedItem(
+                        source_event_ids=("evt-001",),
+                        text="FastAPI selected",
+                        score=1.0,
+                        rank=1,
+                        memory_type="episode",
+                        metadata={"activation": 2.0},
+                    ),
+                ),
                 expected_event_ids=("evt-001",),
                 metrics={"recall@5": 1.0},
                 latency_ms=1.0,
@@ -47,6 +57,7 @@ def test_result_to_dict_round_trip(tmp_path) -> None:
     payload = result_to_dict(result)
     assert payload["backend_name"] == "oracle"
     assert payload["query_results"][0]["query_id"] == "direct-001"
+    assert payload["query_results"][0]["retrieved_items"][0]["metadata"]["activation"] == 2.0
 
     output = tmp_path / "result.json"
     write_result_json(result, output)

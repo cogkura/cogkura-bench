@@ -45,7 +45,7 @@ async def test_cogkura_mini_run_has_no_future_leak() -> None:
 
 
 @pytest.mark.asyncio
-async def test_cogkura_assess_is_available_for_metamemory() -> None:
+async def test_cogkura_assess_maps_missing_knowledge_flag() -> None:
     dataset = load_dataset("mini")
     backend = CogKuraBackend()
     await backend.reset()
@@ -63,6 +63,33 @@ async def test_cogkura_assess_is_available_for_metamemory() -> None:
         )
     )
     assert assessment is not None
+    assert assessment.indicates_missing_knowledge is True
+    assert "missing_knowledge" in assessment.flags or any(
+        flag in assessment.flags
+        for flag in ("no_retrieved_memory", "low_cue_coverage", "low_retrieval_strength")
+    )
+
+
+@pytest.mark.asyncio
+async def test_cogkura_retrieved_items_include_metadata() -> None:
+    dataset = load_dataset("mini")
+    backend = CogKuraBackend()
+    await backend.reset()
+    event = dataset.events[0]
+    await backend.ingest([event])
+    await backend.prepare(as_of=event.timestamp)
+    response = await backend.retrieve(
+        RetrievalRequest(
+            query_id="direct-001",
+            query="Which API framework was selected?",
+            as_of=event.timestamp,
+            limit=5,
+        )
+    )
+    assert response.items
+    assert response.items[0].metadata
+    assert "activation" in response.items[0].metadata
+    assert "reason" in response.items[0].metadata
 
 
 @pytest.mark.asyncio

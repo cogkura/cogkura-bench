@@ -24,6 +24,7 @@ from cogkurabench.models import (
     Capability,
     ContextResponse,
     ProjectEvent,
+    RetrievedItem,
 )
 
 _RETRIEVAL_AGGREGATE_METRICS = frozenset(
@@ -99,6 +100,8 @@ def evaluate_query(
     context_response: ContextResponse | None = None,
     assessment_response: AssessmentResponse | None = None,
     backend_metadata: dict[str, object] | None = None,
+    retrieved_items: Sequence[RetrievedItem] = (),
+    context_items: Sequence[RetrievedItem] = (),
 ) -> QueryResult:
     """Score one query against retrieved event IDs and optional backend signals."""
     metrics = dict(compute_retrieval_metrics(ranked_event_ids, query))
@@ -169,11 +172,13 @@ def evaluate_query(
         query_id=query.id,
         capability=query.capability,
         retrieved_event_ids=tuple(ranked_event_ids),
+        retrieved_items=tuple(retrieved_items),
         expected_event_ids=query.expected_evidence_ids,
         metrics=metrics,
         latency_ms=latency_ms,
         context_tokens=context_tokens,
         context_event_ids=context_event_ids,
+        context_items=tuple(context_items),
         indicates_missing_knowledge=indicates_missing,
         indicates_conflict=indicates_conflict,
         assessment_flags=assessment_flags,
@@ -206,11 +211,13 @@ def apply_learning_deltas(
                 query_id=result.query_id,
                 capability=result.capability,
                 retrieved_event_ids=result.retrieved_event_ids,
+                retrieved_items=result.retrieved_items,
                 expected_event_ids=result.expected_event_ids,
                 metrics={**dict(result.metrics), **deltas},
                 latency_ms=result.latency_ms,
                 context_tokens=result.context_tokens,
                 context_event_ids=result.context_event_ids,
+                context_items=result.context_items,
                 indicates_missing_knowledge=result.indicates_missing_knowledge,
                 indicates_conflict=result.indicates_conflict,
                 assessment_flags=result.assessment_flags,

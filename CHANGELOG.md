@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-15
+
+### Fixed
+
+- CogKura `missing_knowledge` assessment flag now maps to neutral `indicates_missing_knowledge=True`.
+
+### Added
+
+- Optional CogKura retrieval diagnostic metadata on `RetrievedItem.metadata`.
+- `retrieved_items` and `context_items` on `QueryResult` for JSON and inspect output.
+- Richer single-query inspection: query id, structured cues, acceptable/forbidden evidence, per-item score, type, and metadata.
+
+### Changed
+
+- CogKura extra requires `>=0.14.3,<0.15.0` (minimum will move to `0.14.4` when published on PyPI).
+
+### Unchanged
+
+- Retrieval scoring semantics, datasets, gold IDs, forbidden IDs, oracle behaviour, and token-overlap behaviour.
+
+## [0.1.0] - 2026-08-14
+
 ### Added
 
 - Initial benchmark scaffold (Phases 0–2).
@@ -25,10 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- CogKura extra requires `>=0.14.3,<0.15.0`. Custom simulated-time stores were removed; encode and consolidate receive the benchmark clock via CogKura's public `as_of` argument.
 - CogKura adapter writes `metadata["entity_ids"]` on ingest, stops auto-`record_access` on retrieve, and passes structured `RetrievalCue` when queries/requests include optional cue fields.
 - Optional query/request fields: `entity_ids`, `predicate`, `object_value` (Helios core cues; mini and Atlas omit them).
 - Helios distractors are distinct authored lines (no numbered template mill); story slots `helios-005` / `helios-016` carry entity and semantic-fact structure for spreading and current-state recall.
 - Core capability tables merge metamemory F1 from aggregated counts instead of averaging per-query F1.
-
 - CogKura backend reports the installed distribution version from package metadata.
