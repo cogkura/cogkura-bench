@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- CogKura extra requires `>=0.14.3,<0.15.0` (minimum will move to `0.14.4` when published on PyPI).
+- CogKura extra requires `>=0.14.4,<0.15.0`.
 
 ### Unchanged
 
