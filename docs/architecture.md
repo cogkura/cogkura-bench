@@ -1,34 +1,31 @@
 # Architecture
 
-CogKuraBench separates benchmark domain models, backend adapters, metrics, and evaluation.
+CogKuraBench separates benchmark domain models, backend adapters, metrics, and evaluation. New-user install and first-run steps are in the [README](../README.md).
 
-```text
-datasets/
-    ↓
-BenchmarkDataset + action stream
-    ↓
-BenchmarkRunner (simulated clock, future-leakage enforcement)
-    ↓
-MemoryBackend (neutral protocol)
-    ↓
-RetrievedItem (benchmark event IDs)
-    ↓
-Metrics + BenchmarkResult
+```mermaid
+flowchart LR
+    DS["datasets/"] --> Dataset["BenchmarkDataset<br/>action stream"]
+    Dataset --> Runner["BenchmarkRunner"]
+    Runner --> Clock["Simulated clock<br/>no future leakage"]
+    Clock --> Backend["MemoryBackend"]
+    Backend --> Items["RetrievedItem<br/>benchmark event IDs"]
+    Items --> Result["Metrics and BenchmarkResult"]
 ```
 
 Dependency direction:
 
-```text
-CogKuraBench
-      ├── benchmark domain
-      ├── datasets
-      ├── metrics
-      ├── evaluation
-      └── backend adapters
-              ├── Oracle (validation)
-              ├── token overlap
-              ├── full history
-              └── CogKura (optional extra)
+```mermaid
+flowchart TB
+    Bench["CogKuraBench"]
+    Bench --> Domain["Benchmark domain"]
+    Bench --> Datasets["Datasets"]
+    Bench --> Metrics["Metrics"]
+    Bench --> Evaluation["Evaluation"]
+    Bench --> Adapters["Backend adapters"]
+    Adapters --> Oracle["oracle"]
+    Adapters --> Token["token-overlap"]
+    Adapters --> Full["full-history"]
+    Adapters --> Cogkura["cogkura extra"]
 ```
 
 CogKuraBench is a consumer of memory systems, not part of CogKura.

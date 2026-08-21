@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Expanded the README for new users, and added mermaid diagrams to the architecture and methodology docs.
+
 ## [0.1.1] - 2026-08-15
 
 ### Fixed
