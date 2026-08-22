@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Expanded the README for new users, and added mermaid diagrams to the architecture and methodology docs.
+- CogKura extra requires `>=0.15.0,<0.16.0`.
 
 ## [0.1.1] - 2026-08-15
 
