@@ -4,47 +4,54 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from cogkurabench.metrics.retrieval import recall_at_k
-from cogkurabench.models import BenchmarkQuery, ProjectEvent
+from cogkurabench.metrics.ranking import (
+    item_is_forbidden,
+    order_retrieved_items,
+    top_k_items,
+)
+from cogkurabench.metrics.retrieval import group_recall_at_k
+from cogkurabench.models import BenchmarkQuery, ProjectEvent, RetrievedItem
 
 
 def stale_suppression_rate(
-    ranked_ids: Sequence[str],
+    items: Sequence[RetrievedItem],
     forbidden_ids: Sequence[str],
     *,
     k: int,
 ) -> float:
-    """Fraction of top-K where forbidden stale evidence is absent."""
+    """Fraction of top-K retrieved items where forbidden stale evidence is absent."""
     if not forbidden_ids or k <= 0:
         return 1.0
-    top_k = ranked_ids[:k]
-    if not top_k:
+    top = top_k_items(items, k)
+    if not top:
         return 1.0
-    forbidden = set(forbidden_ids)
-    suppressed = sum(1 for event_id in top_k if event_id not in forbidden)
-    return suppressed / len(top_k)
+    suppressed = sum(1 for item in top if not item_is_forbidden(item, forbidden_ids))
+    return suppressed / len(top)
 
 
 def noise_intrusion_rate(
-    ranked_ids: Sequence[str],
+    items: Sequence[RetrievedItem],
     events_by_id: Mapping[str, ProjectEvent],
     *,
     k: int,
 ) -> float:
-    """Fraction of top-K results tagged as noise."""
-    top_k = ranked_ids[:k]
-    if not top_k:
+    """Fraction of top-K retrieved items citing at least one noise-tagged event."""
+    top = top_k_items(items, k)
+    if not top:
         return 0.0
     noise_hits = sum(
         1
-        for event_id in top_k
-        if event_id in events_by_id and "noise" in events_by_id[event_id].tags
+        for item in top
+        if any(
+            event_id in events_by_id and "noise" in events_by_id[event_id].tags
+            for event_id in item.source_event_ids
+        )
     )
-    return noise_hits / len(top_k)
+    return noise_hits / len(top)
 
 
 def compute_forgetting_metrics(
-    ranked_ids: Sequence[str],
+    items: Sequence[RetrievedItem],
     query: BenchmarkQuery,
     *,
     events_by_id: Mapping[str, ProjectEvent],
@@ -52,20 +59,22 @@ def compute_forgetting_metrics(
     """Compute forgetting metrics for one query."""
     if query.capability.value != "forgetting":
         return {}
+    ordered = order_retrieved_items(items)
+    limit = query.retrieval_limit
     return {
         "stale_suppression_rate": stale_suppression_rate(
-            ranked_ids,
+            ordered,
             query.forbidden_evidence_ids,
-            k=query.retrieval_limit,
+            k=limit,
         ),
-        "relevant_long_term_retention": recall_at_k(
-            ranked_ids,
+        "relevant_long_term_retention": group_recall_at_k(
+            ordered,
             query.expected_evidence_ids,
-            k=query.retrieval_limit,
+            k=limit,
         ),
         "noise_intrusion_rate": noise_intrusion_rate(
-            ranked_ids,
+            ordered,
             events_by_id,
-            k=query.retrieval_limit,
+            k=limit,
         ),
     }

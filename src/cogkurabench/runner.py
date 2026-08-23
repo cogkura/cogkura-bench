@@ -26,7 +26,6 @@ from cogkurabench.evaluation.result import (
     EnvironmentInfo,
     QueryResult,
 )
-from cogkurabench.metrics.retrieval import retrieved_event_ids
 from cogkurabench.models import (
     AssessmentRequest,
     BenchmarkAction,
@@ -106,9 +105,6 @@ class BenchmarkRunner:
                         object_value=query.object_value,
                     )
                     response = await backend.retrieve(request)
-                    ranked_ids = retrieved_event_ids(
-                        [event_id for item in response.items for event_id in item.source_event_ids]
-                    )
 
                     context_response = None
                     should_select_context = (
@@ -149,13 +145,12 @@ class BenchmarkRunner:
                     query_results.append(
                         evaluate_query(
                             query,
-                            ranked_ids,
+                            response.items,
                             latency_ms=response.latency_ms,
                             events_by_id=events_by_id,
                             context_response=context_response,
                             assessment_response=assessment_response,
                             backend_metadata=dict(response.backend_metadata),
-                            retrieved_items=response.items,
                             context_items=(
                                 context_response.items if context_response is not None else ()
                             ),

@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-23
+
 ### Changed
 
-- Expanded the README for new users, and added mermaid diagrams to the architecture and methodology docs.
-- CogKura extra requires `>=0.15.0,<0.16.0`.
+- **Grouped retrieval scoring:** top-K primary metrics (`recall@K`, MRR, nDCG, temporal/update/forgetting/learning rank metrics) now count ranked `RetrievedItem` groups. A multi-source memory item occupies one rank position.
+- `memories_retrieved` and `memories_selected` efficiency counts use retrieved/context items, not flattened source events.
+
+### Unchanged
+
+- Released datasets, gold IDs, forbidden IDs, and backend adapters.
+- Oracle, token-overlap, and full-history primary scores (one source per item).
+- Working-memory budget coverage and metamemory scoring.
+- `RetrievedItem.metadata` remains observational only.
 
 ## [0.1.1] - 2026-08-15
 

@@ -14,6 +14,7 @@ from cogkurabench.metrics.metamemory import (
     conflict_detection,
     missing_knowledge_detection,
 )
+from cogkurabench.metrics.ranking import flatten_source_event_ids, order_retrieved_items
 from cogkurabench.metrics.retrieval import compute_retrieval_metrics
 from cogkurabench.metrics.temporal import compute_temporal_metrics
 from cogkurabench.metrics.updating import compute_update_metrics
@@ -93,23 +94,29 @@ def aggregate_capability_results(
 
 def evaluate_query(
     query: BenchmarkQuery,
-    ranked_event_ids: Sequence[str],
+    retrieved_items: Sequence[RetrievedItem],
     *,
     latency_ms: float,
     events_by_id: Mapping[str, ProjectEvent] | None = None,
     context_response: ContextResponse | None = None,
     assessment_response: AssessmentResponse | None = None,
     backend_metadata: dict[str, object] | None = None,
-    retrieved_items: Sequence[RetrievedItem] = (),
     context_items: Sequence[RetrievedItem] = (),
 ) -> QueryResult:
-    """Score one query against retrieved event IDs and optional backend signals."""
-    metrics = dict(compute_retrieval_metrics(ranked_event_ids, query))
-    metrics.update(compute_temporal_metrics(ranked_event_ids, query))
-    metrics.update(compute_update_metrics(ranked_event_ids, query))
+    """Score one query against retrieved items and optional backend signals."""
+    ordered_items = order_retrieved_items(retrieved_items)
+    ranked_event_ids = flatten_source_event_ids(ordered_items)
+
+    metrics = dict(compute_retrieval_metrics(ordered_items, query))
+    metrics.update(compute_temporal_metrics(ordered_items, query))
+    metrics.update(compute_update_metrics(ordered_items, query))
     if events_by_id is not None:
         metrics.update(
-            compute_forgetting_metrics(ranked_event_ids, query, events_by_id=events_by_id)
+            compute_forgetting_metrics(
+                ordered_items,
+                query,
+                events_by_id=events_by_id,
+            )
         )
 
     context_event_ids: tuple[str, ...] = ()
@@ -137,8 +144,8 @@ def evaluate_query(
         compute_efficiency_metrics(
             retrieval_latency_ms=latency_ms,
             context_latency_ms=context_latency_ms,
-            retrieved_count=len(ranked_event_ids),
-            selected_count=len(context_event_ids),
+            retrieved_count=len(ordered_items),
+            selected_count=len(context_response.items) if context_response is not None else 0,
             context_tokens=context_tokens,
         )
     )
@@ -171,8 +178,8 @@ def evaluate_query(
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
-        retrieved_event_ids=tuple(ranked_event_ids),
-        retrieved_items=tuple(retrieved_items),
+        retrieved_event_ids=ranked_event_ids,
+        retrieved_items=tuple(ordered_items),
         expected_event_ids=query.expected_evidence_ids,
         metrics=metrics,
         latency_ms=latency_ms,

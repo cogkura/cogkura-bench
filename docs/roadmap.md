@@ -17,6 +17,11 @@
 - [x] Persist retrieved/context items in results and JSON
 - [x] Richer `inspect` output for query gold, cues, and per-item diagnostics
 
+## 0.2.0
+
+- [x] Grouped retrieval scoring: top-K over `RetrievedItem` rank positions
+- [x] Grouped temporal, update, forgetting, and learning rank metrics
+
 ## Future
 
 - Vector/RAG baseline

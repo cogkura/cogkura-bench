@@ -4,44 +4,49 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from cogkurabench.metrics.retrieval import recall_at_k
-from cogkurabench.models import BenchmarkQuery
+from cogkurabench.metrics.ranking import (
+    item_has_any,
+    item_is_forbidden,
+    order_retrieved_items,
+    top_k_items,
+)
+from cogkurabench.metrics.retrieval import group_recall_at_k
+from cogkurabench.models import BenchmarkQuery, RetrievedItem
 
 
-def stale_intrusion_rate(
-    ranked_ids: Sequence[str],
+def group_stale_intrusion_rate(
+    items: Sequence[RetrievedItem],
     forbidden_ids: Sequence[str],
     *,
     k: int,
 ) -> float:
-    """Fraction of top-K results that are forbidden stale evidence."""
+    """Fraction of top-K retrieved items citing forbidden stale evidence."""
     if not forbidden_ids or k <= 0:
         return 0.0
-    top_k = ranked_ids[:k]
-    if not top_k:
+    top = top_k_items(items, k)
+    if not top:
         return 0.0
-    forbidden = set(forbidden_ids)
-    hits = sum(1 for event_id in top_k if event_id in forbidden)
-    return hits / len(top_k)
+    hits = sum(1 for item in top if item_is_forbidden(item, forbidden_ids))
+    return hits / len(top)
 
 
-def current_state_ranking_score(
-    ranked_ids: Sequence[str],
+def group_current_state_ranking_score(
+    items: Sequence[RetrievedItem],
     query: BenchmarkQuery,
 ) -> float:
-    """Score new-vs-old ranking: 1.0 when new expected outranks all forbidden."""
+    """Score new-vs-old ranking over retrieved items."""
     if not query.expected_evidence_ids or not query.forbidden_evidence_ids:
         return 1.0
-    new_ranks = [
-        index + 1
-        for index, event_id in enumerate(ranked_ids)
-        if event_id in query.expected_evidence_ids
-    ]
-    old_ranks = [
-        index + 1
-        for index, event_id in enumerate(ranked_ids)
-        if event_id in query.forbidden_evidence_ids
-    ]
+    ordered = order_retrieved_items(items)
+    new_ranks: list[int] = []
+    old_ranks: list[int] = []
+    for index, item in enumerate(ordered, start=1):
+        has_expected = item_has_any(item, query.expected_evidence_ids)
+        has_forbidden = item_is_forbidden(item, query.forbidden_evidence_ids)
+        if has_expected and not has_forbidden:
+            new_ranks.append(index)
+        if has_forbidden:
+            old_ranks.append(index)
     if not new_ranks:
         return 0.0
     if not old_ranks:
@@ -50,22 +55,24 @@ def current_state_ranking_score(
 
 
 def compute_update_metrics(
-    ranked_ids: Sequence[str],
+    items: Sequence[RetrievedItem],
     query: BenchmarkQuery,
 ) -> dict[str, float]:
     """Compute knowledge-update metrics for one query."""
     if query.capability.value != "knowledge_update":
         return {}
+    ordered = order_retrieved_items(items)
+    limit = query.retrieval_limit
     return {
-        "updated_evidence_recall": recall_at_k(
-            ranked_ids,
+        "updated_evidence_recall": group_recall_at_k(
+            ordered,
             query.expected_evidence_ids,
-            k=query.retrieval_limit,
+            k=limit,
         ),
-        "stale_intrusion_rate": stale_intrusion_rate(
-            ranked_ids,
+        "stale_intrusion_rate": group_stale_intrusion_rate(
+            ordered,
             query.forbidden_evidence_ids,
-            k=query.retrieval_limit,
+            k=limit,
         ),
-        "current_state_ranking": current_state_ranking_score(ranked_ids, query),
+        "current_state_ranking": group_current_state_ranking_score(ordered, query),
     }

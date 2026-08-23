@@ -9,9 +9,9 @@ flowchart TB
     Scores -.-> LayerB["Layer B downstream reasoning<br/>future optional LLM pass"]
 ```
 
-## Layer A — memory evaluation (0.1.0)
+## Layer A — memory evaluation (0.2.0)
 
-No LLM required. Measures evidence retrieval, ranking, temporal correctness, updates, forgetting, working-memory selection, learning, and metamemory where supported.
+No LLM required. Measures evidence retrieval, ranking, temporal correctness, updates, forgetting, working-memory selection, learning, and metamemory where supported. Primary top-K metrics count ranked `RetrievedItem` groups.
 
 ## Layer B — downstream reasoning (future)
 

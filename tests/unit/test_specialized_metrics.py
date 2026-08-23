@@ -6,10 +6,11 @@ from cogkurabench.evaluation.result import QueryResult
 from cogkurabench.metrics.forgetting import compute_forgetting_metrics, stale_suppression_rate
 from cogkurabench.metrics.learning import compute_learning_deltas, first_relevant_rank
 from cogkurabench.metrics.metamemory import aggregate_binary_metrics, missing_knowledge_detection
-from cogkurabench.metrics.temporal import temporal_accuracy
-from cogkurabench.metrics.updating import current_state_ranking_score, stale_intrusion_rate
+from cogkurabench.metrics.retrieval import forbidden_intrusion_rate
+from cogkurabench.metrics.temporal import group_temporal_accuracy
+from cogkurabench.metrics.updating import group_current_state_ranking_score
 from cogkurabench.metrics.working_memory import evidence_coverage_at_budget
-from cogkurabench.models import BenchmarkQuery, Capability, EventType, ProjectEvent
+from cogkurabench.models import BenchmarkQuery, Capability, EventType, ProjectEvent, RetrievedItem
 
 
 def _query(**kwargs: object) -> BenchmarkQuery:
@@ -36,13 +37,23 @@ def _event(event_id: str, *, tags: tuple[str, ...] = ()) -> ProjectEvent:
     )
 
 
+def _item(event_ids: tuple[str, ...], rank: int) -> RetrievedItem:
+    return RetrievedItem(
+        source_event_ids=event_ids,
+        text="sample",
+        score=0.5,
+        rank=rank,
+        memory_type="episode",
+    )
+
+
 def test_temporal_accuracy_hit() -> None:
     query = _query(expected_evidence_ids=("evt-a",), capability=Capability.TEMPORAL_RECALL)
-    assert temporal_accuracy(("evt-b", "evt-a"), query) == 1.0
+    assert group_temporal_accuracy((_item(("evt-b",), 1), _item(("evt-a",), 2)), query) == 1.0
 
 
 def test_stale_intrusion_rate() -> None:
-    assert stale_intrusion_rate(("evt-a", "evt-b"), ("evt-b",), k=2) == 0.5
+    assert forbidden_intrusion_rate(("evt-a", "evt-b"), ("evt-b",), k=2) == 0.5
 
 
 def test_current_state_ranking_prefers_new() -> None:
@@ -51,7 +62,7 @@ def test_current_state_ranking_prefers_new() -> None:
         forbidden_evidence_ids=("old",),
         capability=Capability.KNOWLEDGE_UPDATE,
     )
-    assert current_state_ranking_score(("new", "old"), query) == 1.0
+    assert group_current_state_ranking_score((_item(("new",), 1), _item(("old",), 2)), query) == 1.0
 
 
 def test_forgetting_metrics() -> None:
@@ -61,7 +72,7 @@ def test_forgetting_metrics() -> None:
         capability=Capability.FORGETTING,
     )
     metrics = compute_forgetting_metrics(
-        ("keep", "noise"),
+        (_item(("keep",), 1), _item(("noise",), 2)),
         query,
         events_by_id={
             "keep": _event("keep"),
@@ -69,7 +80,7 @@ def test_forgetting_metrics() -> None:
         },
     )
     assert metrics["relevant_long_term_retention"] == 1.0
-    assert stale_suppression_rate(("keep",), ("stale",), k=1) == 1.0
+    assert stale_suppression_rate((_item(("keep",), 1),), ("stale",), k=1) == 1.0
 
 
 def test_working_memory_coverage() -> None:
@@ -81,6 +92,7 @@ def test_learning_delta_recall() -> None:
         query_id="pre",
         capability=Capability.LEARNING,
         retrieved_event_ids=("old",),
+        retrieved_items=(_item(("old",), 1),),
         expected_event_ids=("new", "old"),
         metrics={"recall@5": 0.5},
         latency_ms=1.0,
@@ -90,6 +102,7 @@ def test_learning_delta_recall() -> None:
         query_id="post",
         capability=Capability.LEARNING,
         retrieved_event_ids=("new", "old"),
+        retrieved_items=(_item(("new",), 1), _item(("old",), 2)),
         expected_event_ids=("new", "old"),
         metrics={"recall@5": 1.0},
         latency_ms=1.0,
@@ -97,7 +110,7 @@ def test_learning_delta_recall() -> None:
     )
     deltas = compute_learning_deltas(pre, post, k=5)
     assert deltas["delta_recall@5"] == 0.5
-    assert first_relevant_rank(("new", "old"), ("new",)) == 1.0
+    assert first_relevant_rank((_item(("new",), 1), _item(("old",), 2)), ("new",)) == 1.0
 
 
 def test_metamemory_aggregate() -> None:

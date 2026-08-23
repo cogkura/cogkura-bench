@@ -1,5 +1,13 @@
 # Metrics
 
+## Retrieval scoring unit (0.2.0)
+
+Primary retrieval metrics treat the first K ranked `RetrievedItem` objects as top-K. Each item may cite multiple `source_event_ids`; relevance uses set semantics within the item (any expected ID is a hit).
+
+`QueryResult.retrieved_event_ids` remains a flattened, deduplicated projection for provenance and inspection.
+
+Compare primary capability scores only within the same benchmark version. Retrieval scores from 0.1.x are not directly comparable to 0.2.0 because top-K semantics changed from event positions to retrieved-item rank positions.
+
 ## Retrieval (all queries)
 
 - Recall@K (1, 3, 5, 10)
@@ -30,6 +38,6 @@ Metamemory results from CogKuraBench 0.1.0 omitted CogKura's explicit `missing_k
 - Temporal recall also reports `temporal_historical_accuracy` as a secondary column.
 - Queries may carry optional `tags`; `compare` and summary Markdown include an **All queries** table and a **Core queries** table (queries tagged `core`).
 - Core metamemory F1/conflict F1 in the core table use the same count aggregation as the full run (`finalize_metamemory_metrics`), not a naive average of per-query F1 values.
-- Abstain/leak queries (`should_abstain`) are excluded from retrieval metric averages (Recall@K, MRR, nDCG, precision, forbidden intrusion) but still contribute metamemory counts.
+- Abstain/leak queries (`should_abstain`) are excluded from retrieval metric averages but still contribute metamemory counts.
 
-Each specialized metric module has hand-calculated unit tests in `tests/unit/test_specialized_metrics.py`.
+Each specialized metric module has hand-calculated unit tests in `tests/unit/test_specialized_metrics.py` and grouped scoring tests in `tests/unit/test_metrics_group_retrieval.py`.

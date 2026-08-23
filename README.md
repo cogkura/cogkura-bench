@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.1.1. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.2.0. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -122,7 +122,7 @@ sequenceDiagram
     Eval-->>Runner: BenchmarkResult
 ```
 
-Scoring compares those benchmark event IDs to the query's expected, acceptable, and forbidden lists. Adapter metadata is observational only.
+Scoring compares benchmark event IDs to each query's expected, acceptable, and forbidden lists using ranked `RetrievedItem` groups for primary metrics. Adapter metadata is observational only.
 
 ## Architecture
 
@@ -204,11 +204,11 @@ To plug in another memory system, implement `MemoryBackend` in `src/cogkurabench
 
 `run` prints each capability's primary metric. The Markdown summary also includes a core-query table when tags are present. Temporal recall reports `temporal_historical_accuracy` as a secondary column.
 
-Use `inspect` when a query looks wrong. It shows gold IDs, structured cues, retrieved items, and per-item diagnostics. Scoring still uses flattened benchmark event IDs, not adapter metadata.
+Use `inspect` when a query looks wrong. It shows gold IDs, structured cues, retrieved items, and per-item diagnostics. Primary scoring uses ranked `RetrievedItem` groups.
 
 Abstain queries (`should_abstain`) are excluded from retrieval averages such as Recall@K and MRR, but they still contribute to metamemory counts.
 
-Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a corrected baseline. Metric definitions are in [docs/metrics.md](docs/metrics.md).
+Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a corrected baseline. Primary retrieval scores from 0.1.x are not directly comparable to 0.2.0 because top-K is item-based in 0.2.0. Metric definitions are in [docs/metrics.md](docs/metrics.md).
 
 ## Documentation
 

@@ -44,29 +44,27 @@ def _item(
 
 def test_evaluate_query_metrics_ignore_backend_metadata() -> None:
     query = _query()
-    ranked_ids = ("evt-a", "evt-c")
     base_metadata = {"diagnostic": "baseline"}
     rich_metadata = {"diagnostic": "different", "activation": 99.0, "slot_fit": 0.0}
+    items = (
+        _item(event_id="evt-a", rank=1, metadata=base_metadata),
+        _item(event_id="evt-c", rank=2, metadata={}),
+    )
 
     base = evaluate_query(
         query,
-        ranked_ids,
+        items,
         latency_ms=1.0,
         backend_metadata=base_metadata,
-        retrieved_items=(
-            _item(event_id="evt-a", rank=1, metadata=base_metadata),
-            _item(event_id="evt-c", rank=2, metadata={}),
-        ),
     )
     rich = evaluate_query(
         query,
-        ranked_ids,
-        latency_ms=1.0,
-        backend_metadata=rich_metadata,
-        retrieved_items=(
+        (
             _item(event_id="evt-a", rank=1, metadata=rich_metadata),
             _item(event_id="evt-c", rank=2, metadata={"activation": -1.0}),
         ),
+        latency_ms=1.0,
+        backend_metadata=rich_metadata,
     )
     assert base.metrics == rich.metrics
 
@@ -93,16 +91,20 @@ def test_working_memory_metrics_ignore_item_metadata() -> None:
         estimated_tokens=42,
         latency_ms=2.0,
     )
+    retrieval_items = (
+        _item(event_id="evt-a", rank=1, metadata={}),
+        _item(event_id="evt-b", rank=2, metadata={}),
+    )
     base = evaluate_query(
         query,
-        ("evt-a", "evt-b"),
+        retrieval_items,
         latency_ms=1.0,
         context_response=context,
         context_items=context.items,
     )
     alternate = evaluate_query(
         query,
-        ("evt-a", "evt-b"),
+        retrieval_items,
         latency_ms=1.0,
         context_response=alternate_context,
         context_items=alternate_context.items,
@@ -114,17 +116,15 @@ def test_capability_aggregation_ignores_backend_metadata() -> None:
     query = _query()
     base = evaluate_query(
         query,
-        ("evt-a",),
+        (_item(event_id="evt-a", rank=1, metadata={"note": "a"}),),
         latency_ms=1.0,
         backend_metadata={"note": "a"},
-        retrieved_items=(_item(event_id="evt-a", rank=1, metadata={"note": "a"}),),
     )
     rich = evaluate_query(
         query,
-        ("evt-a",),
+        (_item(event_id="evt-a", rank=1, metadata={"activation": 5.0}),),
         latency_ms=1.0,
         backend_metadata={"note": "b", "activation": 5.0},
-        retrieved_items=(_item(event_id="evt-a", rank=1, metadata={"activation": 5.0}),),
     )
     base_caps = aggregate_capability_results([base])
     rich_caps = aggregate_capability_results([rich])
@@ -145,16 +145,14 @@ def test_metamemory_metrics_ignore_retrieved_item_metadata() -> None:
     )
     base = evaluate_query(
         query,
-        (),
+        (_item(event_id="evt-a", rank=1, metadata={}),),
         latency_ms=1.0,
         assessment_response=assessment,
-        retrieved_items=(_item(event_id="evt-a", rank=1, metadata={}),),
     )
     rich = evaluate_query(
         query,
-        (),
+        (_item(event_id="evt-a", rank=1, metadata={"activation": 9.9}),),
         latency_ms=1.0,
         assessment_response=assessment,
-        retrieved_items=(_item(event_id="evt-a", rank=1, metadata={"activation": 9.9}),),
     )
     assert base.metrics == rich.metrics

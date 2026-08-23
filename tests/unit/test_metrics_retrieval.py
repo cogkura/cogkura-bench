@@ -2,13 +2,13 @@
 
 from datetime import UTC, datetime
 
+from cogkurabench.metrics.ranking import retrieved_event_ids
 from cogkurabench.metrics.retrieval import (
     forbidden_intrusion_rate,
     mean_reciprocal_rank,
     ndcg_at_k,
     precision_at_k,
     recall_at_k,
-    retrieved_event_ids,
 )
 from cogkurabench.models import BenchmarkQuery, Capability
 
