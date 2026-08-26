@@ -43,4 +43,4 @@ uv run cogkura-bench compare full-history token-overlap cogkura --dataset custom
 uv run cogkura-bench inspect customer-waterproof-jacket --backend cogkura --dataset customer_decision_context_v1
 ```
 
-Findings from CogKura 0.15.0: [findings/customer-decision-context-0.3.0.md](findings/customer-decision-context-0.3.0.md).
+Findings from CogKura 0.15.0: [findings/customer-decision-context-0.3.0.md](findings/customer-decision-context-0.3.0.md). Lifecycle diagnostics (0.3.1): [findings/customer-decision-context-0.3.1.md](findings/customer-decision-context-0.3.1.md).

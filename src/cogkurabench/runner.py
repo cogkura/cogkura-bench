@@ -151,6 +151,11 @@ class BenchmarkRunner:
                             context_response=context_response,
                             assessment_response=assessment_response,
                             backend_metadata=dict(response.backend_metadata),
+                            context_backend_metadata=(
+                                dict(context_response.backend_metadata)
+                                if context_response is not None
+                                else {}
+                            ),
                             context_items=(
                                 context_response.items if context_response is not None else ()
                             ),
@@ -197,6 +202,7 @@ class BenchmarkRunner:
                 python_version=sys.version.split()[0],
                 platform=platform.platform(),
                 git_commit=_git_commit(),
+                git_dirty=_git_dirty(),
                 backend_configuration=environment_metadata,
             ),
         )
@@ -225,3 +231,16 @@ def _git_commit() -> str | None:
         return None
     commit = completed.stdout.strip()
     return commit or None
+
+
+def _git_dirty() -> bool:
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return False
+    return bool(completed.stdout.strip())

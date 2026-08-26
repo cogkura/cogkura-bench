@@ -54,6 +54,7 @@ class EnvironmentInfo:
     python_version: str
     platform: str
     git_commit: str | None
+    git_dirty: bool = False
     backend_configuration: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -83,6 +84,7 @@ class QueryResult:
     assessment_flags: tuple[str, ...] = ()
     assessment_signals: Mapping[str, float | None] = field(default_factory=dict)
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
+    context_backend_metadata: Mapping[str, Any] = field(default_factory=dict)
     should_abstain: bool = False
     tags: tuple[str, ...] = ()
     evidence_group_diagnostics: tuple[EvidenceGroupDiagnosticResult, ...] = ()
@@ -97,6 +99,11 @@ class QueryResult:
             MappingProxyType(dict(self.assessment_signals)),
         )
         object.__setattr__(self, "backend_metadata", MappingProxyType(dict(self.backend_metadata)))
+        object.__setattr__(
+            self,
+            "context_backend_metadata",
+            MappingProxyType(dict(self.context_backend_metadata)),
+        )
 
 
 @dataclass(frozen=True, slots=True)

@@ -29,6 +29,12 @@
 - [x] Commerce event types, `session_id`, semantic validity fields
 - [x] CogKura 0.15.x adapter updates
 
+## 0.3.1
+
+- [x] CogKura raw/mapped recall and context diagnostics
+- [x] Lifecycle and memory-inventory diagnostic tooling
+- [x] Customer decision-context lifecycle findings
+
 ## Future
 
 - Vector/RAG baseline

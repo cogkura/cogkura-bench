@@ -84,6 +84,42 @@ def _yes_no(value: bool) -> str:
     return "yes" if value else "no"
 
 
+def format_backend_metadata_section(
+    metadata: Mapping[str, object],
+    *,
+    title: str,
+    indent: int = 0,
+) -> str:
+    """Render backend metadata recursively without backend-specific assumptions."""
+    if not metadata:
+        return ""
+    prefix = " " * indent
+    lines = [f"{prefix}{title}:"]
+    lines.extend(_format_metadata_lines(metadata, indent=indent + 2))
+    return "\n".join(lines)
+
+
+def _format_metadata_lines(value: object, *, indent: int) -> list[str]:
+    prefix = " " * indent
+    if isinstance(value, Mapping):
+        lines: list[str] = []
+        for key in sorted(value):
+            child = value[key]
+            if isinstance(child, Mapping):
+                lines.append(f"{prefix}{key}:")
+                lines.extend(_format_metadata_lines(child, indent=indent + 2))
+            elif isinstance(child, (list, tuple)):
+                lines.append(f"{prefix}{key}: {_format_sequence(child)}")
+            else:
+                lines.append(f"{prefix}{key}: {child}")
+        return lines
+    return [f"{prefix}{value}"]
+
+
+def _format_sequence(values: Sequence[object]) -> str:
+    return ", ".join(str(item) for item in values)
+
+
 def format_evidence_groups_section(query_result: QueryResult) -> str:
     """Render evidence-group diagnostic table."""
     if not query_result.evidence_group_diagnostics:
@@ -210,6 +246,18 @@ def format_query_inspection(
                 f"Conflict: {query_result.indicates_conflict}",
             ]
         )
+    metadata_section = format_backend_metadata_section(
+        query_result.backend_metadata,
+        title="Retrieval backend metadata",
+    )
+    if metadata_section:
+        sections.extend(["", metadata_section])
+    context_metadata_section = format_backend_metadata_section(
+        query_result.context_backend_metadata,
+        title="Context backend metadata",
+    )
+    if context_metadata_section:
+        sections.extend(["", context_metadata_section])
     sections.extend(["", "Metrics:"])
     for key in sorted(query_result.metrics):
         sections.append(f"  {key}: {query_result.metrics[key]:.4f}")

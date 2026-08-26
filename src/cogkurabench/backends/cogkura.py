@@ -3,10 +3,19 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from cogkurabench.backends.cogkura_diagnostics import (
+    COGKURA_METADATA_SCHEMA_VERSION,
+    RecallMappingResult,
+    dataclass_to_metadata,
+    json_safe_metadata_value,
+    map_ranked_recall_results,
+    recall_mapping_metadata,
+    recall_result_to_metadata,
+)
 from cogkurabench.models import (
     AssessmentRequest,
     AssessmentResponse,
@@ -18,7 +27,6 @@ from cogkurabench.models import (
     ProjectEvent,
     RetrievalRequest,
     RetrievalResponse,
-    RetrievedItem,
     SemanticFact,
 )
 
@@ -39,66 +47,9 @@ MISSING_KNOWLEDGE_FLAGS: frozenset[str] = frozenset(
     }
 )
 
-_OPTIONAL_RECALL_METADATA_FIELDS: tuple[str, ...] = (
-    "rank_activation",
-    "text_coverage",
-    "text_cue_fit",
-    "temporal_mode",
-    "slot_fit",
-    "structured_adjustment",
-    "eligibility",
-    "admission_reason",
-    "support_slot",
-    "support_semantic",
-    "semantic_slot",
-    "semantic_status",
-)
-
 
 def _indicates_missing_knowledge_from_flags(flags: Sequence[str]) -> bool:
     return any(flag in flags for flag in MISSING_KNOWLEDGE_FLAGS)
-
-
-def _json_safe_metadata_value(value: object) -> object:
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    if hasattr(value, "value"):
-        return value.value
-    return str(value)
-
-
-def _recall_result_to_metadata(result: RecallResult) -> dict[str, object]:
-    metadata: dict[str, object] = {
-        "activation": result.activation,
-        "score": result.score,
-        "latency_seconds": result.latency_seconds,
-        "reason": result.reason,
-    }
-    components = result.components
-    metadata["activation_base_level"] = components.base_level
-    metadata["activation_spreading"] = components.spreading
-    metadata["activation_partial_match"] = components.partial_match
-    metadata["activation_noise"] = components.noise
-    metadata["activation_total"] = components.total
-    metadata["activation_current_state"] = components.current_state
-
-    for field_name in _OPTIONAL_RECALL_METADATA_FIELDS:
-        if hasattr(result, field_name):
-            metadata[field_name] = _json_safe_metadata_value(getattr(result, field_name))
-
-    memory = result.memory
-    if hasattr(memory, "status"):
-        metadata["semantic_status"] = _json_safe_metadata_value(memory.status)
-    if hasattr(memory, "predicate"):
-        metadata["semantic_predicate"] = memory.predicate
-    if hasattr(memory, "subject_entity_id"):
-        metadata["semantic_subject_entity_id"] = memory.subject_entity_id
-    if hasattr(memory, "object_value"):
-        metadata["semantic_object_value"] = memory.object_value
-    if hasattr(memory, "slot_key"):
-        metadata["semantic_slot_key"] = memory.slot_key
-
-    return metadata
 
 
 def _require_cogkura() -> Any:
@@ -176,6 +127,23 @@ class CogKuraBackend:
         self._observation_store: Any = None
         self._observation_id_to_event_id: dict[str, str] = {}
         self._version: str | None = None
+        self._events_ingested = 0
+        self._ingest_calls = 0
+        self._prepare_calls = 0
+        self._maintenance_calls = 0
+        self._last_prepare_at: datetime | None = None
+        self._last_maintenance_at: datetime | None = None
+        self._last_episode_encoding: dict[str, object] = {}
+        self._last_semantic_consolidation: dict[str, object] = {}
+        self._last_forgetting: dict[str, object] = {}
+        self._cumulative_forgetting: dict[str, int] = {
+            "evaluated": 0,
+            "active": 0,
+            "fading": 0,
+            "forgotten": 0,
+            "reactivated": 0,
+            "references_compacted": 0,
+        }
 
     @property
     def name(self) -> str:
@@ -214,6 +182,23 @@ class CogKuraBackend:
             ),
         )
         self._observation_id_to_event_id.clear()
+        self._events_ingested = 0
+        self._ingest_calls = 0
+        self._prepare_calls = 0
+        self._maintenance_calls = 0
+        self._last_prepare_at = None
+        self._last_maintenance_at = None
+        self._last_episode_encoding = {}
+        self._last_semantic_consolidation = {}
+        self._last_forgetting = {}
+        self._cumulative_forgetting = {
+            "evaluated": 0,
+            "active": 0,
+            "fading": 0,
+            "forgotten": 0,
+            "reactivated": 0,
+            "references_compacted": 0,
+        }
 
     async def ingest(self, events: Sequence[ProjectEvent]) -> None:
         _require_cogkura()
@@ -242,12 +227,18 @@ class CogKuraBackend:
                     metadata=metadata,
                 )
             )
+        self._events_ingested += len(events)
+        self._ingest_calls += 1
         await self._refresh_observation_map()
 
     async def prepare(self, *, as_of: datetime) -> None:
         memory = self._require_memory()
-        await memory.encode_episodes(tenant_id=TENANT_ID, as_of=as_of)
-        await memory.consolidate_semantics(tenant_id=TENANT_ID, as_of=as_of)
+        episode_result = await memory.encode_episodes(tenant_id=TENANT_ID, as_of=as_of)
+        semantic_result = await memory.consolidate_semantics(tenant_id=TENANT_ID, as_of=as_of)
+        self._prepare_calls += 1
+        self._last_prepare_at = as_of
+        self._last_episode_encoding = dataclass_to_metadata(episode_result)
+        self._last_semantic_consolidation = dataclass_to_metadata(semantic_result)
         await self._refresh_observation_map()
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:
@@ -266,9 +257,17 @@ class CogKuraBackend:
             as_of=request.as_of,
             valid_at=request.valid_at,
         )
-        items = self._results_to_items(results)
+        mapping = self._map_recall_results(results)
         latency_ms = (time.perf_counter() - start) * 1000.0
-        return RetrievalResponse(items=tuple(items), latency_ms=latency_ms)
+        backend_metadata = self._build_response_metadata(
+            recall_mapping=mapping,
+            snapshot_at=request.as_of,
+        )
+        return RetrievalResponse(
+            items=mapping.items,
+            latency_ms=latency_ms,
+            backend_metadata=backend_metadata,
+        )
 
     async def select_context(self, request: ContextRequest) -> ContextResponse | None:
         if request.prompt_budget_tokens is None:
@@ -289,12 +288,29 @@ class CogKuraBackend:
             as_of=request.as_of,
             valid_at=request.valid_at,
         )
-        items = self._results_to_items(snapshot.recall_results)
+        ranked_items = [(item.rank, item.recall) for item in snapshot.items]
+        mapping = map_ranked_recall_results(
+            ranked_items,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+            statement_for_result=self._statement_for_result,
+        )
         latency_ms = (time.perf_counter() - start) * 1000.0
+        backend_metadata = self._build_response_metadata(
+            context_mapping=mapping,
+            selector_funnel={
+                "selector_candidate_count": snapshot.candidate_count,
+                "selector_selected_count": snapshot.selected_count,
+                "goal_filtered_count": snapshot.goal_filtered_count,
+                "inhibited_count": snapshot.inhibited_count,
+                "budget_skipped_count": snapshot.budget_skipped_count,
+            },
+            snapshot_at=request.as_of,
+        )
         return ContextResponse(
-            items=tuple(items),
+            items=mapping.items,
             estimated_tokens=snapshot.estimated_prompt_tokens,
             latency_ms=latency_ms,
+            backend_metadata=backend_metadata,
         )
 
     async def assess(self, request: AssessmentRequest) -> AssessmentResponse | None:
@@ -368,7 +384,84 @@ class CogKuraBackend:
 
     async def maintain(self, *, as_of: datetime) -> None:
         memory = self._require_memory()
-        await memory.apply_forgetting(tenant_id=TENANT_ID, as_of=as_of)
+        forgetting_result = await memory.apply_forgetting(tenant_id=TENANT_ID, as_of=as_of)
+        self._maintenance_calls += 1
+        self._last_maintenance_at = as_of
+        self._last_forgetting = dataclass_to_metadata(forgetting_result)
+        for key in self._cumulative_forgetting:
+            self._cumulative_forgetting[key] += int(getattr(forgetting_result, key, 0))
+
+    async def diagnostic_snapshot(self) -> dict[str, object]:
+        """Return a CogKura-only lifecycle and inventory snapshot."""
+        memory = self._require_memory()
+        _require_cogkura()
+        from cogkura.models import SemanticMemoryStatus  # noqa: PLC0415
+
+        episodes_all = await memory.list_episodes(tenant_id=TENANT_ID, include_inactive=True)
+        semantics_all = await memory.list_semantic_memories(
+            tenant_id=TENANT_ID,
+            include_inactive=True,
+        )
+        semantics_superseded = await memory.list_semantic_memories(
+            tenant_id=TENANT_ID,
+            include_inactive=True,
+            status=SemanticMemoryStatus.SUPERSEDED,
+        )
+
+        semantic_keys: set[str] = set()
+        semantic_status_counts = {
+            "semantic_status_active_count": 0,
+            "semantic_status_contested_count": 0,
+            "semantic_status_superseded_count": 0,
+        }
+        semantic_is_active_count = 0
+        for semantic in semantics_all:
+            semantic_keys.add(semantic.memory_key)
+            if semantic.is_active:
+                semantic_is_active_count += 1
+            status_value = json_safe_metadata_value(semantic.status)
+            if status_value == "active":
+                semantic_status_counts["semantic_status_active_count"] += 1
+            elif status_value == "contested":
+                semantic_status_counts["semantic_status_contested_count"] += 1
+            elif status_value == "superseded":
+                semantic_status_counts["semantic_status_superseded_count"] += 1
+
+        episode_is_active_count = sum(1 for episode in episodes_all if episode.is_active)
+
+        return {
+            "schema_version": COGKURA_METADATA_SCHEMA_VERSION,
+            "lifecycle_counters": {
+                "events_ingested": self._events_ingested,
+                "ingest_calls": self._ingest_calls,
+                "prepare_calls": self._prepare_calls,
+                "maintenance_calls": self._maintenance_calls,
+                "last_prepare_at": (
+                    self._last_prepare_at.isoformat() if self._last_prepare_at is not None else None
+                ),
+                "last_maintenance_at": (
+                    self._last_maintenance_at.isoformat()
+                    if self._last_maintenance_at is not None
+                    else None
+                ),
+            },
+            "last_prepare": {
+                "episode_encoding": self._last_episode_encoding,
+                "semantic_consolidation": self._last_semantic_consolidation,
+            },
+            "last_maintenance": {
+                "last_forgetting": self._last_forgetting,
+                "cumulative_forgetting": dict(self._cumulative_forgetting),
+            },
+            "memory_inventory": {
+                "episode_listed_count": len(episodes_all),
+                "episode_is_active_count": episode_is_active_count,
+                "semantic_listed_count": len(semantic_keys),
+                "semantic_is_active_count": semantic_is_active_count,
+                "semantic_superseded_listed_count": len(semantics_superseded),
+                **semantic_status_counts,
+            },
+        }
 
     def _require_memory(self) -> Memory:
         if self._memory is None:
@@ -383,44 +476,72 @@ class CogKuraBackend:
             observation.id: observation.source_record_id for observation in observations
         }
 
-    def _results_to_items(self, results: Sequence[RecallResult]) -> list[RetrievedItem]:
-        items: list[RetrievedItem] = []
-        for rank, result in enumerate(results, start=1):
-            event_ids = self._event_ids_for_result(result)
-            if not event_ids:
-                continue
-            text = self._statement_for_result(result)
-            items.append(
-                RetrievedItem(
-                    source_event_ids=event_ids,
-                    text=text,
-                    score=result.score,
-                    rank=rank,
-                    memory_type=result.memory_kind.value,
-                    metadata=_recall_result_to_metadata(result),
-                )
-            )
-        return items
-
-    def _event_ids_for_result(self, result: RecallResult) -> tuple[str, ...]:
-        memory = result.memory
-        observation_ids: set[str] = set()
-        if hasattr(memory, "evidence"):
-            for evidence in memory.evidence:
-                observation_ids.add(evidence.observation_id)
-        if hasattr(memory, "observation_evidence"):
-            for evidence in memory.observation_evidence:
-                observation_ids.add(evidence.observation_id)
-        event_ids = tuple(
-            sorted(
-                {
-                    self._observation_id_to_event_id[observation_id]
-                    for observation_id in observation_ids
-                    if observation_id in self._observation_id_to_event_id
-                }
-            )
+    def _map_recall_results(
+        self,
+        results: Sequence[RecallResult],
+        ranked_pairs: Sequence[tuple[int, RecallResult]] | None = None,
+    ) -> RecallMappingResult:
+        if ranked_pairs is None:
+            ranked_pairs = [(index, result) for index, result in enumerate(results, start=1)]
+        return map_ranked_recall_results(
+            ranked_pairs,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+            statement_for_result=self._statement_for_result,
         )
-        return event_ids
+
+    def _build_response_metadata(
+        self,
+        *,
+        recall_mapping: RecallMappingResult | None = None,
+        context_mapping: RecallMappingResult | None = None,
+        selector_funnel: Mapping[str, object] | None = None,
+        snapshot_at: datetime | None = None,
+    ) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "cogkura": {
+                "schema_version": COGKURA_METADATA_SCHEMA_VERSION,
+                "lifecycle_counters": {
+                    "events_ingested": self._events_ingested,
+                    "ingest_calls": self._ingest_calls,
+                    "prepare_calls": self._prepare_calls,
+                    "maintenance_calls": self._maintenance_calls,
+                    "last_prepare_at": (
+                        self._last_prepare_at.isoformat()
+                        if self._last_prepare_at is not None
+                        else None
+                    ),
+                    "last_maintenance_at": (
+                        self._last_maintenance_at.isoformat()
+                        if self._last_maintenance_at is not None
+                        else None
+                    ),
+                },
+                "last_prepare": {
+                    "episode_encoding": self._last_episode_encoding,
+                    "semantic_consolidation": self._last_semantic_consolidation,
+                },
+                "last_maintenance": {
+                    "last_forgetting": self._last_forgetting,
+                    "cumulative_forgetting": dict(self._cumulative_forgetting),
+                },
+            }
+        }
+        cogkura_payload = payload["cogkura"]
+        assert isinstance(cogkura_payload, dict)
+        if snapshot_at is not None:
+            cogkura_payload["snapshot_at"] = snapshot_at.isoformat()
+        if recall_mapping is not None:
+            cogkura_payload["recall_mapping"] = recall_mapping_metadata(recall_mapping)
+        if context_mapping is not None:
+            cogkura_payload["context_mapping"] = {
+                "raw_selected_count": context_mapping.raw_count,
+                "mapped_selected_count": context_mapping.mapped_count,
+                "unmapped_selected_count": context_mapping.unmapped_count,
+                **recall_mapping_metadata(context_mapping),
+            }
+        if selector_funnel is not None:
+            cogkura_payload["selector_funnel"] = dict(selector_funnel)
+        return payload
 
     def _statement_for_result(self, result: RecallResult) -> str:
         memory = result.memory
@@ -467,3 +588,7 @@ class CogKuraBackend:
             if event_id in target_ids:
                 return True
         return False
+
+
+# Backward-compatible test import.
+_recall_result_to_metadata = recall_result_to_metadata

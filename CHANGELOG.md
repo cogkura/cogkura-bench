@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-26
+
+### Added
+
+- CogKura raw-versus-provenance-mapped recall and bounded-context diagnostics in `backend_metadata` / `context_backend_metadata`.
+- CogKura lifecycle counters, prepare/maintenance summaries, and public memory inventory via `diagnostic_snapshot()`.
+- Customer decision-context lifecycle diagnostic matrix (`scripts/diagnose_customer_decision_lifecycle.py`, `cogkurabench.diagnostics.lifecycle`).
+- `EnvironmentInfo.git_dirty` for reproducibility metadata.
+- `QueryResult.context_backend_metadata` JSON persistence and backend-neutral inspect metadata rendering.
+
+### Fixed
+
+- CogKura 0.15 optional retrieval diagnostics now read from `RecallResult.diagnostics`.
+- Bounded context mapping preserves `WorkingMemoryItem` selected ranks and selector funnel counters.
+- Customer decision-context 0.3.0 findings commit metadata and lifecycle description.
+
+### Unchanged
+
+- Benchmark scoring, dataset evidence groups, default replay/maintenance semantics, and CogKura algorithms.
+
 ## [0.3.0] - 2026-08-26
 
 ### Added

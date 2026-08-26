@@ -1,6 +1,8 @@
 # Customer Decision Context — CogKuraBench 0.3.0 findings
 
-Recorded from an actual benchmark run on commit `935fb8d` with CogKuraBench **0.3.0** and **cogkura 0.15.0**.
+Recorded from benchmark runs with CogKuraBench **0.3.0** and **cogkura 0.15.0**.
+
+> **Provenance correction (0.3.1):** the original note cited commit `935fb8d`, which is the 0.2.0 release and does not contain this dataset. The released 0.3.0 implementation is commit `e9f95ddd68f9aaeea67f272eee7b9c5d44e930cd`. The measured 0/5 result below was reproduced on that commit.
 
 ## Scenario
 
@@ -36,9 +38,11 @@ Forbidden groups `stale_jacket_size` and `old_skiing_interest` were absent from 
 
 ### Interpretation
 
-With incremental ingest and a single end-of-timeline query, CogKura returned no provenance-mapped recall items for this scenario. All five expected concept groups classify as **retrieval miss** — the harness cannot distinguish retrieval failure from selection drop because bounded context is empty.
+The dataset contains one user query, but every source event is compiled into an ingest action. The runner prepares and runs maintenance at each distinct action timestamp (147 ingest calls, 148 prepare calls, 148 maintenance calls for this dataset) before the final query. CogKura returned no provenance-mapped recall items under that standard replay.
 
-Bulk ingest of the same event set followed by one `prepare` and `recall` call does return items in isolation. Helios-style interleaved queries also restore recall. This release documents the behaviour; it does not change CogKura algorithms or add query-specific adapter ranking.
+All five expected concept groups classify as **retrieval miss**. The harness cannot distinguish retrieval failure from selection drop because bounded context is empty. With 0.3.1 diagnostics, `raw_recall_count` is also 0 under standard replay, so the failure occurs before benchmark provenance mapping.
+
+Bulk ingest with query-only prepare returns items in isolation. See [customer-decision-context-0.3.1.md](customer-decision-context-0.3.1.md) for the controlled lifecycle matrix.
 
 ## Baseline comparison (same dataset)
 

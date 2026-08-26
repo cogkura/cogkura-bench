@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.0. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.1. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -221,7 +221,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/scenarios.md`](docs/scenarios.md)
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
-- [`docs/findings/customer-decision-context-0.3.0.md`](docs/findings/customer-decision-context-0.3.0.md)
+- [`docs/findings/customer-decision-context-0.3.1.md`](docs/findings/customer-decision-context-0.3.1.md)
 
 ## License
 

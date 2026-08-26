@@ -40,3 +40,17 @@ async def test_cogkura_customer_decision_context_reports_group_stages() -> None:
             EvidenceGroupStage.CONTEXT_ONLY.value,
         }
     assert len(query_result.forbidden_group_diagnostics) == 2
+    cogkura_meta = query_result.backend_metadata.get("cogkura", {})
+    recall_mapping = cogkura_meta.get("recall_mapping", {})
+    assert "raw_recall_count" in recall_mapping
+    assert "mapped_recall_count" in recall_mapping
+    assert "unmapped_recall_count" in recall_mapping
+    assert recall_mapping["raw_recall_count"] == (
+        recall_mapping["mapped_recall_count"] + recall_mapping["unmapped_recall_count"]
+    )
+    context_meta = query_result.context_backend_metadata.get("cogkura", {})
+    context_mapping = context_meta.get("context_mapping", {})
+    assert "raw_selected_count" in context_mapping
+    assert context_mapping["raw_selected_count"] == (
+        context_mapping["mapped_selected_count"] + context_mapping["unmapped_selected_count"]
+    )

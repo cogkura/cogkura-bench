@@ -7,6 +7,7 @@ from cogkurabench.evaluation.result import (
     QueryResult,
 )
 from cogkurabench.inspect_format import (
+    format_backend_metadata_section,
     format_evidence_groups_section,
     format_query_inspection,
     format_retrieved_item,
@@ -84,6 +85,19 @@ def test_format_query_inspection_includes_cue_and_gold_fields() -> None:
     assert "helios-012" in rendered
     assert "helios-002" in rendered
     assert "Retrieved items:" in rendered
+
+
+def test_format_backend_metadata_section() -> None:
+    rendered = format_backend_metadata_section(
+        {
+            "cogkura": {
+                "recall_mapping": {"raw_recall_count": 3, "mapped_recall_count": 2},
+            }
+        },
+        title="Retrieval backend metadata",
+    )
+    assert "raw_recall_count: 3" in rendered
+    assert "mapped_recall_count: 2" in rendered
 
 
 def test_format_evidence_groups_section() -> None:

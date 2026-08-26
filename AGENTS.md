@@ -94,6 +94,15 @@ uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle
 - Repeated topical evidence is intentional in customer-memory scenarios.
 - Do not add query-specific adapter ranking or fix CogKura algorithms in this repository.
 - CogKura is not required to pass customer decision context; CI validates harness correctness with Oracle only.
+- Do not add warm-up queries to hide lifecycle behaviour.
+
+## Lifecycle diagnostics (0.3.1)
+
+- A zero benchmark recall result must distinguish raw backend recall from provenance-mapped benchmark recall.
+- Lifecycle variants are diagnostics until benchmark semantics are explicitly redesigned.
+- Do not disable forgetting just to improve scores.
+- Use public CogKura APIs only for memory inventory.
+- 0.3.1 instrumentation must not silently change 0.3.0 scores.
 
 ## Agent completion contract
 

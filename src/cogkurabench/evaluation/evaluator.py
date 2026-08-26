@@ -108,6 +108,7 @@ def evaluate_query(
     context_response: ContextResponse | None = None,
     assessment_response: AssessmentResponse | None = None,
     backend_metadata: dict[str, object] | None = None,
+    context_backend_metadata: dict[str, object] | None = None,
     context_items: Sequence[RetrievedItem] = (),
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
@@ -213,6 +214,7 @@ def evaluate_query(
         assessment_flags=assessment_flags,
         assessment_signals=assessment_signals,
         backend_metadata=backend_metadata or {},
+        context_backend_metadata=context_backend_metadata or {},
         should_abstain=query.should_abstain,
         tags=query.tags,
         evidence_group_diagnostics=tuple(
@@ -285,6 +287,7 @@ def apply_learning_deltas(
                 assessment_flags=result.assessment_flags,
                 assessment_signals=dict(result.assessment_signals),
                 backend_metadata=dict(result.backend_metadata),
+                context_backend_metadata=dict(result.context_backend_metadata),
                 should_abstain=result.should_abstain,
                 tags=result.tags,
                 evidence_group_diagnostics=result.evidence_group_diagnostics,
