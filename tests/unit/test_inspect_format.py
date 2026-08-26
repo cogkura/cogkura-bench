@@ -2,8 +2,15 @@
 
 from datetime import UTC, datetime
 
-from cogkurabench.evaluation.result import QueryResult
-from cogkurabench.inspect_format import format_query_inspection, format_retrieved_item
+from cogkurabench.evaluation.result import (
+    EvidenceGroupDiagnosticResult,
+    QueryResult,
+)
+from cogkurabench.inspect_format import (
+    format_evidence_groups_section,
+    format_query_inspection,
+    format_retrieved_item,
+)
 from cogkurabench.models import (
     BenchmarkQuery,
     Capability,
@@ -77,3 +84,40 @@ def test_format_query_inspection_includes_cue_and_gold_fields() -> None:
     assert "helios-012" in rendered
     assert "helios-002" in rendered
     assert "Retrieved items:" in rendered
+
+
+def test_format_evidence_groups_section() -> None:
+    query_result = QueryResult(
+        query_id="customer-waterproof-jacket",
+        capability=Capability.WORKING_MEMORY,
+        retrieved_event_ids=(),
+        expected_event_ids=(),
+        metrics={},
+        latency_ms=1.0,
+        context_tokens=100,
+        evidence_group_diagnostics=(
+            EvidenceGroupDiagnosticResult(
+                group_id="hiking_interest",
+                label="Established hiking interest",
+                retrieval_present=True,
+                context_present=True,
+                first_retrieval_rank=1,
+                first_context_rank=1,
+                stage="selected",
+            ),
+            EvidenceGroupDiagnosticResult(
+                group_id="lightweight_preference",
+                label="Prefers lightweight outerwear",
+                retrieval_present=True,
+                context_present=False,
+                first_retrieval_rank=14,
+                first_context_rank=None,
+                stage="selection_drop",
+            ),
+        ),
+    )
+    rendered = format_evidence_groups_section(query_result)
+    assert "Evidence groups" in rendered
+    assert "Established hiking interest" in rendered
+    assert "selection_drop" in rendered
+    assert "yes" in rendered

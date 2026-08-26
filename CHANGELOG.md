@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-26
+
+### Added
+
+- **Customer Decision Context** dataset (`customer_decision_context_v1`: 149 events, 1 query) for bounded working-memory diagnostics in a customer-memory / outdoor-retail domain.
+- **Evidence groups:** `EvidenceGroup`, `expected_evidence_groups` / `forbidden_evidence_groups` on `BenchmarkQuery`, and `evidence_group_*` metrics with per-group stage classification (`selected`, `selection_drop`, `retrieval_miss`, `context_only`).
+- Commerce-oriented `EventType` values, optional `session_id` on `ProjectEvent`, and optional `valid_from` / `valid_until` on `SemanticFact`.
+- Evidence-group tables in `inspect`, JSON persistence, `compare` summary, and markdown run summaries.
+- Oracle group-aware retrieval: first declared event ID per expected group, then remaining flat expected IDs.
+- CogKura adapter: `session_id` metadata, semantic validity fields, docstring for 0.15.x.
+
+### Changed
+
+- CogKura extra requires `cogkura>=0.15.0,<0.16.0`.
+- When a backend does not return bounded context, evidence-group stages do not emit fake `selection_drop` for broad-recall hits.
+
+### Unchanged
+
+- `ProjectEvent` name and `schema_version` 1 dataset compatibility.
+- Existing mini, Atlas, and Helios dataset semantics and golden expectations.
+- Grouped retrieval scoring from 0.2.0.
+
 ## [0.2.0] - 2026-08-23
 
 ### Changed

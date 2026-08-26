@@ -80,6 +80,86 @@ def format_retrieved_items_section(
     return "\n".join(lines)
 
 
+def _yes_no(value: bool) -> str:
+    return "yes" if value else "no"
+
+
+def format_evidence_groups_section(query_result: QueryResult) -> str:
+    """Render evidence-group diagnostic table."""
+    if not query_result.evidence_group_diagnostics:
+        return ""
+    lines = ["Evidence groups", ""]
+    lines.append(f"{'Group':<28} {'Recall':<8} {'Context':<8} Stage")
+    for diag in query_result.evidence_group_diagnostics:
+        lines.append(
+            f"{diag.label:<28} {_yes_no(diag.retrieval_present):<8} "
+            f"{_yes_no(diag.context_present):<8} {diag.stage or '—'}"
+        )
+    return "\n".join(lines)
+
+
+def format_missing_group_retrieval_detail(
+    query: BenchmarkQuery,
+    query_result: QueryResult,
+) -> str:
+    """Render retrieval detail for groups absent from bounded context."""
+    if not query_result.evidence_group_diagnostics:
+        return ""
+    lines: list[str] = []
+    group_by_id = {group.id: group for group in query.expected_evidence_groups}
+    has_context = query_result.context_tokens is not None
+    for diag in query_result.evidence_group_diagnostics:
+        if diag.context_present:
+            continue
+        lines.extend(["", f"{diag.label}", ""])
+        lines.append(f"Broad recall: {_yes_no(diag.retrieval_present)}")
+        if diag.first_retrieval_rank is not None:
+            lines.append(f"First rank: {diag.first_retrieval_rank}")
+        group = group_by_id.get(diag.group_id)
+        if group is not None:
+            matching = [
+                item
+                for item in query_result.retrieved_items
+                if any(event_id in group.event_ids for event_id in item.source_event_ids)
+            ]
+            if matching:
+                lines.append("Matching retrieval items:")
+                for item in matching[:5]:
+                    lines.append(f"  - rank {item.rank}: {', '.join(item.source_event_ids)}")
+            else:
+                lines.append("Evidence: (none in broad recall)")
+        lines.append(f"Context: {'yes' if has_context else 'n/a'}")
+        if diag.stage:
+            lines.append(f"Stage: {diag.stage}")
+    return "\n".join(lines)
+
+
+def format_context_items_with_groups(query_result: QueryResult) -> str:
+    """Render bounded context items with group labels."""
+    if not query_result.context_items:
+        return ""
+    classification_by_rank = {item.rank: item for item in query_result.context_item_classifications}
+    lines = ["Context items (with group labels):", ""]
+    for item in query_result.context_items:
+        lines.append(f"#{item.rank}")
+        lines.append(f"  statement: {item.text}")
+        lines.append(f"  events: {', '.join(item.source_event_ids)}")
+        classification = classification_by_rank.get(item.rank)
+        if classification is not None:
+            if classification.matched_expected_groups:
+                lines.append(f"  groups: {', '.join(classification.matched_expected_groups)}")
+            if classification.matched_forbidden_groups:
+                lines.append(
+                    f"  forbidden groups: {', '.join(classification.matched_forbidden_groups)}"
+                )
+            if classification.classification == "unclassified":
+                lines.append("  classification: unclassified")
+            if classification.redundant_labelled_coverage:
+                lines.append("  repeated labelled coverage: yes")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def format_query_inspection(
     query: BenchmarkQuery,
     query_result: QueryResult,
@@ -105,14 +185,22 @@ def format_query_inspection(
         "",
         format_retrieved_items_section("Retrieved items:", query_result.retrieved_items),
     ]
+    group_section = format_evidence_groups_section(query_result)
+    if group_section:
+        sections.extend(["", group_section])
+        sections.append(format_missing_group_retrieval_detail(query, query_result))
     if query_result.context_items or query_result.context_event_ids:
-        sections.extend(
-            [
-                "",
-                format_retrieved_items_section("Context items:", query_result.context_items),
-                f"Context tokens: {query_result.context_tokens}",
-            ]
-        )
+        context_with_groups = format_context_items_with_groups(query_result)
+        if context_with_groups:
+            sections.extend(["", context_with_groups])
+        else:
+            sections.extend(
+                [
+                    "",
+                    format_retrieved_items_section("Context items:", query_result.context_items),
+                ]
+            )
+        sections.append(f"Context tokens: {query_result.context_tokens}")
     if query_result.assessment_flags:
         sections.extend(
             [

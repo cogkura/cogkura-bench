@@ -22,6 +22,13 @@
 - [x] Grouped retrieval scoring: top-K over `RetrievedItem` rank positions
 - [x] Grouped temporal, update, forgetting, and learning rank metrics
 
+## 0.3.0
+
+- [x] Customer Decision Context dataset (`customer_decision_context_v1`)
+- [x] Evidence-group diagnostics and retrieve-vs-select stage classification
+- [x] Commerce event types, `session_id`, semantic validity fields
+- [x] CogKura 0.15.x adapter updates
+
 ## Future
 
 - Vector/RAG baseline

@@ -41,3 +41,30 @@ Metamemory results from CogKuraBench 0.1.0 omitted CogKura's explicit `missing_k
 - Abstain/leak queries (`should_abstain`) are excluded from retrieval metric averages but still contribute metamemory counts.
 
 Each specialized metric module has hand-calculated unit tests in `tests/unit/test_specialized_metrics.py` and grouped scoring tests in `tests/unit/test_metrics_group_retrieval.py`.
+
+## Evidence groups (0.3.0)
+
+Queries may declare **evidence groups**: concept clusters scored by provenance intersection (`item.source_event_ids ∩ group.event_ids ≠ ∅`). Flat `expected_evidence_ids` and `forbidden_evidence_ids` remain the ground truth for Recall@K and working-memory coverage.
+
+| Metric | Meaning |
+| --- | --- |
+| `evidence_group_coverage_at_retrieval` | Expected groups present in broad recall (`retrieve()`) |
+| `evidence_group_coverage_at_budget` | Expected groups present in bounded context (`select_context()`) |
+| `forbidden_group_intrusion_at_budget` | Forbidden groups present in bounded context |
+| `redundant_expected_group_items` | Context items that add no new expected-group coverage |
+| `unclassified_context_items` | Context items matching neither expected nor forbidden groups |
+
+**Stages** (when bounded context is evaluated):
+
+| Stage | Meaning |
+| --- | --- |
+| `selected` | Group in broad recall and bounded context |
+| `selection_drop` | Group in broad recall but dropped from bounded context |
+| `retrieval_miss` | Group absent from both stages |
+| `context_only` | Group only in bounded context |
+
+When a backend does not support `select_context`, stages are not emitted for broad-recall hits (no fake `selection_drop`). Inspect and JSON still report retrieval-side coverage and ranks.
+
+Evidence groups are scoring-only. Source events are ground truth. **Broad recall** is the `retrieve()` response — do not call it the internal candidate pool. Unclassified items are not automatic precision penalties. Repeated topical evidence is intentional in customer-memory scenarios.
+
+Hand-calculated tests live in `tests/unit/test_metrics_evidence_groups.py`.

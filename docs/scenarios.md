@@ -29,3 +29,18 @@ uv run cogkura-bench inspect helios-update-001 --backend cogkura --dataset helio
 uv run cogkura-bench inspect helios-temporal-curr-001 --backend cogkura --dataset helios_v1
 uv run cogkura-bench inspect helios-temporal-hist-001 --backend cogkura --dataset helios_v1
 ```
+
+## Customer Decision Context (`customer_decision_context_v1`)
+
+Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.
+
+Validate and run:
+
+```bash
+uv run cogkura-bench validate-dataset customer_decision_context_v1
+uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle --quiet
+uv run cogkura-bench compare full-history token-overlap cogkura --dataset customer_decision_context_v1
+uv run cogkura-bench inspect customer-waterproof-jacket --backend cogkura --dataset customer_decision_context_v1
+```
+
+Findings from CogKura 0.15.0: [findings/customer-decision-context-0.3.0.md](findings/customer-decision-context-0.3.0.md).

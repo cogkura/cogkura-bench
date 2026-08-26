@@ -80,7 +80,20 @@ uv run cogkura-bench run --dataset software_project_v1 --backend oracle --quiet
 uv run cogkura-bench validate-dataset helios_v1
 uv run cogkura-bench run --dataset helios_v1 --backend oracle --quiet
 uv run cogkura-bench run --dataset mini --backend cogkura --quiet
+uv run cogkura-bench validate-dataset customer_decision_context_v1
+uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle --quiet
 ```
+
+## Customer decision context guidance
+
+- Datasets are independently authored; do not import demo-application fixtures or depend on sibling apps.
+- Evidence groups are scoring-only concept clusters; flat expected/forbidden event IDs remain primary ground truth.
+- Source events are ground truth; adapter provenance must map back to benchmark event IDs.
+- Call the `retrieve()` response **broad recall**, not the internal candidate pool.
+- Do not auto-penalise unclassified context items.
+- Repeated topical evidence is intentional in customer-memory scenarios.
+- Do not add query-specific adapter ranking or fix CogKura algorithms in this repository.
+- CogKura is not required to pass customer decision context; CI validates harness correctness with Oracle only.
 
 ## Agent completion contract
 

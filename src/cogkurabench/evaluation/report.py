@@ -109,6 +109,42 @@ def _secondary_metric_name(capability: Capability) -> str | None:
     return None
 
 
+def format_evidence_group_run_summary(result: BenchmarkResult) -> str:
+    """Render a concise evidence-group summary for group-enabled query results."""
+    group_queries = [
+        query_result
+        for query_result in result.query_results
+        if query_result.evidence_group_diagnostics
+    ]
+    if not group_queries:
+        return ""
+    lines = ["## Customer decision context", ""]
+    for query_result in group_queries:
+        expected_total = len(query_result.evidence_group_diagnostics)
+        expected_present = sum(
+            1 for diag in query_result.evidence_group_diagnostics if diag.context_present
+        )
+        forbidden_present = sum(
+            1 for diag in query_result.forbidden_group_diagnostics if diag.context_present
+        )
+        redundant = int(query_result.metrics.get("redundant_expected_group_items", 0))
+        context_items = len(query_result.context_items)
+        context_tokens = query_result.context_tokens or 0
+        lines.extend(
+            [
+                f"Query `{query_result.query_id}`:",
+                "",
+                f"- Expected groups: {expected_present} / {expected_total}",
+                f"- Forbidden groups present: {forbidden_present}",
+                f"- Repeated labelled items: {redundant}",
+                f"- Context items: {context_items}",
+                f"- Context tokens: {context_tokens}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
 def format_capability_table(
     capability_results: Mapping[str, CapabilityResult],
     *,
@@ -180,6 +216,10 @@ def write_summary_markdown(result: BenchmarkResult, path: Path) -> None:
     if result.environment.backend_configuration:
         for key, value in result.environment.backend_configuration.items():
             lines.append(f"- {key}: {value}")
-    lines.extend(["", format_result_tables(result), ""])
+    lines.extend(["", format_result_tables(result)])
+    group_summary = format_evidence_group_run_summary(result)
+    if group_summary:
+        lines.extend(["", group_summary])
+    lines.append("")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")

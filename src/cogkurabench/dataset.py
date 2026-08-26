@@ -16,6 +16,7 @@ from cogkurabench.models import (
     Capability,
     DatasetManifest,
     EventType,
+    EvidenceGroup,
     ExpectedFact,
     FeedbackAction,
     FeedbackOutcome,
@@ -135,6 +136,7 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
                     errors.append(
                         f"query {query.id} expected evidence {evidence_id} is after valid_at"
                     )
+        errors.extend(_validate_evidence_groups(query, events_by_id))
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -155,6 +157,49 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
     if len({(ts, seq) for ts, seq, _ in sequences}) != len(sequences):
         errors.append("event (timestamp, sequence) pairs are not unique")
 
+    return errors
+
+
+def _validate_evidence_groups(
+    query: BenchmarkQuery,
+    events_by_id: dict[str, ProjectEvent],
+) -> list[str]:
+    """Validate evidence-group references for one query."""
+    errors: list[str] = []
+    expected_event_ids: set[str] = set()
+    forbidden_event_ids: set[str] = set()
+
+    for group in query.expected_evidence_groups:
+        for event_id in group.event_ids:
+            expected_event_ids.add(event_id)
+            if event_id not in events_by_id:
+                errors.append(
+                    f"query {query.id} expected group {group.id} references unknown event "
+                    f"{event_id}"
+                )
+            else:
+                evidence_event = events_by_id[event_id]
+                if evidence_event.timestamp > query.timestamp:
+                    errors.append(
+                        f"query {query.id} expected group {group.id} references future event "
+                        f"{event_id}"
+                    )
+
+    for group in query.forbidden_evidence_groups:
+        for event_id in group.event_ids:
+            forbidden_event_ids.add(event_id)
+            if event_id not in events_by_id:
+                errors.append(
+                    f"query {query.id} forbidden group {group.id} references unknown event "
+                    f"{event_id}"
+                )
+
+    overlap = expected_event_ids & forbidden_event_ids
+    if overlap:
+        errors.append(
+            f"query {query.id} assigns events to both expected and forbidden groups: "
+            f"{sorted(overlap)}"
+        )
     return errors
 
 
@@ -224,6 +269,7 @@ def _action_sort_key(action: BenchmarkAction) -> tuple[datetime, int, str]:
 
 def _parse_event(data: dict[str, Any]) -> ProjectEvent:
     semantic_facts = tuple(_parse_semantic_fact(item) for item in data.get("semantic_facts", []))
+    session_id = data.get("session_id")
     return ProjectEvent(
         id=str(data["id"]),
         timestamp=_parse_datetime(data["timestamp"]),
@@ -236,6 +282,7 @@ def _parse_event(data: dict[str, Any]) -> ProjectEvent:
         tags=tuple(str(item) for item in data.get("tags", [])),
         supersedes=tuple(str(item) for item in data.get("supersedes", [])),
         related_events=tuple(str(item) for item in data.get("related_events", [])),
+        session_id=str(session_id) if session_id is not None else None,
     )
 
 
@@ -270,6 +317,8 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         entity_ids=tuple(str(item) for item in data.get("entity_ids", [])),
         predicate=data.get("predicate"),
         object_value=data.get("object_value"),
+        expected_evidence_groups=_parse_evidence_groups(data.get("expected_evidence_groups", [])),
+        forbidden_evidence_groups=_parse_evidence_groups(data.get("forbidden_evidence_groups", [])),
     )
 
 
@@ -283,7 +332,20 @@ def _parse_feedback(data: dict[str, Any]) -> BenchmarkFeedback:
     )
 
 
+def _parse_evidence_groups(groups: list[dict[str, Any]]) -> tuple[EvidenceGroup, ...]:
+    return tuple(
+        EvidenceGroup(
+            id=str(group["id"]),
+            label=str(group["label"]),
+            event_ids=tuple(str(item) for item in group["event_ids"]),
+        )
+        for group in groups
+    )
+
+
 def _parse_semantic_fact(data: dict[str, Any]) -> SemanticFact:
+    valid_from = data.get("valid_from")
+    valid_until = data.get("valid_until")
     return SemanticFact(
         subject=str(data["subject"]),
         predicate=str(data["predicate"]),
@@ -291,6 +353,8 @@ def _parse_semantic_fact(data: dict[str, Any]) -> SemanticFact:
         cardinality=str(data.get("cardinality", "many")),
         polarity=str(data.get("polarity", "affirm")),
         qualifiers={str(k): str(v) for k, v in dict(data.get("qualifiers", {})).items()},
+        valid_from=_parse_datetime(valid_from) if valid_from is not None else None,
+        valid_until=_parse_datetime(valid_until) if valid_until is not None else None,
     )
 
 

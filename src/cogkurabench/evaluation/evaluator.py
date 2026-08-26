@@ -5,8 +5,15 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 
-from cogkurabench.evaluation.result import CapabilityResult, QueryResult
+from cogkurabench.evaluation.result import (
+    CapabilityResult,
+    EvidenceGroupDiagnosticResult,
+    ForbiddenGroupDiagnosticResult,
+    ItemGroupClassificationResult,
+    QueryResult,
+)
 from cogkurabench.metrics.efficiency import compute_efficiency_metrics
+from cogkurabench.metrics.evidence_groups import compute_evidence_group_diagnostics
 from cogkurabench.metrics.forgetting import compute_forgetting_metrics
 from cogkurabench.metrics.learning import compute_learning_deltas
 from cogkurabench.metrics.metamemory import (
@@ -175,6 +182,21 @@ def evaluate_query(
             )
         )
 
+    ordered_context = order_retrieved_items(context_items or ())
+    has_context = context_response is not None
+    (
+        expected_diagnostics,
+        forbidden_diagnostics,
+        item_classifications,
+        group_metrics,
+    ) = compute_evidence_group_diagnostics(
+        query,
+        ordered_items,
+        ordered_context,
+        has_context=has_context,
+    )
+    metrics.update(group_metrics)
+
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
@@ -185,7 +207,7 @@ def evaluate_query(
         latency_ms=latency_ms,
         context_tokens=context_tokens,
         context_event_ids=context_event_ids,
-        context_items=tuple(context_items),
+        context_items=tuple(ordered_context),
         indicates_missing_knowledge=indicates_missing,
         indicates_conflict=indicates_conflict,
         assessment_flags=assessment_flags,
@@ -193,6 +215,39 @@ def evaluate_query(
         backend_metadata=backend_metadata or {},
         should_abstain=query.should_abstain,
         tags=query.tags,
+        evidence_group_diagnostics=tuple(
+            EvidenceGroupDiagnosticResult(
+                group_id=diag.group_id,
+                label=diag.label,
+                retrieval_present=diag.retrieval_present,
+                context_present=diag.context_present,
+                first_retrieval_rank=diag.first_retrieval_rank,
+                first_context_rank=diag.first_context_rank,
+                stage=diag.stage,
+                context_slot_count=diag.context_slot_count,
+            )
+            for diag in expected_diagnostics
+        ),
+        forbidden_group_diagnostics=tuple(
+            ForbiddenGroupDiagnosticResult(
+                group_id=diag.group_id,
+                label=diag.label,
+                retrieval_present=diag.retrieval_present,
+                context_present=diag.context_present,
+            )
+            for diag in forbidden_diagnostics
+        ),
+        context_item_classifications=tuple(
+            ItemGroupClassificationResult(
+                rank=item.rank,
+                source_event_ids=item.source_event_ids,
+                matched_expected_groups=item.matched_expected_groups,
+                matched_forbidden_groups=item.matched_forbidden_groups,
+                classification=item.classification,
+                redundant_labelled_coverage=item.redundant_labelled_coverage,
+            )
+            for item in item_classifications
+        ),
     )
 
 
@@ -232,6 +287,9 @@ def apply_learning_deltas(
                 backend_metadata=dict(result.backend_metadata),
                 should_abstain=result.should_abstain,
                 tags=result.tags,
+                evidence_group_diagnostics=result.evidence_group_diagnostics,
+                forbidden_group_diagnostics=result.forbidden_group_diagnostics,
+                context_item_classifications=result.context_item_classifications,
             )
         )
     return updated

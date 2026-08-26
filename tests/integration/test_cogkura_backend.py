@@ -122,6 +122,32 @@ async def test_cogkura_ingest_writes_entity_ids_to_encoded_episodes() -> None:
 
 
 @pytest.mark.asyncio
+async def test_cogkura_ingest_preserves_session_id_metadata() -> None:
+    from datetime import UTC, datetime
+
+    from cogkurabench.models import EventType, ProjectEvent
+
+    backend = CogKuraBackend()
+    await backend.reset()
+    timestamp = datetime(2026, 1, 1, tzinfo=UTC)
+    event = ProjectEvent(
+        id="browse-session-001",
+        timestamp=timestamp,
+        sequence=1,
+        subject_id="customer-alex",
+        event_type=EventType.BROWSE,
+        content="Browsed lightweight jackets in a single session.",
+        session_id="lightweight-session-001",
+    )
+    await backend.ingest([event])
+    store = backend._observation_store
+    assert store is not None
+    observations = await store.list(tenant_id="benchmark")
+    assert len(observations) == 1
+    assert observations[0].metadata.get("session_id") == "lightweight-session-001"
+
+
+@pytest.mark.asyncio
 async def test_cogkura_retrieve_does_not_record_access() -> None:
     from datetime import UTC, datetime
 

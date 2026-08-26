@@ -61,8 +61,9 @@ class OracleBackend:
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:
         start = time.perf_counter()
         query = self._queries[request.query_id]
+        ordered_event_ids = _oracle_retrieval_event_ids(query)
         items: list[RetrievedItem] = []
-        for rank, event_id in enumerate(query.expected_evidence_ids[: request.limit], start=1):
+        for rank, event_id in enumerate(ordered_event_ids[: request.limit], start=1):
             event = self._events[event_id]
             items.append(
                 RetrievedItem(
@@ -87,3 +88,21 @@ class OracleBackend:
 
     async def maintain(self, *, as_of: datetime) -> None:
         return None
+
+
+def _oracle_retrieval_event_ids(query: BenchmarkQuery) -> tuple[str, ...]:
+    """Return oracle retrieval event IDs, preferring one hit per expected group."""
+    ordered: list[str] = []
+    seen: set[str] = set()
+    if query.expected_evidence_groups:
+        for group in query.expected_evidence_groups:
+            if group.event_ids:
+                first_id = group.event_ids[0]
+                if first_id not in seen:
+                    ordered.append(first_id)
+                    seen.add(first_id)
+    for event_id in query.expected_evidence_ids:
+        if event_id not in seen:
+            ordered.append(event_id)
+            seen.add(event_id)
+    return tuple(ordered)

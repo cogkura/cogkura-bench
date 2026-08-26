@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.2.0. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.0. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -171,8 +171,11 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 | `mini` | 15 | 12 | 2 | Golden fixture for harness correctness |
 | `software_project_v1` | 61 | 24 | 3 | Project Atlas, about 60 simulated days |
 | `helios_v1` | 550 | 49 | 3 | Project Helios, about 180 simulated days, paraphrase and interference |
+| `customer_decision_context_v1` | 149 | 1 | 0 | Customer decision context, evidence-group working-memory diagnostics |
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
+
+Customer decision context findings: [docs/findings/customer-decision-context-0.3.0.md](docs/findings/customer-decision-context-0.3.0.md).
 
 ## Backends
 
@@ -181,7 +184,7 @@ Queries tagged `core` appear as a second table in `compare` output and summary M
 | `oracle` | Returns declared expected evidence. Validation infrastructure, not a competitor. |
 | `token-overlap` | Shallow deterministic lexical baseline |
 | `full-history` | All currently visible events, in chronological order |
-| `cogkura` | Optional CogKura 0.14.x adapter |
+| `cogkura` | Optional CogKura 0.15.x adapter |
 
 Unsupported optional capabilities return `None`. Backends must not fake features they do not provide.
 
@@ -218,6 +221,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/scenarios.md`](docs/scenarios.md)
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
+- [`docs/findings/customer-decision-context-0.3.0.md`](docs/findings/customer-decision-context-0.3.0.md)
 
 ## License
 

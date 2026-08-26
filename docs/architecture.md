@@ -29,3 +29,9 @@ flowchart TB
 ```
 
 CogKuraBench is a consumer of memory systems, not part of CogKura.
+
+## Evidence groups (0.3.0)
+
+Queries may carry `expected_evidence_groups` and `forbidden_evidence_groups` alongside flat evidence ID lists. Metrics in `metrics/evidence_groups.py` classify each expected group into retrieval vs bounded-context stages. This is separate from grouped retrieval scoring in `metrics/ranking.py` (0.2.0), which scores ranked `RetrievedItem` positions.
+
+The runner calls `retrieve()` then `select_context()` when `prompt_budget_tokens` is set. Broad recall diagnostics use the retrieval response; budget diagnostics use the context response when the backend supports selection.

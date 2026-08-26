@@ -13,7 +13,7 @@ from cogkurabench.exceptions import ValidationError
 
 
 class EventType(StrEnum):
-    """Canonical project event categories."""
+    """Canonical benchmark event categories across domains."""
 
     CONVERSATION = "conversation"
     REQUIREMENT = "requirement"
@@ -30,6 +30,13 @@ class EventType(StrEnum):
     RELEASE = "release"
     DOCUMENTATION = "documentation"
     NOISE = "noise"
+    BROWSE = "browse"
+    PURCHASE = "purchase"
+    PRODUCT_RETURN = "product_return"
+    SUPPORT_INTERACTION = "support_interaction"
+    PREFERENCE_STATEMENT = "preference_statement"
+    POSITIVE_OUTCOME = "positive_outcome"
+    NEGATIVE_OUTCOME = "negative_outcome"
 
 
 class Capability(StrEnum):
@@ -54,6 +61,15 @@ class FeedbackOutcome(StrEnum):
     INCORRECT = "incorrect"
 
 
+class EvidenceGroupStage(StrEnum):
+    """Stage classification for evidence-group diagnostics."""
+
+    SELECTED = "selected"
+    SELECTION_DROP = "selection_drop"
+    RETRIEVAL_MISS = "retrieval_miss"
+    CONTEXT_ONLY = "context_only"
+
+
 def _require_tzaware(label: str, value: datetime) -> datetime:
     if value.tzinfo is None:
         raise ValidationError(f"{label} must be timezone-aware.")
@@ -62,7 +78,7 @@ def _require_tzaware(label: str, value: datetime) -> datetime:
 
 @dataclass(frozen=True, slots=True)
 class SemanticFact:
-    """Atomic semantic proposition attached to a project event."""
+    """Atomic semantic proposition attached to a benchmark event."""
 
     subject: str
     predicate: str
@@ -70,6 +86,8 @@ class SemanticFact:
     cardinality: str = "many"
     polarity: str = "affirm"
     qualifiers: Mapping[str, str] = field(default_factory=dict)
+    valid_from: datetime | None = None
+    valid_until: datetime | None = None
 
     def __post_init__(self) -> None:
         if not self.subject.strip():
@@ -79,6 +97,31 @@ class SemanticFact:
         if not self.object.strip():
             raise ValidationError("object must not be empty.")
         object.__setattr__(self, "qualifiers", MappingProxyType(dict(self.qualifiers)))
+        if self.valid_from is not None:
+            object.__setattr__(self, "valid_from", _require_tzaware("valid_from", self.valid_from))
+        if self.valid_until is not None:
+            object.__setattr__(
+                self, "valid_until", _require_tzaware("valid_until", self.valid_until)
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceGroup:
+    """Several source events that satisfy one benchmark concept."""
+
+    id: str
+    label: str
+    event_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("evidence group id must not be empty.")
+        if not self.label.strip():
+            raise ValidationError("evidence group label must not be empty.")
+        if not self.event_ids:
+            raise ValidationError(f"evidence group {self.id!r} must contain at least one event.")
+        if len(set(self.event_ids)) != len(self.event_ids):
+            raise ValidationError(f"evidence group {self.id!r} contains duplicate event IDs.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +156,7 @@ class ProjectEvent:
     tags: tuple[str, ...] = ()
     supersedes: tuple[str, ...] = ()
     related_events: tuple[str, ...] = ()
+    session_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -146,6 +190,8 @@ class BenchmarkQuery:
     entity_ids: tuple[str, ...] = ()
     predicate: str | None = None
     object_value: str | None = None
+    expected_evidence_groups: tuple[EvidenceGroup, ...] = ()
+    forbidden_evidence_groups: tuple[EvidenceGroup, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -157,6 +203,18 @@ class BenchmarkQuery:
         object.__setattr__(self, "timestamp", _require_tzaware("timestamp", self.timestamp))
         if self.valid_at is not None:
             object.__setattr__(self, "valid_at", _require_tzaware("valid_at", self.valid_at))
+        expected_group_ids = [group.id for group in self.expected_evidence_groups]
+        forbidden_group_ids = [group.id for group in self.forbidden_evidence_groups]
+        if len(set(expected_group_ids)) != len(expected_group_ids):
+            raise ValidationError(f"query {self.id} has duplicate expected evidence group IDs.")
+        if len(set(forbidden_group_ids)) != len(forbidden_group_ids):
+            raise ValidationError(f"query {self.id} has duplicate forbidden evidence group IDs.")
+        overlap = set(expected_group_ids) & set(forbidden_group_ids)
+        if overlap:
+            raise ValidationError(
+                f"query {self.id} assigns group IDs to both expected and forbidden: "
+                f"{sorted(overlap)}"
+            )
 
 
 @dataclass(frozen=True, slots=True)

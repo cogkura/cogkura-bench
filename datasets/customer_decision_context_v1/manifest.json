@@ -1,0 +1,11 @@
+{
+  "name": "customer-decision-context-v1",
+  "schema_version": 1,
+  "events": 149,
+  "queries": 1,
+  "feedback": 0,
+  "description": "Customer decision context scenario for bounded working-memory diagnostics.",
+  "required_capabilities": [
+    "working_memory"
+  ]
+}

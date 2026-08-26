@@ -62,5 +62,11 @@ jobs:
       - name: Run Helios benchmark (oracle)
         run: uv run cogkura-bench run --dataset helios_v1 --backend oracle --quiet
 
+      - name: Validate customer_decision_context_v1 dataset
+        run: uv run cogkura-bench validate-dataset customer_decision_context_v1
+
+      - name: Run customer decision context benchmark (oracle)
+        run: uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle --quiet
+
       - name: Run mini benchmark (cogkura)
         run: uv run cogkura-bench run --dataset mini --backend cogkura --quiet

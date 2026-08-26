@@ -152,21 +152,24 @@ def _build_retrieval_cue(
 def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[str, object]]:
     payload: list[dict[str, object]] = []
     for fact in facts:
-        payload.append(
-            {
-                "predicate": fact.predicate,
-                "object_value": fact.object,
-                "subject_entity_id": fact.subject,
-                "cardinality": fact.cardinality,
-                "polarity": fact.polarity,
-                "qualifiers": dict(fact.qualifiers),
-            }
-        )
+        entry: dict[str, object] = {
+            "predicate": fact.predicate,
+            "object_value": fact.object,
+            "subject_entity_id": fact.subject,
+            "cardinality": fact.cardinality,
+            "polarity": fact.polarity,
+            "qualifiers": dict(fact.qualifiers),
+        }
+        if fact.valid_from is not None:
+            entry["valid_from"] = fact.valid_from.isoformat()
+        if fact.valid_until is not None:
+            entry["valid_until"] = fact.valid_until.isoformat()
+        payload.append(entry)
     return payload
 
 
 class CogKuraBackend:
-    """Benchmark adapter for CogKura 0.14.x public memory API."""
+    """Benchmark adapter for CogKura 0.15.x public memory API."""
 
     def __init__(self) -> None:
         self._memory: Memory | None = None
@@ -225,6 +228,8 @@ class CogKuraBackend:
                 metadata["tags"] = list(event.tags)
             if event.entities:
                 metadata["entity_ids"] = list(event.entities)
+            if event.session_id is not None:
+                metadata["session_id"] = event.session_id
             await memory.observe(
                 ObservationInput(
                     tenant_id=TENANT_ID,
