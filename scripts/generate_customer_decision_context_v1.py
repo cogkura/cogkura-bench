@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -22,6 +23,52 @@ def write_jsonl(path: Path, records: list[dict[str, object]]) -> None:
     with path.open("w", encoding="utf-8") as handle:
         for record in records:
             handle.write(json.dumps(record, ensure_ascii=True) + "\n")
+
+
+def fallback_session_id(event_id: str) -> str:
+    """Return a deterministic standalone session for ungrouped events."""
+    return f"session-{event_id}"
+
+
+def session_stats(events: list[dict[str, object]]) -> dict[str, object]:
+    """Summarise session grouping for fixture validation."""
+    session_members: dict[str, list[str]] = {}
+    for event in events:
+        session_id = str(event["session_id"])
+        session_members.setdefault(session_id, []).append(str(event["id"]))
+    sizes = {session_id: len(member_ids) for session_id, member_ids in session_members.items()}
+    multi_event = {
+        session_id: member_ids
+        for session_id, member_ids in session_members.items()
+        if len(member_ids) > 1
+    }
+    largest_session_size = max(sizes.values()) if sizes else 0
+    return {
+        "event_count": len(events),
+        "session_count": len(session_members),
+        "largest_session_size": largest_session_size,
+        "multi_event_sessions": multi_event,
+        "session_sizes": sizes,
+    }
+
+
+def format_session_inspection(events: list[dict[str, object]]) -> str:
+    """Render human-readable session statistics."""
+    stats = session_stats(events)
+    lines = [
+        f"events: {stats['event_count']}",
+        f"sessions: {stats['session_count']}",
+        f"largest_session_size: {stats['largest_session_size']}",
+        "multi_event_sessions:",
+    ]
+    multi_event = stats["multi_event_sessions"]
+    if not multi_event:
+        lines.append("  (none)")
+    else:
+        for session_id in sorted(multi_event):
+            member_ids = multi_event[session_id]
+            lines.append(f"  {session_id}: {len(member_ids)} events -> {', '.join(member_ids)}")
+    return "\n".join(lines)
 
 
 def build_events() -> list[dict[str, object]]:
@@ -45,7 +92,7 @@ def build_events() -> list[dict[str, object]]:
         nonlocal seq
         seq += 1
         if session_id is None:
-            session_id = f"timeline-{months:02d}"
+            session_id = fallback_session_id(event_id)
         record: dict[str, object] = {
             "id": event_id,
             "timestamp": iso(months, day, hour),
@@ -224,6 +271,14 @@ def build_events() -> list[dict[str, object]]:
         "purchase",
         "Purchased FeatherLite Packable Shell jacket in navy, size L.",
         entities=["featherlite-packable-shell"],
+        semantic_facts=[
+            {
+                "subject": SUBJECT,
+                "predicate": "outerwear_weight_preference",
+                "object": "lightweight",
+                "cardinality": "one",
+            }
+        ],
         tags=["lightweight"],
     )
     add(
@@ -593,7 +648,18 @@ def build_queries(events: list[dict[str, object]]) -> list[dict[str, object]]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate customer_decision_context_v1.")
+    parser.add_argument(
+        "--inspect-sessions",
+        action="store_true",
+        help="Print session statistics for generated events and exit.",
+    )
+    args = parser.parse_args()
     events = build_events()
+    if args.inspect_sessions:
+        print(format_session_inspection(events))
+        return
+
     queries = build_queries(events)
     DATASET_DIR.mkdir(parents=True, exist_ok=True)
     write_jsonl(DATASET_DIR / "events.jsonl", events)

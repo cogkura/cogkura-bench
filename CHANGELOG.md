@@ -7,9 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-08-28
+
+### Fixed
+
+- `customer_decision_context_v1` fixture: deterministic per-event session fallback (`session-{event_id}`) instead of month-wide `timeline-{month}` buckets that concatenated unrelated noise events.
+- `customer_decision_context_v1` fixture: structured semantic fact `outerwear_weight_preference=lightweight` (`cardinality=one`) on `lightweight-purchase-001` only.
+
+### Added
+
+- Generator `--inspect-sessions` for session cardinality diagnostics.
+- Fixture-integrity integration tests for customer decision context (semantic fact, session fallback, gold/query stability, generator determinism).
+- [Customer decision-context 0.3.2 findings](docs/findings/customer-decision-context-0.3.2.md).
+
 ### Changed
 
 - CogKura extra requires `cogkura>=0.15.2,<0.16.0`.
+
+### Unchanged
+
+- Query text, goal, timestamps, gold evidence groups, scoring, retrieval limit, context budget, and CogKura algorithms.
+- Other datasets and golden benchmark expectations.
 
 ## [0.3.1] - 2026-08-26
 

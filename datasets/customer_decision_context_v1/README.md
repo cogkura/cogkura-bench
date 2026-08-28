@@ -35,7 +35,7 @@ Five expected evidence groups:
 | `current_jacket_size` | Current size M only (`size-current-m-001`) |
 | `hiking_interest` | Semantic fact, purchase, positive outcomes |
 | `colour_preference` | Explicit neutral colour preference |
-| `lightweight_preference` | Purchase and positive outcome only (not browse-only activity) |
+| `lightweight_preference` | Purchase (structured semantic fact) and positive outcome (episodic support) |
 | `northpeak_fit_issue` | Return and support follow-up only (not browsing or purchase alone) |
 
 Two forbidden evidence groups:
@@ -46,6 +46,14 @@ Two forbidden evidence groups:
 | `old_skiing_interest` | Complete skiing phase |
 
 Browse-only lightweight activity does not satisfy the lightweight preference group. Product browsing or purchase alone does not satisfy the NorthPeak fit issue group. Skiing is stale history, not a contradictory current interest.
+
+## Session semantics
+
+Explicit `session_id` values represent coherent customer interactions (for example `hiking-session-001`, `lightweight-session-001`). Events without an explicit session receive a deterministic standalone session (`session-{event_id}`). Synthetic month is timeline organisation only; it is **not** a session boundary.
+
+## Lightweight semantic contract
+
+`lightweight-purchase-001` carries the structured semantic assertion `outerwear_weight_preference = lightweight` (`cardinality = one`). `lightweight-positive-001` provides additional episodic evidence for the same concept without duplicating the structured fact. Browse-only lightweight events remain weaker evidence only.
 
 ## Primary query
 

@@ -35,6 +35,12 @@
 - [x] Lifecycle and memory-inventory diagnostic tooling
 - [x] Customer decision-context lifecycle findings
 
+## 0.3.2
+
+- [x] Customer decision-context fixture integrity (session fallback, lightweight semantic fact)
+- [x] Generator session inspection and fixture-integrity tests
+- [x] Customer decision-context 0.3.2 findings
+
 ## Future
 
 - Vector/RAG baseline

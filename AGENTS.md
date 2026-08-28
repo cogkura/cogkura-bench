@@ -95,6 +95,9 @@ uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle
 - Do not add query-specific adapter ranking or fix CogKura algorithms in this repository.
 - CogKura is not required to pass customer decision context; CI validates harness correctness with Oracle only.
 - Do not add warm-up queries to hide lifecycle behaviour.
+- `session_id` is semantic fixture data, not a synthetic month bucket; ungrouped events get deterministic per-event sessions.
+- Structured semantic facts in source events must agree with gold evidence groups; do not repair backends by weakening fixture semantics.
+- Noise events stay realistic but must not be concatenated into month-wide sessions.
 
 ## Lifecycle diagnostics (0.3.1)
 
