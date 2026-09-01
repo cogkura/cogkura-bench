@@ -196,6 +196,27 @@ def format_context_items_with_groups(query_result: QueryResult) -> str:
     return "\n".join(lines)
 
 
+def format_structured_relationships_section(
+    backend_metadata: Mapping[str, object],
+) -> str:
+    """Render relationship diagnostics when catalogue relationships were ingested."""
+    cogkura_meta = backend_metadata.get("cogkura", {})
+    if not isinstance(cogkura_meta, Mapping):
+        return ""
+    relationships_ingested = cogkura_meta.get("relationships_ingested", 0)
+    inspection = cogkura_meta.get("relationship_inspection", {})
+    if not relationships_ingested and not (
+        isinstance(inspection, Mapping) and inspection.get("relationship_paths_used", 0)
+    ):
+        return ""
+    lines = ["Structured relationships", ""]
+    lines.append(f"Relationships ingested: {relationships_ingested}")
+    if isinstance(inspection, Mapping):
+        lines.append(f"Relationship seed count: {inspection.get('relationship_seed_count', 0)}")
+        lines.append(f"Relationship paths used: {inspection.get('relationship_paths_used', 0)}")
+    return "\n".join(lines)
+
+
 def format_query_inspection(
     query: BenchmarkQuery,
     query_result: QueryResult,
@@ -252,6 +273,9 @@ def format_query_inspection(
     )
     if metadata_section:
         sections.extend(["", metadata_section])
+    relationship_section = format_structured_relationships_section(query_result.backend_metadata)
+    if relationship_section:
+        sections.extend(["", relationship_section])
     context_metadata_section = format_backend_metadata_section(
         query_result.context_backend_metadata,
         title="Context backend metadata",

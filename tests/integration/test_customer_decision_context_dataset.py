@@ -208,6 +208,88 @@ def test_generator_determinism() -> None:
     assert first == second
 
 
+def test_catalogue_has_four_is_a_edges() -> None:
+    generator = _load_generator_module()
+    catalogue = generator.build_catalogue()
+    relationships = catalogue["relationships"]
+    assert len(relationships) == 4
+    assert all(relationship["relation_type"] == "is_a" for relationship in relationships)
+    assert all(relationship["provenance"] == "catalog" for relationship in relationships)
+    assert set(catalogue["entities"]) == {
+        "northpeak-alpine-shell",
+        "featherlite-packable-shell",
+        "waterproof-shell",
+        "jacket",
+        "outerwear",
+    }
+
+
+def test_catalogue_edges_are_source_knowledge_not_gold() -> None:
+    generator = _load_generator_module()
+    catalogue = generator.build_catalogue()
+    query_terms = {"hiking", "lightweight", "waterproof", "customer-waterproof-jacket"}
+    for relationship in catalogue["relationships"]:
+        for entity_id in (
+            relationship["source_entity_id"],
+            relationship["target_entity_id"],
+        ):
+            assert entity_id not in query_terms
+            assert not entity_id.startswith("northpeak_fit")
+
+
+def test_product_events_carry_catalogue_relationships() -> None:
+    events = _events_by_id()
+    northpeak_return = events["northpeak-return-001"]
+    assert "waterproof-shell" in northpeak_return.entities
+    assert "jacket" in northpeak_return.entities
+    assert len(northpeak_return.relationships) == 3
+    featherlite_purchase = events["lightweight-purchase-001"]
+    assert "jacket" in featherlite_purchase.entities
+    assert "outerwear" in featherlite_purchase.entities
+    assert len(featherlite_purchase.relationships) == 1
+
+
+def test_semantic_facts_unchanged_with_relationships() -> None:
+    events = _events_by_id()
+    lightweight = events["lightweight-purchase-001"].semantic_facts[0]
+    assert lightweight.predicate == "outerwear_weight_preference"
+    assert lightweight.object == "lightweight"
+    northpeak = events["northpeak-return-001"].semantic_facts[0]
+    assert northpeak.predicate == "product_fit_issue"
+    assert "northpeak-alpine-shell:sleeves_too_short" in northpeak.object
+
+
+def test_build_catalogue_is_neutral_to_queries() -> None:
+    generator = _load_generator_module()
+    with_relationships = generator.build_events()
+    events_without_query_build = generator.build_events()
+    generator.build_queries(with_relationships)
+    events_after_query_build = generator.build_events()
+    relationship_fields_with = [
+        event.get("relationships", []) for event in with_relationships if event.get("relationships")
+    ]
+    relationship_fields_after = [
+        event.get("relationships", [])
+        for event in events_after_query_build
+        if event.get("relationships")
+    ]
+    assert relationship_fields_with == relationship_fields_after
+    assert relationship_fields_with == relationship_fields_after
+    assert events_without_query_build == events_after_query_build
+
+
+def test_without_relationships_emits_no_relationship_fields() -> None:
+    generator = _load_generator_module()
+    events = generator.build_events(without_relationships=True)
+    assert all("relationships" not in event for event in events)
+
+
+def test_other_datasets_omit_relationship_fields() -> None:
+    for dataset_name in ("mini", "software_project_v1", "helios_v1"):
+        dataset = load_dataset(dataset_name)
+        assert all(not event.relationships for event in dataset.events)
+
+
 def test_generator_session_stats_acceptable() -> None:
     generator = _load_generator_module()
     stats = generator.session_stats(generator.build_events())

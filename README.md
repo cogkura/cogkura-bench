@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.2. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.3. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -43,7 +43,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.15.7,<0.16.0`.
+The CogKura extra pins `cogkura>=0.15.8,<0.16.0`.
 
 ## First run
 
@@ -175,7 +175,7 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
 
-Customer decision context findings: [docs/findings/customer-decision-context-0.3.2.md](docs/findings/customer-decision-context-0.3.2.md) (fixture integrity; see also [0.3.1 lifecycle](docs/findings/customer-decision-context-0.3.1.md) and [0.3.0 baseline](docs/findings/customer-decision-context-0.3.0.md)).
+Customer decision context findings: [docs/findings/customer-decision-context-0.3.3.md](docs/findings/customer-decision-context-0.3.3.md) (structured relationships; see also [0.3.2 fixture integrity](docs/findings/customer-decision-context-0.3.2.md), [0.3.1 lifecycle](docs/findings/customer-decision-context-0.3.1.md) and [0.3.0 baseline](docs/findings/customer-decision-context-0.3.0.md)).
 
 ## Backends
 
@@ -221,7 +221,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/scenarios.md`](docs/scenarios.md)
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
-- [`docs/findings/customer-decision-context-0.3.2.md`](docs/findings/customer-decision-context-0.3.2.md)
+- [`docs/findings/customer-decision-context-0.3.3.md`](docs/findings/customer-decision-context-0.3.3.md)
 - [`docs/findings/customer-decision-context-0.3.1.md`](docs/findings/customer-decision-context-0.3.1.md)
 
 ## License

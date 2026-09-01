@@ -55,6 +55,10 @@ Explicit `session_id` values represent coherent customer interactions (for examp
 
 `lightweight-purchase-001` carries the structured semantic assertion `outerwear_weight_preference = lightweight` (`cardinality = one`). `lightweight-positive-001` provides additional episodic evidence for the same concept without duplicating the structured fact. Browse-only lightweight events remain weaker evidence only.
 
+## Product catalogue relationships
+
+Product-bearing events include source catalogue structure (PIM-style `is_a` edges and category entity IDs). This is **source knowledge**, independent of query text and gold evidence groups. The lightweight preference remains a customer semantic fact, not an ontology edge. Generator `--inspect-catalogue` reports attachment counts; `--without-relationships` emits 0.3.2-shaped events for causality checks.
+
 ## Primary query
 
 - **ID:** `customer-waterproof-jacket`

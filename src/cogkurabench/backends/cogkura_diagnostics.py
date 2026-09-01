@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass
 from typing import TYPE_CHECKING, Any
 
 from cogkurabench.models import RetrievedItem
 
 if TYPE_CHECKING:
-    from cogkura.models import RecallResult
+    from cogkura.models import RecallInspectionResult, RecallResult
 
 
 COGKURA_METADATA_SCHEMA_VERSION = 1
@@ -29,6 +29,9 @@ _OPTIONAL_DIAGNOSTIC_FIELDS: tuple[str, ...] = (
     "selected_support_revision_key",
     "observation_evidence_ids",
     "semantic_status",
+    "association_path",
+    "structured_association_fit",
+    "relevance_tier",
 )
 
 
@@ -62,6 +65,8 @@ def json_safe_metadata_value(value: object) -> object:
         return value
     if hasattr(value, "value"):
         return value.value
+    if is_dataclass(value):
+        return dataclass_to_metadata(value)
     if isinstance(value, Mapping):
         return {str(key): json_safe_metadata_value(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -108,7 +113,7 @@ def recall_result_to_metadata(result: RecallResult) -> dict[str, object]:
 
 def dataclass_to_metadata(value: object) -> dict[str, object]:
     """Convert a CogKura result dataclass to JSON-safe metadata."""
-    from dataclasses import fields, is_dataclass
+    from dataclasses import fields
 
     if not is_dataclass(value):
         return {}
@@ -237,3 +242,63 @@ def _observation_ids_for_result(result: RecallResult) -> set[str]:
         for evidence in memory.observation_evidence:
             observation_ids.add(evidence.observation_id)
     return observation_ids
+
+
+def relationship_inspection_to_metadata(
+    inspection: RecallInspectionResult,
+) -> dict[str, object]:
+    """Serialize inspect_recall relationship diagnostics for backend metadata."""
+    rows: list[dict[str, object]] = []
+    for candidate in (*inspection.returned, *inspection.rejected):
+        memory = candidate.memory
+        predicate = getattr(memory, "predicate", None)
+        object_value = getattr(memory, "object_value", None)
+        diagnostics = candidate.diagnostics
+        association_path: dict[str, object] | None = None
+        relationship_edges: list[dict[str, object]] = []
+        hop_kind: str | None = None
+        hop_count: int | None = None
+        relevance_tier: object = None
+        structured_association_fit: float | None = None
+        admission_reason: str | None = None
+        soft_admitted: bool | None = None
+        if diagnostics is not None:
+            relevance_tier = json_safe_metadata_value(diagnostics.relevance_tier)
+            structured_association_fit = diagnostics.structured_association_fit
+            admission_reason = diagnostics.admission_reason
+            soft_admitted = diagnostics.soft_admitted
+            path = diagnostics.association_path
+            if path is not None:
+                hop_kind = path.hop_kind
+                hop_count = path.hop_count
+                association_path = dataclass_to_metadata(path)
+                relationship_edges = [
+                    dataclass_to_metadata(edge) for edge in path.relationship_edges
+                ]
+        disposition = json_safe_metadata_value(candidate.disposition)
+        rows.append(
+            {
+                "memory_kind": json_safe_metadata_value(candidate.memory_kind),
+                "predicate": predicate,
+                "object_value": object_value,
+                "disposition": disposition,
+                "relevance_tier": relevance_tier,
+                "admission_reason": admission_reason,
+                "soft_admitted": soft_admitted,
+                "association_path": association_path,
+                "relationship_edges": relationship_edges,
+                "hop_kind": hop_kind,
+                "hop_count": hop_count,
+                "rank": candidate.rank,
+                "selected": disposition == "returned",
+                "structured_association_fit": structured_association_fit,
+            }
+        )
+    return {
+        "relationship_seed_count": inspection.relationship_seed_count,
+        "relationship_paths_used": inspection.relationship_paths_used,
+        "association_seed_count": inspection.association_seed_count,
+        "association_paths_used": inspection.association_paths_used,
+        "considered_count": inspection.considered_count,
+        "predicate_rows": rows,
+    }

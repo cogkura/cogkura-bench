@@ -41,6 +41,12 @@
 - [x] Generator session inspection and fixture-integrity tests
 - [x] Customer decision-context 0.3.2 findings
 
+## 0.3.3
+
+- [x] Customer decision-context structured relationship fixture (`EntityRelationship`, catalogue `is_a` edges)
+- [x] CogKura relationship ingest and `inspect_recall` diagnostics in backend metadata
+- [x] Customer decision-context 0.3.3 findings (A/B/C attribution)
+
 ## Future
 
 - Vector/RAG baseline

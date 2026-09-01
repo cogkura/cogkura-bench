@@ -15,6 +15,7 @@ from cogkurabench.models import (
     BenchmarkQuery,
     Capability,
     DatasetManifest,
+    EntityRelationship,
     EventType,
     EvidenceGroup,
     ExpectedFact,
@@ -269,6 +270,9 @@ def _action_sort_key(action: BenchmarkAction) -> tuple[datetime, int, str]:
 
 def _parse_event(data: dict[str, Any]) -> ProjectEvent:
     semantic_facts = tuple(_parse_semantic_fact(item) for item in data.get("semantic_facts", []))
+    relationships = tuple(
+        _parse_entity_relationship(item) for item in data.get("relationships", [])
+    )
     session_id = data.get("session_id")
     return ProjectEvent(
         id=str(data["id"]),
@@ -283,6 +287,7 @@ def _parse_event(data: dict[str, Any]) -> ProjectEvent:
         supersedes=tuple(str(item) for item in data.get("supersedes", [])),
         related_events=tuple(str(item) for item in data.get("related_events", [])),
         session_id=str(session_id) if session_id is not None else None,
+        relationships=relationships,
     )
 
 
@@ -340,6 +345,16 @@ def _parse_evidence_groups(groups: list[dict[str, Any]]) -> tuple[EvidenceGroup,
             event_ids=tuple(str(item) for item in group["event_ids"]),
         )
         for group in groups
+    )
+
+
+def _parse_entity_relationship(data: dict[str, Any]) -> EntityRelationship:
+    provenance = data.get("provenance")
+    return EntityRelationship(
+        source_entity_id=str(data["source_entity_id"]),
+        relation_type=str(data["relation_type"]),
+        target_entity_id=str(data["target_entity_id"]),
+        provenance=str(provenance) if provenance is not None else None,
     )
 
 

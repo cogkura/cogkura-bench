@@ -13,6 +13,13 @@ DATASET_DIR = ROOT / "datasets" / "customer_decision_context_v1"
 START = datetime(2025, 1, 15, 10, 0, tzinfo=UTC)
 SUBJECT = "customer-alex"
 
+NORTHPEAK_PRODUCT_ID = "northpeak-alpine-shell"
+FEATHERLITE_PRODUCT_ID = "featherlite-packable-shell"
+CATEGORY_WATERPROOF_SHELL = "waterproof-shell"
+CATEGORY_JACKET = "jacket"
+CATEGORY_OUTERWEAR = "outerwear"
+CATALOG_PROVENANCE = "catalog"
+
 
 def iso(months: int, day: int = 15, hour: int = 10) -> str:
     base = START + timedelta(days=months * 30 + day - 15)
@@ -71,7 +78,139 @@ def format_session_inspection(events: list[dict[str, object]]) -> str:
     return "\n".join(lines)
 
 
-def build_events() -> list[dict[str, object]]:
+def build_catalogue() -> dict[str, object]:
+    """Return catalogue entities and is_a edges (source knowledge, not gold)."""
+    relationships = [
+        {
+            "source_entity_id": NORTHPEAK_PRODUCT_ID,
+            "relation_type": "is_a",
+            "target_entity_id": CATEGORY_WATERPROOF_SHELL,
+            "provenance": CATALOG_PROVENANCE,
+        },
+        {
+            "source_entity_id": CATEGORY_WATERPROOF_SHELL,
+            "relation_type": "is_a",
+            "target_entity_id": CATEGORY_JACKET,
+            "provenance": CATALOG_PROVENANCE,
+        },
+        {
+            "source_entity_id": CATEGORY_JACKET,
+            "relation_type": "is_a",
+            "target_entity_id": CATEGORY_OUTERWEAR,
+            "provenance": CATALOG_PROVENANCE,
+        },
+        {
+            "source_entity_id": FEATHERLITE_PRODUCT_ID,
+            "relation_type": "is_a",
+            "target_entity_id": CATEGORY_JACKET,
+            "provenance": CATALOG_PROVENANCE,
+        },
+    ]
+    entities = sorted(
+        {
+            NORTHPEAK_PRODUCT_ID,
+            FEATHERLITE_PRODUCT_ID,
+            CATEGORY_WATERPROOF_SHELL,
+            CATEGORY_JACKET,
+            CATEGORY_OUTERWEAR,
+        }
+    )
+    return {"entities": entities, "relationships": relationships}
+
+
+def _dedupe_relationships(
+    relationships: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    seen: set[tuple[str, str, str]] = set()
+    unique: list[dict[str, object]] = []
+    for relationship in relationships:
+        key = (
+            str(relationship["source_entity_id"]),
+            str(relationship["relation_type"]),
+            str(relationship["target_entity_id"]),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(relationship)
+    return unique
+
+
+def _extend_entities(entities: list[str], extra: list[str]) -> list[str]:
+    entity_set = set(entities)
+    for entity_id in extra:
+        if entity_id not in entity_set:
+            entities.append(entity_id)
+            entity_set.add(entity_id)
+    return entities
+
+
+def apply_catalogue(events: list[dict[str, object]]) -> None:
+    """Attach catalogue entities and relationships to product-bearing events."""
+    catalogue = build_catalogue()
+    northpeak_relationships = list(catalogue["relationships"][:3])
+    featherlite_relationship = catalogue["relationships"][3]
+    for event in events:
+        entities = list(event.get("entities", []))
+        relationships: list[dict[str, object]] = []
+        entity_set = set(entities)
+        if NORTHPEAK_PRODUCT_ID in entity_set:
+            entities = _extend_entities(
+                entities,
+                [CATEGORY_WATERPROOF_SHELL, CATEGORY_JACKET],
+            )
+            relationships.extend(northpeak_relationships)
+        if FEATHERLITE_PRODUCT_ID in entity_set:
+            entities = _extend_entities(entities, [CATEGORY_JACKET])
+            relationships.append(featherlite_relationship)
+        if event["id"] == "lightweight-purchase-001":
+            entities = _extend_entities(entities, [CATEGORY_OUTERWEAR])
+        if relationships:
+            event["entities"] = entities
+            event["relationships"] = _dedupe_relationships(relationships)
+
+
+def catalogue_stats(events: list[dict[str, object]]) -> dict[str, object]:
+    """Summarise catalogue attachment for fixture validation."""
+    catalogue = build_catalogue()
+    relationship_count = 0
+    type_counts: dict[str, int] = {}
+    attached_entities: set[str] = set()
+    for event in events:
+        for relationship in event.get("relationships", []):
+            relationship_count += 1
+            relation_type = str(relationship["relation_type"])
+            type_counts[relation_type] = type_counts.get(relation_type, 0) + 1
+        attached_entities.update(str(entity) for entity in event.get("entities", []))
+    return {
+        "catalogue_entity_count": len(catalogue["entities"]),
+        "catalogue_relationship_count": len(catalogue["relationships"]),
+        "attached_relationship_count": relationship_count,
+        "relationship_type_counts": type_counts,
+        "attached_entity_count": len(attached_entities & set(catalogue["entities"])),
+    }
+
+
+def format_catalogue_inspection(events: list[dict[str, object]]) -> str:
+    """Render human-readable catalogue statistics."""
+    stats = catalogue_stats(events)
+    lines = [
+        f"catalogue_entities: {stats['catalogue_entity_count']}",
+        f"catalogue_relationships: {stats['catalogue_relationship_count']}",
+        f"attached_relationships: {stats['attached_relationship_count']}",
+        "relationship_type_counts:",
+    ]
+    type_counts = stats["relationship_type_counts"]
+    if not type_counts:
+        lines.append("  (none)")
+    else:
+        for relation_type in sorted(type_counts):
+            lines.append(f"  {relation_type}: {type_counts[relation_type]}")
+    lines.append(f"catalogue_entities_on_events: {stats['attached_entity_count']}")
+    return "\n".join(lines)
+
+
+def build_events(*, without_relationships: bool = False) -> list[dict[str, object]]:
     events: list[dict[str, object]] = []
     seq = 0
 
@@ -543,6 +682,8 @@ def build_events() -> list[dict[str, object]]:
             tags=["noise"],
         )
 
+    if not without_relationships:
+        apply_catalogue(events)
     return events
 
 
@@ -654,10 +795,23 @@ def main() -> None:
         action="store_true",
         help="Print session statistics for generated events and exit.",
     )
+    parser.add_argument(
+        "--inspect-catalogue",
+        action="store_true",
+        help="Print catalogue relationship statistics for generated events and exit.",
+    )
+    parser.add_argument(
+        "--without-relationships",
+        action="store_true",
+        help="Emit 0.3.2-shaped events without catalogue relationships.",
+    )
     args = parser.parse_args()
-    events = build_events()
+    events = build_events(without_relationships=args.without_relationships)
     if args.inspect_sessions:
         print(format_session_inspection(events))
+        return
+    if args.inspect_catalogue:
+        print(format_catalogue_inspection(events))
         return
 
     queries = build_queries(events)

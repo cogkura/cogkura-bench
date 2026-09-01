@@ -15,6 +15,7 @@ from cogkurabench.backends.cogkura_diagnostics import (
     map_ranked_recall_results,
     recall_mapping_metadata,
     recall_result_to_metadata,
+    relationship_inspection_to_metadata,
 )
 from cogkurabench.models import (
     AssessmentRequest,
@@ -23,6 +24,7 @@ from cogkurabench.models import (
     BenchmarkFeedback,
     ContextRequest,
     ContextResponse,
+    EntityRelationship,
     FeedbackOutcome,
     ProjectEvent,
     RetrievalRequest,
@@ -119,6 +121,22 @@ def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[st
     return payload
 
 
+def _relationships_to_metadata(
+    relationships: tuple[EntityRelationship, ...],
+) -> list[dict[str, object]]:
+    payload: list[dict[str, object]] = []
+    for relationship in relationships:
+        entry: dict[str, object] = {
+            "source_entity_id": relationship.source_entity_id,
+            "relation_type": relationship.relation_type,
+            "target_entity_id": relationship.target_entity_id,
+        }
+        if relationship.provenance is not None:
+            entry["provenance"] = relationship.provenance
+        payload.append(entry)
+    return payload
+
+
 class CogKuraBackend:
     """Benchmark adapter for CogKura 0.15.x public memory API."""
 
@@ -127,7 +145,9 @@ class CogKuraBackend:
         self._observation_store: Any = None
         self._observation_id_to_event_id: dict[str, str] = {}
         self._version: str | None = None
+        self._bench_version: str | None = None
         self._events_ingested = 0
+        self._relationships_ingested = 0
         self._ingest_calls = 0
         self._prepare_calls = 0
         self._maintenance_calls = 0
@@ -165,6 +185,8 @@ class CogKuraBackend:
         )
 
     async def reset(self) -> None:
+        import cogkurabench
+
         cogkura = _require_cogkura()
         from cogkura.algorithms.semantic import (
             ComplementaryLearningSemanticConsolidator,  # noqa: PLC0415
@@ -172,6 +194,7 @@ class CogKuraBackend:
         from cogkura.storage.in_memory_observation import InMemoryObservationStore  # noqa: PLC0415
 
         self._version = _installed_cogkura_version(cogkura)
+        self._bench_version = cogkurabench.__version__
         if self._memory is not None:
             await self._memory.clear(tenant_id=TENANT_ID)
         self._observation_store = InMemoryObservationStore()
@@ -183,6 +206,7 @@ class CogKuraBackend:
         )
         self._observation_id_to_event_id.clear()
         self._events_ingested = 0
+        self._relationships_ingested = 0
         self._ingest_calls = 0
         self._prepare_calls = 0
         self._maintenance_calls = 0
@@ -215,6 +239,9 @@ class CogKuraBackend:
                 metadata["entity_ids"] = list(event.entities)
             if event.session_id is not None:
                 metadata["session_id"] = event.session_id
+            if event.relationships:
+                metadata["relationships"] = _relationships_to_metadata(event.relationships)
+                self._relationships_ingested += len(event.relationships)
             await memory.observe(
                 ObservationInput(
                     tenant_id=TENANT_ID,
@@ -257,11 +284,19 @@ class CogKuraBackend:
             as_of=request.as_of,
             valid_at=request.valid_at,
         )
+        inspection = await memory.inspect_recall(
+            cue,
+            tenant_id=TENANT_ID,
+            limit=request.limit,
+            as_of=request.as_of,
+            valid_at=request.valid_at,
+        )
         mapping = self._map_recall_results(results)
         latency_ms = (time.perf_counter() - start) * 1000.0
         backend_metadata = self._build_response_metadata(
             recall_mapping=mapping,
             snapshot_at=request.as_of,
+            relationship_inspection=relationship_inspection_to_metadata(inspection),
         )
         return RetrievalResponse(
             items=mapping.items,
@@ -496,10 +531,14 @@ class CogKuraBackend:
         context_mapping: RecallMappingResult | None = None,
         selector_funnel: Mapping[str, object] | None = None,
         snapshot_at: datetime | None = None,
+        relationship_inspection: Mapping[str, object] | None = None,
     ) -> dict[str, object]:
         payload: dict[str, object] = {
             "cogkura": {
                 "schema_version": COGKURA_METADATA_SCHEMA_VERSION,
+                "cogkura_version": self._version,
+                "bench_version": self._bench_version,
+                "relationships_ingested": self._relationships_ingested,
                 "lifecycle_counters": {
                     "events_ingested": self._events_ingested,
                     "ingest_calls": self._ingest_calls,
@@ -541,6 +580,8 @@ class CogKuraBackend:
             }
         if selector_funnel is not None:
             cogkura_payload["selector_funnel"] = dict(selector_funnel)
+        if relationship_inspection is not None:
+            cogkura_payload["relationship_inspection"] = dict(relationship_inspection)
         return payload
 
     def _statement_for_result(self, result: RecallResult) -> str:

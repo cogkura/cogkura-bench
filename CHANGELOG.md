@@ -7,9 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-08-28
+
+### Added
+
+- Neutral `EntityRelationship` model and optional `ProjectEvent.relationships` field (customer dataset only).
+- `customer_decision_context_v1` catalogue: four `is_a` product/category edges with `provenance=catalog` on existing product events (149 events unchanged).
+- CogKura adapter maps `relationships` to `metadata["relationships"]` on ingest; persists `inspect_recall` relationship diagnostics and inventory counts in `backend_metadata`.
+- Generator `--inspect-catalogue` and `--without-relationships` (0.3.2-shaped causality baseline).
+- Fixture tests for catalogue neutrality, gold/query stability, semantic-fact invariance, and relationship causality.
+- Inspect output "Structured relationships" section when relationship counts are present.
+- [Customer decision-context 0.3.3 findings](docs/findings/customer-decision-context-0.3.3.md) with mandatory A/B/C attribution table.
+
 ### Changed
 
-- CogKura extra requires `cogkura>=0.15.7,<0.16.0`.
+- CogKura extra requires `cogkura>=0.15.8,<0.16.0`.
+- Optional recall metadata now includes `association_path`, `structured_association_fit`, and `relevance_tier`.
+
+### Unchanged
+
+- Query text, goal, timestamps, gold evidence groups, scoring, retrieval limit, context budget, and CogKura algorithms.
+- Other datasets (no relationship fields) and golden benchmark expectations.
 
 ## [0.3.2] - 2026-08-28
 

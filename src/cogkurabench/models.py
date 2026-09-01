@@ -77,6 +77,28 @@ def _require_tzaware(label: str, value: datetime) -> datetime:
 
 
 @dataclass(frozen=True, slots=True)
+class EntityRelationship:
+    """Directed relationship between catalogue or product entities."""
+
+    source_entity_id: str
+    relation_type: str
+    target_entity_id: str
+    provenance: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.source_entity_id.strip():
+            raise ValidationError("relationship source_entity_id must not be empty.")
+        if not self.relation_type.strip():
+            raise ValidationError("relationship relation_type must not be empty.")
+        if not self.target_entity_id.strip():
+            raise ValidationError("relationship target_entity_id must not be empty.")
+        if self.source_entity_id == self.target_entity_id:
+            raise ValidationError(
+                "relationship source_entity_id must differ from target_entity_id."
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class SemanticFact:
     """Atomic semantic proposition attached to a benchmark event."""
 
@@ -157,6 +179,7 @@ class ProjectEvent:
     supersedes: tuple[str, ...] = ()
     related_events: tuple[str, ...] = ()
     session_id: str | None = None
+    relationships: tuple[EntityRelationship, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id.strip():

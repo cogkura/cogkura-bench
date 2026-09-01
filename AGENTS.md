@@ -98,6 +98,9 @@ uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle
 - `session_id` is semantic fixture data, not a synthetic month bucket; ungrouped events get deterministic per-event sessions.
 - Structured semantic facts in source events must agree with gold evidence groups; do not repair backends by weakening fixture semantics.
 - Noise events stay realistic but must not be concatenated into month-wide sessions.
+- Product catalogue `relationships` are source/PIM structure on `customer_decision_context_v1` only; do not encode gold into the graph or add relationships to mini/Atlas/Helios.
+- Map relationships through CogKura `metadata["relationships"]` on ingest only; `inspect_recall` diagnostics are attribution-only and must not change scores.
+- Compare CogKura customer scores across fixture versions using the A/B/C attribution table in [0.3.3 findings](docs/findings/customer-decision-context-0.3.3.md).
 
 ## Lifecycle diagnostics (0.3.1)
 
