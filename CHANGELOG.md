@@ -9,7 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- CogKura extra requires `cogkura>=0.15.9,<0.16.0`.
+- CogKura extra requires `cogkura>=0.16.4,<0.17.0`.
+- CogKura adapter docstring and docs target the 0.16.x public Memory API.
+- Optional CogKura 0.16 inspect/assessment contextual diagnostics are persisted in `backend_metadata` (observational; scoring unchanged).
+
+### Unchanged
+
+- Ranked recall, update, forgetting, learning, and metamemory scores on mini, Atlas, and customer decision context versus CogKura 0.15.9.
+- Customer evidence-group coverage remains 5/5 at retrieval and budget (`recall@5` 0.6, MRR 0.5, broad recall 11).
+
+### Notes
+
+- Helios CogKura replay completes on 0.16.4; 0.15.9 crashed in `SEMANTIC_WITH_SUPPORT` chunk serialization (fixed in CogKura 0.15.10).
+- Working-memory token efficiency rose from shorter `SEMANTIC_WITH_SUPPORT` serialized text (CogKura 0.15.11), not from 0.16 ranking: mini 0.107→0.130, Atlas 0.203→0.209, customer context tokens 165→69 with the same 6 selected items.
+- Bench retrieve/select/assess calls do not pass `retrieval_context`; inspect reports `context_not_provided` as expected.
 
 ## [0.3.3] - 2026-08-28
 

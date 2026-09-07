@@ -32,6 +32,11 @@ _OPTIONAL_DIAGNOSTIC_FIELDS: tuple[str, ...] = (
     "association_path",
     "structured_association_fit",
     "relevance_tier",
+    "context_match",
+    "context_reinstatement",
+    "activation_before_context",
+    "support_context",
+    "crossed_activation_threshold_due_to_context",
 )
 
 
@@ -89,6 +94,8 @@ def recall_result_to_metadata(result: RecallResult) -> dict[str, object]:
     metadata["activation_noise"] = components.noise
     metadata["activation_total"] = components.total
     metadata["activation_current_state"] = components.current_state
+    if hasattr(components, "context_reinstatement"):
+        metadata["activation_context_reinstatement"] = components.context_reinstatement
 
     diagnostics = getattr(result, "diagnostics", None)
     if diagnostics is not None:
@@ -302,3 +309,13 @@ def relationship_inspection_to_metadata(
         "considered_count": inspection.considered_count,
         "predicate_rows": rows,
     }
+
+
+def retrieval_context_diagnostics_to_metadata(
+    inspection: RecallInspectionResult,
+) -> dict[str, object] | None:
+    """Serialize inspect_recall contextual diagnostics when CogKura exposes them."""
+    context = getattr(inspection, "context", None)
+    if context is None:
+        return None
+    return dataclass_to_metadata(context)

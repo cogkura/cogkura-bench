@@ -1,6 +1,11 @@
 """Unit tests for CogKura recall mapping diagnostics."""
 
-from cogkurabench.backends.cogkura_diagnostics import map_ranked_recall_results
+from dataclasses import dataclass
+
+from cogkurabench.backends.cogkura_diagnostics import (
+    map_ranked_recall_results,
+    retrieval_context_diagnostics_to_metadata,
+)
 
 
 class _Evidence:
@@ -109,3 +114,19 @@ def test_map_ranked_recall_results_empty_raw() -> None:
     assert mapping.raw_count == 0
     assert mapping.mapped_count == 0
     assert mapping.unmapped_count == 0
+
+
+def test_retrieval_context_diagnostics_absent_when_missing() -> None:
+    inspection = type("Inspection", (), {})()
+    assert retrieval_context_diagnostics_to_metadata(inspection) is None
+
+
+def test_retrieval_context_diagnostics_serializes_dataclass_fields() -> None:
+    @dataclass
+    class _Context:
+        state: str
+        comparable_candidate_count: int
+
+    inspection = type("Inspection", (), {"context": _Context("context_not_provided", 0)})()
+    payload = retrieval_context_diagnostics_to_metadata(inspection)
+    assert payload == {"state": "context_not_provided", "comparable_candidate_count": 0}

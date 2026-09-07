@@ -43,7 +43,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.15.9,<0.16.0`.
+The CogKura extra pins `cogkura>=0.16.4,<0.17.0`.
 
 ## First run
 
@@ -184,7 +184,7 @@ Customer decision context findings: [docs/findings/customer-decision-context-0.3
 | `oracle` | Returns declared expected evidence. Validation infrastructure, not a competitor. |
 | `token-overlap` | Shallow deterministic lexical baseline |
 | `full-history` | All currently visible events, in chronological order |
-| `cogkura` | Optional CogKura 0.15.x adapter |
+| `cogkura` | Optional CogKura 0.16.x adapter |
 
 Unsupported optional capabilities return `None`. Backends must not fake features they do not provide.
 

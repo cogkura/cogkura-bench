@@ -16,6 +16,7 @@ from cogkurabench.backends.cogkura_diagnostics import (
     recall_mapping_metadata,
     recall_result_to_metadata,
     relationship_inspection_to_metadata,
+    retrieval_context_diagnostics_to_metadata,
 )
 from cogkurabench.models import (
     AssessmentRequest,
@@ -138,7 +139,7 @@ def _relationships_to_metadata(
 
 
 class CogKuraBackend:
-    """Benchmark adapter for CogKura 0.15.x public memory API."""
+    """Benchmark adapter for CogKura 0.16.x public memory API."""
 
     def __init__(self) -> None:
         self._memory: Memory | None = None
@@ -297,6 +298,7 @@ class CogKuraBackend:
             recall_mapping=mapping,
             snapshot_at=request.as_of,
             relationship_inspection=relationship_inspection_to_metadata(inspection),
+            retrieval_context=retrieval_context_diagnostics_to_metadata(inspection),
         )
         return RetrievalResponse(
             items=mapping.items,
@@ -379,13 +381,17 @@ class CogKuraBackend:
             "learned_utility": assessment.signals.learned_utility,
             "freshness": assessment.signals.freshness,
         }
+        assessment_metadata: dict[str, object] = {"retrieved_count": assessment.retrieved_count}
+        context = getattr(assessment, "context", None)
+        if context is not None:
+            assessment_metadata["retrieval_context"] = dataclass_to_metadata(context)
         return AssessmentResponse(
             indicates_missing_knowledge=indicates_missing,
             indicates_conflict=indicates_conflict,
             latency_ms=latency_ms,
             signals=signals,
             flags=flags,
-            backend_metadata={"retrieved_count": assessment.retrieved_count},
+            backend_metadata=assessment_metadata,
         )
 
     async def apply_feedback(self, feedback: BenchmarkFeedback) -> None:
@@ -532,6 +538,7 @@ class CogKuraBackend:
         selector_funnel: Mapping[str, object] | None = None,
         snapshot_at: datetime | None = None,
         relationship_inspection: Mapping[str, object] | None = None,
+        retrieval_context: Mapping[str, object] | None = None,
     ) -> dict[str, object]:
         payload: dict[str, object] = {
             "cogkura": {
@@ -582,6 +589,8 @@ class CogKuraBackend:
             cogkura_payload["selector_funnel"] = dict(selector_funnel)
         if relationship_inspection is not None:
             cogkura_payload["relationship_inspection"] = dict(relationship_inspection)
+        if retrieval_context is not None:
+            cogkura_payload["retrieval_context"] = dict(retrieval_context)
         return payload
 
     def _statement_for_result(self, result: RecallResult) -> str:
