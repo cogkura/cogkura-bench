@@ -1,0 +1,28 @@
+{
+  "mini": {
+    "direct-001": {
+      "retrieved_event_ids": ["evt-001", "evt-002"],
+      "ranks": [[1, ["evt-001"]], [2, ["evt-001"]], [3, ["evt-002"]]]
+    },
+    "episodic-001": {
+      "retrieved_event_ids": ["evt-006", "evt-005"],
+      "ranks": [[1, ["evt-006"]], [2, ["evt-005"]]]
+    },
+    "assoc-001": {
+      "retrieved_event_ids": ["evt-008", "evt-007", "evt-006"],
+      "ranks": [[1, ["evt-008"]], [2, ["evt-008"]], [3, ["evt-007"]], [4, ["evt-006"]]]
+    },
+    "update-001": {
+      "retrieved_event_ids": ["evt-008", "evt-009", "evt-007", "evt-001"],
+      "ranks": [[1, ["evt-008"]], [2, ["evt-008"]], [3, ["evt-009"]], [4, ["evt-007"]], [5, ["evt-001"]]]
+    },
+    "temporal-hist-001": {
+      "retrieved_event_ids": ["evt-008", "evt-003"],
+      "ranks": [[1, ["evt-008"]], [2, ["evt-003"]]]
+    },
+    "learn-pre-001": {
+      "retrieved_event_ids": ["evt-009", "evt-008"],
+      "ranks": [[1, ["evt-009"]], [2, ["evt-008"]], [3, ["evt-008"]]]
+    }
+  }
+}

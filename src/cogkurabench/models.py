@@ -51,6 +51,15 @@ class Capability(StrEnum):
     WORKING_MEMORY = "working_memory"
     LEARNING = "learning"
     METAMEMORY = "metamemory"
+    INTERFERENCE = "interference"
+
+
+class CompetitionDirection(StrEnum):
+    """Benchmark-neutral temporal competition direction."""
+
+    PROACTIVE = "proactive"
+    RETROACTIVE = "retroactive"
+    CO_TEMPORAL = "co_temporal"
 
 
 class FeedbackOutcome(StrEnum):
@@ -147,6 +156,51 @@ class EvidenceGroup:
 
 
 @dataclass(frozen=True, slots=True)
+class CompetitionExpectation:
+    """Query-level ground truth for a directed competition relationship."""
+
+    id: str
+    candidate_event_ids: tuple[str, ...]
+    competitor_event_ids: tuple[str, ...]
+    direction: CompetitionDirection | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("competition expectation id must not be empty.")
+        if not self.candidate_event_ids:
+            raise ValidationError(
+                f"competition expectation {self.id!r} must contain candidate event IDs."
+            )
+        if not self.competitor_event_ids:
+            raise ValidationError(
+                f"competition expectation {self.id!r} must contain competitor event IDs."
+            )
+        if set(self.candidate_event_ids) == set(self.competitor_event_ids):
+            raise ValidationError(
+                f"competition expectation {self.id!r} candidate and competitor groups "
+                "must not be identical."
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class CompetitionObservation:
+    """Backend-neutral observed competition relationship."""
+
+    candidate_source_event_ids: tuple[str, ...]
+    competitor_source_event_ids: tuple[str, ...]
+    direction: CompetitionDirection
+    strength: float | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.candidate_source_event_ids:
+            raise ValidationError("candidate_source_event_ids must not be empty.")
+        if not self.competitor_source_event_ids:
+            raise ValidationError("competitor_source_event_ids must not be empty.")
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
 class ExpectedFact:
     """Optional structured fact expectation for a query."""
 
@@ -215,6 +269,8 @@ class BenchmarkQuery:
     object_value: str | None = None
     expected_evidence_groups: tuple[EvidenceGroup, ...] = ()
     forbidden_evidence_groups: tuple[EvidenceGroup, ...] = ()
+    expected_competitions: tuple[CompetitionExpectation, ...] = ()
+    forbidden_competitions: tuple[CompetitionExpectation, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -238,6 +294,12 @@ class BenchmarkQuery:
                 f"query {self.id} assigns group IDs to both expected and forbidden: "
                 f"{sorted(overlap)}"
             )
+        competition_ids = [
+            expectation.id
+            for expectation in (*self.expected_competitions, *self.forbidden_competitions)
+        ]
+        if len(set(competition_ids)) != len(competition_ids):
+            raise ValidationError(f"query {self.id} has duplicate competition expectation IDs.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,6 +349,7 @@ class BackendCapabilities:
     learn: bool = False
     forget: bool = False
     maintain: bool = False
+    competition_diagnostics: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -338,6 +401,7 @@ class RetrievalResponse:
 
     items: tuple[RetrievedItem, ...]
     latency_ms: float
+    competition_observations: tuple[CompetitionObservation, ...] = ()
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

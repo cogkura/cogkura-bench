@@ -11,7 +11,7 @@ flowchart TB
 
 ## Layer A — memory evaluation (0.2.0)
 
-No LLM required. Measures evidence retrieval, ranking, temporal correctness, updates, forgetting, working-memory selection, learning, and metamemory where supported. Primary top-K metrics count ranked `RetrievedItem` groups.
+No LLM required. Measures evidence retrieval, ranking, temporal correctness, updates, forgetting, working-memory selection, learning, metamemory, and competition diagnostics where supported. Primary top-K metrics count ranked `RetrievedItem` groups. Competition diagnostics (0.3.4) measure whether related memories are identified without false competitors; they do not score retrieval suppression.
 
 ## Layer B — downstream reasoning (future)
 

@@ -26,6 +26,7 @@ Compare primary capability scores only within the same benchmark version. Retrie
 | Working memory | `evidence_coverage_at_budget`, `context_precision`, `token_efficiency` |
 | Learning | `delta_recall@5`, `delta_mrr`, `delta_first_relevant_rank` |
 | Metamemory | `missing_knowledge_f1`, `conflict_f1` |
+| Interference | `competition_pair_f1` (primary); also precision, recall, direction accuracy, forbidden rate |
 | Efficiency | `retrieval_latency_ms`, `memories_retrieved`, `memories_selected`, `total_context_tokens` |
 
 Metrics operate on benchmark event IDs and neutral `QueryResult` fields (`context_event_ids`, `indicates_missing_knowledge`, `indicates_conflict`). `RetrievedItem.metadata` and per-item diagnostics do not influence scoring. Unsupported backend capabilities are omitted.
@@ -68,3 +69,27 @@ When a backend does not support `select_context`, stages are not emitted for bro
 Evidence groups are scoring-only. Source events are ground truth. **Broad recall** is the `retrieve()` response — do not call it the internal candidate pool. Unclassified items are not automatic precision penalties. Repeated topical evidence is intentional in customer-memory scenarios.
 
 Hand-calculated tests live in `tests/unit/test_metrics_evidence_groups.py`.
+
+## Interference / competition diagnostics (0.3.4)
+
+`Capability.INTERFERENCE` scores **competition detection only**. Interference penalties, proactive/retroactive activation effects, and inhibition are not benchmarked in 0.3.4.
+
+Queries may declare `expected_competitions` and `forbidden_competitions` as directed candidate→competitor event-ID groups. Matching uses provenance intersection (same rule as evidence groups). Direction is scored separately from pair detection.
+
+| Metric | Meaning |
+| --- | --- |
+| `competition_pair_precision` | Matched expected pairs / all canonical observed pairs |
+| `competition_pair_recall` | Matched expected pairs / declared expected pairs |
+| `competition_pair_f1` | Harmonic mean of pair precision and recall (primary) |
+| `competition_direction_accuracy` | Correct direction / direction-labelled matched pairs |
+| `forbidden_competition_rate` | Forbidden hits / declared forbidden pairs (ideal 0.0) |
+
+**Worked examples**
+
+- Correct pair: expected `A→B [proactive]`, observed `A→B [proactive]` → pair recall/precision hit; direction accuracy hit.
+- Wrong direction: expected `A→B [proactive]`, observed `A→B [retroactive]` → pair hit; direction miss.
+- Unexpected pair: observed `X→Y` with no matching gold → precision penalty.
+- Forbidden pair: observed relationship matching `forbidden_competitions` → `forbidden_competition_rate` increases.
+- Grouped provenance: expected candidate group `{gha-001, gha-002}` matches an observation citing `gha-002` only.
+
+Backends without `competition_diagnostics` report interference metrics as **N/A**, not zero. Hand-calculated tests live in `tests/unit/test_metrics_competition.py`.

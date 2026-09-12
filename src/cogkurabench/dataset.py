@@ -14,6 +14,8 @@ from cogkurabench.models import (
     BenchmarkFeedback,
     BenchmarkQuery,
     Capability,
+    CompetitionDirection,
+    CompetitionExpectation,
     DatasetManifest,
     EntityRelationship,
     EventType,
@@ -138,6 +140,7 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
                         f"query {query.id} expected evidence {evidence_id} is after valid_at"
                     )
         errors.extend(_validate_evidence_groups(query, events_by_id))
+        errors.extend(_validate_competitions(query, events_by_id))
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -201,6 +204,68 @@ def _validate_evidence_groups(
             f"query {query.id} assigns events to both expected and forbidden groups: "
             f"{sorted(overlap)}"
         )
+    return errors
+
+
+def _validate_competitions(
+    query: BenchmarkQuery,
+    events_by_id: dict[str, ProjectEvent],
+) -> list[str]:
+    """Validate competition expectation references for one query."""
+    errors: list[str] = []
+    seen_signatures: set[tuple[tuple[str, ...], tuple[str, ...], str | None]] = set()
+    expected_signatures: set[tuple[tuple[str, ...], tuple[str, ...], str | None]] = set()
+
+    for label, expectations in (
+        ("expected", query.expected_competitions),
+        ("forbidden", query.forbidden_competitions),
+    ):
+        for expectation in expectations:
+            signature = (
+                tuple(sorted(expectation.candidate_event_ids)),
+                tuple(sorted(expectation.competitor_event_ids)),
+                expectation.direction.value if expectation.direction is not None else None,
+            )
+            if signature in seen_signatures:
+                errors.append(
+                    f"query {query.id} competition expectation {expectation.id} duplicates "
+                    "an existing competition declaration"
+                )
+            seen_signatures.add(signature)
+            if label == "expected":
+                expected_signatures.add(signature)
+
+            for event_id in (*expectation.candidate_event_ids, *expectation.competitor_event_ids):
+                if event_id not in events_by_id:
+                    errors.append(
+                        f"query {query.id} competition expectation {expectation.id} "
+                        f"references unknown event {event_id}"
+                    )
+                elif label == "expected":
+                    evidence_event = events_by_id[event_id]
+                    if evidence_event.timestamp > query.timestamp:
+                        errors.append(
+                            f"query {query.id} competition expectation {expectation.id} "
+                            f"references future event {event_id}"
+                        )
+                    if query.valid_at is not None and evidence_event.timestamp > query.valid_at:
+                        errors.append(
+                            f"query {query.id} competition expectation {expectation.id} "
+                            f"references event {event_id} after valid_at"
+                        )
+
+    for forbidden in query.forbidden_competitions:
+        forbidden_signature = (
+            tuple(sorted(forbidden.candidate_event_ids)),
+            tuple(sorted(forbidden.competitor_event_ids)),
+            forbidden.direction.value if forbidden.direction is not None else None,
+        )
+        if forbidden_signature in expected_signatures:
+            errors.append(
+                f"query {query.id} competition expectation {forbidden.id} conflicts with "
+                "an expected competition declaration"
+            )
+
     return errors
 
 
@@ -324,6 +389,8 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         object_value=data.get("object_value"),
         expected_evidence_groups=_parse_evidence_groups(data.get("expected_evidence_groups", [])),
         forbidden_evidence_groups=_parse_evidence_groups(data.get("forbidden_evidence_groups", [])),
+        expected_competitions=_parse_competitions(data.get("expected_competitions", [])),
+        forbidden_competitions=_parse_competitions(data.get("forbidden_competitions", [])),
     )
 
 
@@ -335,6 +402,24 @@ def _parse_feedback(data: dict[str, Any]) -> BenchmarkFeedback:
         outcome=FeedbackOutcome(str(data["outcome"])),
         target_event_ids=tuple(str(item) for item in data.get("target_event_ids", [])),
     )
+
+
+def _parse_competitions(items: list[dict[str, Any]]) -> tuple[CompetitionExpectation, ...]:
+    expectations: list[CompetitionExpectation] = []
+    for item in items:
+        direction_value = item.get("direction")
+        direction = (
+            CompetitionDirection(str(direction_value)) if direction_value is not None else None
+        )
+        expectations.append(
+            CompetitionExpectation(
+                id=str(item["id"]),
+                candidate_event_ids=tuple(str(value) for value in item["candidate_event_ids"]),
+                competitor_event_ids=tuple(str(value) for value in item["competitor_event_ids"]),
+                direction=direction,
+            )
+        )
+    return tuple(expectations)
 
 
 def _parse_evidence_groups(groups: list[dict[str, Any]]) -> tuple[EvidenceGroup, ...]:

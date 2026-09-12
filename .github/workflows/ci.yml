@@ -70,3 +70,12 @@ jobs:
 
       - name: Run mini benchmark (cogkura)
         run: uv run cogkura-bench run --dataset mini --backend cogkura --quiet
+
+      - name: Validate interference_v1 dataset
+        run: uv run cogkura-bench validate-dataset interference_v1
+
+      - name: Run interference benchmark (oracle)
+        run: uv run cogkura-bench run --dataset interference_v1 --backend oracle --quiet
+
+      - name: Run interference benchmark (cogkura)
+        run: uv run cogkura-bench run --dataset interference_v1 --backend cogkura --quiet

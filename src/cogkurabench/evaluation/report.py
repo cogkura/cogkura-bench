@@ -44,6 +44,13 @@ _CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
     ),
     Capability.LEARNING: ("delta_recall@5", "delta_mrr", "delta_first_relevant_rank"),
     Capability.METAMEMORY: ("missing_knowledge_f1", "conflict_f1", "recall@5"),
+    Capability.INTERFERENCE: (
+        "competition_pair_f1",
+        "competition_pair_precision",
+        "competition_pair_recall",
+        "competition_direction_accuracy",
+        "forbidden_competition_rate",
+    ),
 }
 
 
@@ -106,7 +113,17 @@ def _primary_metric_name(capability: Capability) -> str:
 def _secondary_metric_name(capability: Capability) -> str | None:
     if capability is Capability.TEMPORAL_RECALL:
         return "temporal_historical_accuracy"
+    if capability is Capability.INTERFERENCE:
+        return "competition_pair_precision"
     return None
+
+
+def _format_metric_value(capability: Capability, metric_name: str, value: float | None) -> str:
+    if value is None:
+        if capability is Capability.INTERFERENCE:
+            return "N/A"
+        return "0.000"
+    return f"{value:.3f}"
 
 
 def format_evidence_group_run_summary(result: BenchmarkResult) -> str:
@@ -160,17 +177,24 @@ def format_capability_table(
     for capability_name, capability_result in sorted(capability_results.items()):
         primary = _primary_metric_name(capability_result.capability)
         secondary = _secondary_metric_name(capability_result.capability)
-        primary_value = capability_result.metrics.get(primary, 0.0)
+        primary_value = capability_result.metrics.get(primary)
         if secondary is not None:
-            secondary_value = capability_result.metrics.get(secondary, 0.0)
+            secondary_value = capability_result.metrics.get(secondary)
+            secondary_display = _format_metric_value(
+                capability_result.capability,
+                secondary,
+                secondary_value,
+            )
             lines.append(
                 f"| {capability_name} | {capability_result.query_count} | {primary} | "
-                f"{primary_value:.3f} | {secondary} | {secondary_value:.3f} |"
+                f"{_format_metric_value(capability_result.capability, primary, primary_value)} | "
+                f"{secondary} | {secondary_display} |"
             )
         else:
             lines.append(
                 f"| {capability_name} | {capability_result.query_count} | {primary} | "
-                f"{primary_value:.3f} | | |"
+                f"{_format_metric_value(capability_result.capability, primary, primary_value)} | "
+                f"| |"
             )
     return "\n".join(lines)
 

@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, is_dataclass
 from typing import TYPE_CHECKING, Any
 
-from cogkurabench.models import RetrievedItem
+from cogkurabench.models import CompetitionDirection, CompetitionObservation, RetrievedItem
 
 if TYPE_CHECKING:
     from cogkura.models import RecallInspectionResult, RecallResult
@@ -319,3 +319,171 @@ def retrieval_context_diagnostics_to_metadata(
     if context is None:
         return None
     return dataclass_to_metadata(context)
+
+
+def _event_ids_for_memory(
+    memory: object,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> tuple[str, ...]:
+    observation_ids: set[str] = set()
+    if hasattr(memory, "evidence"):
+        for evidence in memory.evidence:
+            observation_ids.add(evidence.observation_id)
+    if hasattr(memory, "observation_evidence"):
+        for evidence in memory.observation_evidence:
+            observation_ids.add(evidence.observation_id)
+    mapped = sorted(
+        {
+            observation_id_to_event_id[observation_id]
+            for observation_id in observation_ids
+            if observation_id in observation_id_to_event_id
+        }
+    )
+    return tuple(mapped)
+
+
+def _bench_direction(direction: object) -> CompetitionDirection:
+    value = direction.value if hasattr(direction, "value") else str(direction)
+    return CompetitionDirection(str(value))
+
+
+def competition_inspection_to_observations(
+    inspection: RecallInspectionResult,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> tuple[CompetitionObservation, ...]:
+    """Map CogKura inspect_recall competition diagnostics to benchmark observations."""
+    identity_to_memory: dict[tuple[str, str], object] = {}
+    for candidate in (*inspection.returned, *inspection.rejected):
+        memory = candidate.memory
+        identity_to_memory[(candidate.memory_kind.value, memory.memory_key)] = memory
+
+    observations: list[CompetitionObservation] = []
+    for candidate in (*inspection.returned, *inspection.rejected):
+        competition = getattr(candidate, "competition", None)
+        if competition is None or not competition.competitors:
+            continue
+        candidate_event_ids = _event_ids_for_memory(
+            candidate.memory,
+            observation_id_to_event_id=observation_id_to_event_id,
+        )
+        if not candidate_event_ids:
+            continue
+        for evidence in competition.competitors:
+            competitor_identity = evidence.competitor_identity
+            competitor_memory = identity_to_memory.get(
+                (competitor_identity.memory_kind.value, competitor_identity.memory_key)
+            )
+            if competitor_memory is None:
+                continue
+            competitor_event_ids = _event_ids_for_memory(
+                competitor_memory,
+                observation_id_to_event_id=observation_id_to_event_id,
+            )
+            if not competitor_event_ids:
+                continue
+            observations.append(
+                CompetitionObservation(
+                    candidate_source_event_ids=candidate_event_ids,
+                    competitor_source_event_ids=competitor_event_ids,
+                    direction=_bench_direction(evidence.direction),
+                    strength=evidence.strength,
+                    metadata={
+                        "same_subject": evidence.same_subject,
+                        "same_semantic_slot": evidence.same_semantic_slot,
+                        "same_predicate": evidence.same_predicate,
+                        "shared_entity_ids": list(evidence.shared_entity_ids),
+                        "shared_features": list(evidence.shared_features),
+                        "relationship_strength": evidence.relationship_strength,
+                        "joint_cue_fit": evidence.joint_cue_fit,
+                    },
+                )
+            )
+    return tuple(observations)
+
+
+def competition_inspection_to_metadata(
+    inspection: RecallInspectionResult,
+) -> dict[str, object] | None:
+    """Serialize retrieval-level competition diagnostics when CogKura exposes them."""
+    run_diagnostics = getattr(inspection, "competition", None)
+    if run_diagnostics is None:
+        return None
+
+    proactive = 0
+    retroactive = 0
+    co_temporal = 0
+    strongest = 0.0
+    candidates_with_competitors = 0
+    for candidate in (*inspection.returned, *inspection.rejected):
+        competition = getattr(candidate, "competition", None)
+        if competition is None or competition.competitor_count == 0:
+            continue
+        candidates_with_competitors += 1
+        proactive += competition.proactive_count
+        retroactive += competition.retroactive_count
+        co_temporal += competition.co_temporal_count
+        strongest = max(strongest, competition.strongest_competition)
+
+    return {
+        "candidate_count": run_diagnostics.candidate_count,
+        "potential_competitor_pairs": run_diagnostics.potential_competitor_pairs,
+        "evaluated_competitor_pairs": run_diagnostics.evaluated_competitor_pairs,
+        "accepted_competition_pairs": run_diagnostics.accepted_competition_pairs,
+        "maximum_competitors_for_candidate": run_diagnostics.maximum_competitors_for_candidate,
+        "candidates_with_competitors": candidates_with_competitors,
+        "proactive_count": proactive,
+        "retroactive_count": retroactive,
+        "co_temporal_count": co_temporal,
+        "strongest_competition": strongest,
+    }
+
+
+def competition_mapping_counts(
+    inspection: RecallInspectionResult,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> dict[str, int]:
+    """Count reported, mapped, and unmapped competition pairs."""
+    identity_to_memory: dict[tuple[str, str], object] = {}
+    for candidate in (*inspection.returned, *inspection.rejected):
+        memory = candidate.memory
+        identity_to_memory[(candidate.memory_kind.value, memory.memory_key)] = memory
+
+    reported = 0
+    mapped = 0
+    unmapped = 0
+    for candidate in (*inspection.returned, *inspection.rejected):
+        competition = getattr(candidate, "competition", None)
+        if competition is None:
+            continue
+        for evidence in competition.competitors:
+            reported += 1
+            candidate_event_ids = _event_ids_for_memory(
+                candidate.memory,
+                observation_id_to_event_id=observation_id_to_event_id,
+            )
+            competitor_memory = identity_to_memory.get(
+                (
+                    evidence.competitor_identity.memory_kind.value,
+                    evidence.competitor_identity.memory_key,
+                )
+            )
+            competitor_event_ids = (
+                _event_ids_for_memory(
+                    competitor_memory,
+                    observation_id_to_event_id=observation_id_to_event_id,
+                )
+                if competitor_memory is not None
+                else ()
+            )
+            if candidate_event_ids and competitor_event_ids:
+                mapped += 1
+            else:
+                unmapped += 1
+    return {
+        "competition_pairs_reported": reported,
+        "competition_pairs_mapped": mapped,
+        "competition_pairs_unmapped": unmapped,
+    }

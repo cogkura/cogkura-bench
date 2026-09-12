@@ -82,7 +82,20 @@ uv run cogkura-bench run --dataset helios_v1 --backend oracle --quiet
 uv run cogkura-bench run --dataset mini --backend cogkura --quiet
 uv run cogkura-bench validate-dataset customer_decision_context_v1
 uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle --quiet
+uv run cogkura-bench validate-dataset interference_v1
+uv run cogkura-bench run --dataset interference_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset interference_v1 --backend cogkura --quiet
 ```
+
+## Interference diagnostics (0.3.4)
+
+- `Capability.INTERFERENCE` scores competition **detection** only; not interference penalties or inhibition.
+- Competition ground truth is query-specific (`expected_competitions`, `forbidden_competitions`); do not retrofit into existing datasets.
+- Metrics operate on neutral `CompetitionObservation` values, not CogKura `backend_metadata`.
+- Unsupported backends report interference metrics as N/A.
+- Pair matching uses event-ID intersection; direction is scored separately.
+- Canonical `interference_v1` runs must have `competition_pairs_unmapped == 0`.
+- Compare CogKura competition results in [0.3.4 findings](docs/findings/interference-0.3.4.md).
 
 ## Customer decision context guidance
 

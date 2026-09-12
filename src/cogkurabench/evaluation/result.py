@@ -8,7 +8,8 @@ from datetime import datetime
 from types import MappingProxyType
 from typing import Any
 
-from cogkurabench.models import Capability, RetrievedItem
+from cogkurabench.metrics.competition import CompetitionDiagnosticResult
+from cogkurabench.models import Capability, CompetitionObservation, RetrievedItem
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +91,8 @@ class QueryResult:
     evidence_group_diagnostics: tuple[EvidenceGroupDiagnosticResult, ...] = ()
     forbidden_group_diagnostics: tuple[ForbiddenGroupDiagnosticResult, ...] = ()
     context_item_classifications: tuple[ItemGroupClassificationResult, ...] = ()
+    competition_observations: tuple[CompetitionObservation, ...] = ()
+    competition_diagnostics: tuple[CompetitionDiagnosticResult, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))

@@ -47,6 +47,12 @@
 - [x] CogKura relationship ingest and `inspect_recall` diagnostics in backend metadata
 - [x] Customer decision-context 0.3.3 findings (A/B/C attribution)
 
+## 0.3.4
+
+- [x] Competition diagnostics benchmarking (`Capability.INTERFERENCE`)
+- [x] `interference_v1` controlled fixture and CogKura 0.17.x adapter mapping
+- [x] Interference 0.3.4 findings
+
 ## Future
 
 - Vector/RAG baseline

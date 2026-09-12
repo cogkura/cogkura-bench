@@ -26,6 +26,7 @@ from cogkurabench.evaluation.result import (
     EnvironmentInfo,
     QueryResult,
 )
+from cogkurabench.metrics.competition import finalize_competition_metrics
 from cogkurabench.models import (
     AssessmentRequest,
     BenchmarkAction,
@@ -159,6 +160,10 @@ class BenchmarkRunner:
                             context_items=(
                                 context_response.items if context_response is not None else ()
                             ),
+                            competition_observations=response.competition_observations,
+                            competition_diagnostics_supported=(
+                                backend.capabilities.competition_diagnostics
+                            ),
                         )
                     )
 
@@ -182,6 +187,24 @@ class BenchmarkRunner:
                 capability=Capability.METAMEMORY,
                 query_count=0,
                 metrics=metamemory_metrics,
+            )
+
+        competition_metrics = finalize_competition_metrics(query_results)
+        if competition_metrics and Capability.INTERFERENCE.value in capability_results:
+            existing = capability_results[Capability.INTERFERENCE.value]
+            capability_results[Capability.INTERFERENCE.value] = type(existing)(
+                capability=existing.capability,
+                query_count=existing.query_count,
+                metrics={**dict(existing.metrics), **competition_metrics},
+            )
+        elif competition_metrics:
+            interference_count = sum(
+                1 for result in query_results if result.capability is Capability.INTERFERENCE
+            )
+            capability_results[Capability.INTERFERENCE.value] = CapabilityResult(
+                capability=Capability.INTERFERENCE,
+                query_count=interference_count,
+                metrics=competition_metrics,
             )
 
         backend_version = backend.version

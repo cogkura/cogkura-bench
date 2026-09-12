@@ -1,0 +1,11 @@
+{
+  "name": "interference-v1",
+  "schema_version": 1,
+  "events": 16,
+  "queries": 8,
+  "feedback": 0,
+  "description": "Controlled competition diagnostics fixture for software-engineering interference scenarios.",
+  "required_capabilities": [
+    "interference"
+  ]
+}

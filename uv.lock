@@ -286,16 +286,16 @@ wheels = [
 
 [[package]]
 name = "cogkura"
-version = "0.16.4"
+version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/47/18/d6febe616a949c60a033a0a8f3735237a881e4fb71d31ede15ad81869a21/cogkura-0.16.4.tar.gz", hash = "sha256:7d4ee8dc643392ee0036063bbe08dac85dd9a5bcafb7b13da6bc6f5fb7daca4e", size = 315371, upload-time = "2026-09-07T11:42:30.177Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/a2/8552b54dd184ee98bc4af44c55c9b7617334ff54b4ab7de658247773615e/cogkura-0.17.0.tar.gz", hash = "sha256:211c8736c2725e4d3cff64e05a5dcaa1db42d7dee45357256d9e09a2fab1fbb7", size = 334160, upload-time = "2026-09-12T11:03:12.26Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/c1/83853618acef3881a35e49f87c3c72ffe368f75b951027b78fa9386b0e9f/cogkura-0.16.4-py3-none-any.whl", hash = "sha256:24549aaff51d98d10648e540ad31cfa3f030dcfb49c5b60ef773c7246c25ce7d", size = 165235, upload-time = "2026-09-07T11:42:28.631Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/cf/ac3e53b66a651e5ac8a3791378d0b3b9e8f2c3687140ec3a8af1e2284d69/cogkura-0.17.0-py3-none-any.whl", hash = "sha256:4c4e9f8da9ec81043b5ccb04338628af6e5b980ef469d877e28cccf5df7795cb", size = 171089, upload-time = "2026-09-12T11:03:10.957Z" },
 ]
 
 [[package]]
 name = "cogkurabench"
-version = "0.3.3"
+version = "0.3.4"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -314,7 +314,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "cogkura", marker = "extra == 'cogkura'", specifier = ">=0.16.4,<0.17.0" }]
+requires-dist = [{ name = "cogkura", marker = "extra == 'cogkura'", specifier = ">=0.17.0,<0.18.0" }]
 provides-extras = ["cogkura"]
 
 [package.metadata.requires-dev]

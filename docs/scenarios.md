@@ -30,6 +30,19 @@ uv run cogkura-bench inspect helios-temporal-curr-001 --backend cogkura --datase
 uv run cogkura-bench inspect helios-temporal-hist-001 --backend cogkura --dataset helios_v1
 ```
 
+## Interference (`interference_v1`)
+
+Controlled software-engineering fixture (16 events, 8 queries) for competition diagnostics attribution. Scenarios cover proactive/retroactive/co-temporal competition, entity-overlap negative controls, cross-subject rejection, semantic supersession boundaries, historical isolation, repeated-support provenance grouping, and non-contradictory competition. Uses `Capability.INTERFERENCE` only; does not modify existing dataset gold.
+
+Validate and run:
+
+```bash
+uv run cogkura-bench validate-dataset interference_v1
+uv run cogkura-bench run --dataset interference_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset interference_v1 --backend cogkura --quiet
+uv run cogkura-bench inspect interference-deploy-current --dataset interference_v1 --backend cogkura
+```
+
 ## Customer Decision Context (`customer_decision_context_v1`)
 
 Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.

@@ -12,6 +12,9 @@ from cogkurabench.evaluation.result import (
     ItemGroupClassificationResult,
     QueryResult,
 )
+from cogkurabench.metrics.competition import (
+    compute_competition_metrics,
+)
 from cogkurabench.metrics.efficiency import compute_efficiency_metrics
 from cogkurabench.metrics.evidence_groups import compute_evidence_group_diagnostics
 from cogkurabench.metrics.forgetting import compute_forgetting_metrics
@@ -30,6 +33,7 @@ from cogkurabench.models import (
     AssessmentResponse,
     BenchmarkQuery,
     Capability,
+    CompetitionObservation,
     ContextResponse,
     ProjectEvent,
     RetrievedItem,
@@ -110,6 +114,8 @@ def evaluate_query(
     backend_metadata: dict[str, object] | None = None,
     context_backend_metadata: dict[str, object] | None = None,
     context_items: Sequence[RetrievedItem] = (),
+    competition_observations: Sequence[CompetitionObservation] = (),
+    competition_diagnostics_supported: bool = False,
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
     ordered_items = order_retrieved_items(retrieved_items)
@@ -198,6 +204,13 @@ def evaluate_query(
     )
     metrics.update(group_metrics)
 
+    competition_metrics, competition_diagnostics = compute_competition_metrics(
+        query,
+        competition_observations,
+        competition_diagnostics_supported=competition_diagnostics_supported,
+    )
+    metrics.update(competition_metrics)
+
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
@@ -250,6 +263,8 @@ def evaluate_query(
             )
             for item in item_classifications
         ),
+        competition_observations=tuple(competition_observations),
+        competition_diagnostics=competition_diagnostics,
     )
 
 
@@ -293,6 +308,8 @@ def apply_learning_deltas(
                 evidence_group_diagnostics=result.evidence_group_diagnostics,
                 forbidden_group_diagnostics=result.forbidden_group_diagnostics,
                 context_item_classifications=result.context_item_classifications,
+                competition_observations=result.competition_observations,
+                competition_diagnostics=result.competition_diagnostics,
             )
         )
     return updated

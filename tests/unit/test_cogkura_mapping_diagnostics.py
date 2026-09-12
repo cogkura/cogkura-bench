@@ -3,9 +3,12 @@
 from dataclasses import dataclass
 
 from cogkurabench.backends.cogkura_diagnostics import (
+    competition_inspection_to_observations,
+    competition_mapping_counts,
     map_ranked_recall_results,
     retrieval_context_diagnostics_to_metadata,
 )
+from cogkurabench.models import CompetitionDirection
 
 
 class _Evidence:
@@ -119,6 +122,113 @@ def test_map_ranked_recall_results_empty_raw() -> None:
 def test_retrieval_context_diagnostics_absent_when_missing() -> None:
     inspection = type("Inspection", (), {})()
     assert retrieval_context_diagnostics_to_metadata(inspection) is None
+
+
+class _CompetitionEvidence:
+    def __init__(
+        self,
+        *,
+        competitor_memory: object,
+        direction: str = "proactive",
+        strength: float = 0.87,
+    ) -> None:
+        self.competitor_identity = type(
+            "Identity",
+            (),
+            {
+                "memory_kind": type("Kind", (), {"value": "episode"})(),
+                "memory_key": competitor_memory.memory_key,
+            },
+        )()
+        self.direction = type("Direction", (), {"value": direction})()
+        self.strength = strength
+        self.same_subject = True
+        self.same_semantic_slot = True
+        self.same_predicate = True
+        self.shared_entity_ids = ("payments-api",)
+        self.shared_features = ("deployment",)
+        self.relationship_strength = 0.8
+        self.joint_cue_fit = 0.7
+        self.candidate_cue_fit = 0.9
+        self.competitor_cue_fit = 0.8
+
+
+class _KeyedEpisodeMemory(_EpisodeMemory):
+    def __init__(
+        self,
+        *,
+        memory_key: str,
+        observation_ids: tuple[str, ...],
+        statement: str = "text",
+    ) -> None:
+        super().__init__(observation_ids=observation_ids, statement=statement)
+        self.memory_key = memory_key
+
+
+class _InspectionCandidate:
+    def __init__(self, *, memory: object, competitors: tuple[object, ...]) -> None:
+        self.memory_kind = type("Kind", (), {"value": "episode"})()
+        self.memory = memory
+        self.competition = type(
+            "CompetitionDiagnostics",
+            (),
+            {
+                "competitor_count": len(competitors),
+                "competitors": competitors,
+            },
+        )()
+
+
+def test_competition_inspection_maps_event_ids() -> None:
+    candidate = _KeyedEpisodeMemory(memory_key="cand", observation_ids=("obs-new",))
+    competitor = _KeyedEpisodeMemory(memory_key="comp", observation_ids=("obs-old",))
+    inspection = type(
+        "Inspection",
+        (),
+        {
+            "returned": (
+                _InspectionCandidate(
+                    memory=candidate,
+                    competitors=(_CompetitionEvidence(competitor_memory=competitor),),
+                ),
+            ),
+            "rejected": (_InspectionCandidate(memory=competitor, competitors=()),),
+        },
+    )()
+    observations = competition_inspection_to_observations(
+        inspection,
+        observation_id_to_event_id={"obs-new": "deploy-gha-001", "obs-old": "deploy-jenkins-001"},
+    )
+    assert len(observations) == 1
+    assert observations[0].candidate_source_event_ids == ("deploy-gha-001",)
+    assert observations[0].competitor_source_event_ids == ("deploy-jenkins-001",)
+    assert observations[0].direction is CompetitionDirection.PROACTIVE
+    assert observations[0].strength == 0.87
+
+
+def test_competition_mapping_counts_track_unmapped_pairs() -> None:
+    candidate = _KeyedEpisodeMemory(memory_key="cand", observation_ids=("obs-new",))
+    competitor = _KeyedEpisodeMemory(memory_key="comp", observation_ids=("obs-missing",))
+    inspection = type(
+        "Inspection",
+        (),
+        {
+            "returned": (
+                _InspectionCandidate(
+                    memory=candidate,
+                    competitors=(_CompetitionEvidence(competitor_memory=competitor),),
+                ),
+            ),
+            "rejected": (_InspectionCandidate(memory=competitor, competitors=()),),
+        },
+    )()
+    counts = competition_mapping_counts(
+        inspection,
+        observation_id_to_event_id={"obs-new": "deploy-gha-001"},
+    )
+    assert counts["competition_pairs_reported"] == 1
+    assert counts["competition_pairs_mapped"] == 0
+    assert counts["competition_pairs_unmapped"] == 1
 
 
 def test_retrieval_context_diagnostics_serializes_dataclass_fields() -> None:

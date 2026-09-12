@@ -5,7 +5,12 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from cogkurabench.evaluation.result import QueryResult
-from cogkurabench.models import BenchmarkQuery, ProjectEvent, RetrievedItem
+from cogkurabench.models import (
+    BenchmarkQuery,
+    CompetitionExpectation,
+    ProjectEvent,
+    RetrievedItem,
+)
 
 
 def format_query_header(query: BenchmarkQuery) -> str:
@@ -196,6 +201,102 @@ def format_context_items_with_groups(query_result: QueryResult) -> str:
     return "\n".join(lines)
 
 
+def _format_competition_expectation(expectation: CompetitionExpectation) -> str:
+    candidate = ", ".join(expectation.candidate_event_ids)
+    competitor = ", ".join(expectation.competitor_event_ids)
+    direction = expectation.direction.value if expectation.direction is not None else "any"
+    return f"  {expectation.id}: {candidate} -> {competitor} [{direction}]"
+
+
+def format_competition_diagnostics_section(
+    query: BenchmarkQuery,
+    query_result: QueryResult,
+) -> str:
+    """Render expected, forbidden, and observed competition relationships."""
+    if not (
+        query.expected_competitions
+        or query.forbidden_competitions
+        or query_result.competition_diagnostics
+    ):
+        return ""
+
+    lines = ["Competition diagnostics", ""]
+    lines.append("Expected:")
+    if query.expected_competitions:
+        lines.extend(_format_competition_expectation(item) for item in query.expected_competitions)
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Forbidden:")
+    if query.forbidden_competitions:
+        lines.extend(_format_competition_expectation(item) for item in query.forbidden_competitions)
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Observed:")
+    if query_result.competition_diagnostics:
+        for diag in query_result.competition_diagnostics:
+            candidate = ", ".join(diag.candidate_source_event_ids)
+            competitor = ", ".join(diag.competitor_source_event_ids)
+            lines.append(f"  {candidate} -> {competitor}")
+            lines.append(f"    direction: {diag.direction.value}")
+            if diag.strength is not None:
+                lines.append(f"    strength: {diag.strength:.2f}")
+            lines.append(f"    classification: {diag.classification}")
+    else:
+        lines.append("  (none)")
+
+    expected_total = len(query.expected_competitions)
+    expected_matched = sum(
+        1 for diag in query_result.competition_diagnostics if diag.classification == "expected"
+    )
+    unexpected = sum(
+        1 for diag in query_result.competition_diagnostics if diag.classification == "unexpected"
+    )
+    forbidden_matched = sum(
+        1 for diag in query_result.competition_diagnostics if diag.classification == "forbidden"
+    )
+    unmapped = 0
+    cogkura_meta = query_result.backend_metadata.get("cogkura", {})
+    if isinstance(cogkura_meta, Mapping):
+        unmapped = int(cogkura_meta.get("competition_pairs_unmapped", 0))
+
+    lines.extend(
+        [
+            "",
+            "Summary:",
+            f"  expected matched: {expected_matched}/{expected_total}",
+            f"  unexpected: {unexpected}",
+            f"  forbidden matched: {forbidden_matched}",
+            f"  unmapped: {unmapped}",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def format_cogkura_competition_inspection_section(
+    backend_metadata: Mapping[str, object],
+) -> str:
+    """Render CogKura-specific competition inspection counters."""
+    cogkura_meta = backend_metadata.get("cogkura", {})
+    if not isinstance(cogkura_meta, Mapping):
+        return ""
+    inspection = cogkura_meta.get("competition_inspection")
+    if not isinstance(inspection, Mapping):
+        return ""
+    lines = ["Competition inspection", ""]
+    lines.append(f"Candidates with competitors: {inspection.get('candidates_with_competitors', 0)}")
+    lines.append(f"Competition pairs evaluated: {inspection.get('evaluated_competitor_pairs', 0)}")
+    lines.append(f"Competition pairs accepted: {inspection.get('accepted_competition_pairs', 0)}")
+    strongest = inspection.get("strongest_competition")
+    if strongest is not None:
+        lines.append(f"Strongest competition: {strongest}")
+    lines.append(f"Proactive: {inspection.get('proactive_count', 0)}")
+    lines.append(f"Retroactive: {inspection.get('retroactive_count', 0)}")
+    lines.append(f"Co-temporal: {inspection.get('co_temporal_count', 0)}")
+    return "\n".join(lines)
+
+
 def format_structured_relationships_section(
     backend_metadata: Mapping[str, object],
 ) -> str:
@@ -273,6 +374,14 @@ def format_query_inspection(
     )
     if metadata_section:
         sections.extend(["", metadata_section])
+    competition_section = format_competition_diagnostics_section(query, query_result)
+    if competition_section:
+        sections.extend(["", competition_section])
+    cogkura_competition_section = format_cogkura_competition_inspection_section(
+        query_result.backend_metadata
+    )
+    if cogkura_competition_section:
+        sections.extend(["", cogkura_competition_section])
     relationship_section = format_structured_relationships_section(query_result.backend_metadata)
     if relationship_section:
         sections.extend(["", relationship_section])

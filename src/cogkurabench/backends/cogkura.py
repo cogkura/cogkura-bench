@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING, Any
 from cogkurabench.backends.cogkura_diagnostics import (
     COGKURA_METADATA_SCHEMA_VERSION,
     RecallMappingResult,
+    competition_inspection_to_metadata,
+    competition_inspection_to_observations,
+    competition_mapping_counts,
     dataclass_to_metadata,
     json_safe_metadata_value,
     map_ranked_recall_results,
@@ -139,9 +142,10 @@ def _relationships_to_metadata(
 
 
 class CogKuraBackend:
-    """Benchmark adapter for CogKura 0.16.x public memory API."""
+    """Benchmark adapter for CogKura 0.17.x public memory API."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, competition_enabled: bool = True) -> None:
+        self._competition_enabled = competition_enabled
         self._memory: Memory | None = None
         self._observation_store: Any = None
         self._observation_id_to_event_id: dict[str, str] = {}
@@ -183,6 +187,7 @@ class CogKuraBackend:
             learn=True,
             forget=True,
             maintain=True,
+            competition_diagnostics=self._competition_enabled,
         )
 
     async def reset(self) -> None:
@@ -192,6 +197,7 @@ class CogKuraBackend:
         from cogkura.algorithms.semantic import (
             ComplementaryLearningSemanticConsolidator,  # noqa: PLC0415
         )
+        from cogkura.models import CompetitionConfig  # noqa: PLC0415
         from cogkura.storage.in_memory_observation import InMemoryObservationStore  # noqa: PLC0415
 
         self._version = _installed_cogkura_version(cogkura)
@@ -204,6 +210,7 @@ class CogKuraBackend:
             semantic_consolidator=ComplementaryLearningSemanticConsolidator(
                 minimum_supporting_episodes=1,
             ),
+            competition_config=CompetitionConfig(enabled=self._competition_enabled),
         )
         self._observation_id_to_event_id.clear()
         self._events_ingested = 0
@@ -294,15 +301,26 @@ class CogKuraBackend:
         )
         mapping = self._map_recall_results(results)
         latency_ms = (time.perf_counter() - start) * 1000.0
+        competition_observations = competition_inspection_to_observations(
+            inspection,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+        )
+        competition_counts = competition_mapping_counts(
+            inspection,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+        )
         backend_metadata = self._build_response_metadata(
             recall_mapping=mapping,
             snapshot_at=request.as_of,
             relationship_inspection=relationship_inspection_to_metadata(inspection),
             retrieval_context=retrieval_context_diagnostics_to_metadata(inspection),
+            competition_inspection=competition_inspection_to_metadata(inspection),
+            competition_counts=competition_counts,
         )
         return RetrievalResponse(
             items=mapping.items,
             latency_ms=latency_ms,
+            competition_observations=competition_observations,
             backend_metadata=backend_metadata,
         )
 
@@ -539,6 +557,8 @@ class CogKuraBackend:
         snapshot_at: datetime | None = None,
         relationship_inspection: Mapping[str, object] | None = None,
         retrieval_context: Mapping[str, object] | None = None,
+        competition_inspection: Mapping[str, object] | None = None,
+        competition_counts: Mapping[str, int] | None = None,
     ) -> dict[str, object]:
         payload: dict[str, object] = {
             "cogkura": {
@@ -591,6 +611,10 @@ class CogKuraBackend:
             cogkura_payload["relationship_inspection"] = dict(relationship_inspection)
         if retrieval_context is not None:
             cogkura_payload["retrieval_context"] = dict(retrieval_context)
+        if competition_inspection is not None:
+            cogkura_payload["competition_inspection"] = dict(competition_inspection)
+        if competition_counts is not None:
+            cogkura_payload.update(dict(competition_counts))
         return payload
 
     def _statement_for_result(self, result: RecallResult) -> str:

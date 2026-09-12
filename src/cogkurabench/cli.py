@@ -11,7 +11,7 @@ from cogkurabench.backends.registry import available_backends, create_backend
 from cogkurabench.compare import compare_backends
 from cogkurabench.dataset import ensure_valid_dataset, list_datasets, validate_dataset
 from cogkurabench.demo.project_demo import run_demo
-from cogkurabench.evaluation.report import _primary_metric_name
+from cogkurabench.evaluation.report import _format_metric_value, _primary_metric_name
 from cogkurabench.inspect import inspect_query
 from cogkurabench.runner import BenchmarkRunner
 
@@ -92,8 +92,9 @@ async def _dispatch(args: argparse.Namespace) -> int:
             )
             for capability_name, capability_result in sorted(result.capability_results.items()):
                 primary = _primary_metric_name(capability_result.capability)
-                value = capability_result.metrics.get(primary, 0.0)
-                print(f"  {capability_name}: {primary}={value:.3f}")
+                value = capability_result.metrics.get(primary)
+                formatted = _format_metric_value(capability_result.capability, primary, value)
+                print(f"  {capability_name}: {primary}={formatted}")
         return 0
 
     if args.command == "demo":
