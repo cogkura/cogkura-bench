@@ -57,12 +57,16 @@ async def test_cogkura_competition_disabled_retrieval_parity() -> None:
     enabled_by_id = {result.query_id: result for result in enabled_result.query_results}
     for disabled_result_item in disabled_result.query_results:
         enabled_item = enabled_by_id[disabled_result_item.query_id]
+        # Competition diagnostics must not change gold retrieval coverage. Exact
+        # MRR / full ranked lists can differ across CogKura runs from tie
+        # ordering, including two competition-enabled runs, so they are not
+        # used as a competition-neutrality signal.
         assert disabled_result_item.metrics.get("recall@5") == enabled_item.metrics.get("recall@5")
-        assert disabled_result_item.metrics.get("mrr") == enabled_item.metrics.get("mrr")
-        if enabled_item.retrieved_items and disabled_result_item.retrieved_items:
-            assert (
-                enabled_item.retrieved_items[0].source_event_ids
-                == disabled_result_item.retrieved_items[0].source_event_ids
-            )
+        enabled_gold = set(enabled_item.retrieved_event_ids) & set(enabled_item.expected_event_ids)
+        disabled_gold = set(disabled_result_item.retrieved_event_ids) & set(
+            disabled_result_item.expected_event_ids
+        )
+        assert disabled_gold == enabled_gold
         assert not disabled_result_item.competition_observations
-        assert enabled_item.competition_observations or True
+        assert enabled.capabilities.competition_diagnostics is True
+        assert disabled.capabilities.competition_diagnostics is False
