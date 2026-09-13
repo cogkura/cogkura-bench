@@ -6,7 +6,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, is_dataclass
 from typing import TYPE_CHECKING, Any
 
-from cogkurabench.models import CompetitionDirection, CompetitionObservation, RetrievedItem
+from cogkurabench.models import (
+    CompetitionDirection,
+    CompetitionObservation,
+    InterferenceContributionObservation,
+    RetrievedItem,
+    TransientInterferenceObservation,
+)
 
 if TYPE_CHECKING:
     from cogkura.models import RecallInspectionResult, RecallResult
@@ -486,4 +492,146 @@ def competition_mapping_counts(
         "competition_pairs_reported": reported,
         "competition_pairs_mapped": mapped,
         "competition_pairs_unmapped": unmapped,
+    }
+
+
+def interference_inspection_to_observations(
+    inspection: RecallInspectionResult,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> tuple[TransientInterferenceObservation, ...]:
+    """Map CogKura inspect_recall interference diagnostics to benchmark observations."""
+    identity_to_memory: dict[tuple[str, str], object] = {}
+    for candidate in (*inspection.returned, *inspection.rejected):
+        memory = candidate.memory
+        identity_to_memory[(candidate.memory_kind.value, memory.memory_key)] = memory
+
+    observations: list[TransientInterferenceObservation] = []
+    for candidate in (*inspection.returned, *inspection.rejected):
+        competition = getattr(candidate, "competition", None)
+        if competition is None or competition.interference is None:
+            continue
+
+        candidate_event_ids = _event_ids_for_memory(
+            candidate.memory,
+            observation_id_to_event_id=observation_id_to_event_id,
+        )
+        if not candidate_event_ids:
+            continue
+
+        interference = competition.interference
+        diagnostics = candidate.diagnostics
+        activation_before = candidate.activation
+        if diagnostics is not None and diagnostics.activation_before_interference is not None:
+            activation_before = diagnostics.activation_before_interference
+
+        crossed = False
+        if diagnostics is not None:
+            crossed = bool(diagnostics.crossed_activation_threshold_due_to_interference)
+
+        contributions: list[InterferenceContributionObservation] = []
+        for contribution in interference.contributions:
+            competitor_memory = identity_to_memory.get(
+                (
+                    contribution.competitor_identity.memory_kind.value,
+                    contribution.competitor_identity.memory_key,
+                )
+            )
+            if competitor_memory is None:
+                continue
+            competitor_event_ids = _event_ids_for_memory(
+                competitor_memory,
+                observation_id_to_event_id=observation_id_to_event_id,
+            )
+            if not competitor_event_ids:
+                continue
+            contributions.append(
+                InterferenceContributionObservation(
+                    competitor_source_event_ids=competitor_event_ids,
+                    direction=_bench_direction(contribution.direction),
+                    competition_strength=contribution.strength,
+                    competitor_accessibility=contribution.competitor_accessibility,
+                    pressure=contribution.pressure,
+                )
+            )
+
+        observations.append(
+            TransientInterferenceObservation(
+                candidate_source_event_ids=candidate_event_ids,
+                activation_before=activation_before,
+                activation_after=candidate.activation,
+                proactive_pressure=interference.proactive_pressure,
+                retroactive_pressure=interference.retroactive_pressure,
+                proactive_penalty=interference.proactive_penalty,
+                retroactive_penalty=interference.retroactive_penalty,
+                total_penalty=interference.total_penalty,
+                crossed_activation_threshold=crossed,
+                rank_before=candidate.rank_before_interference,
+                rank_after=candidate.rank_after_interference or candidate.rank,
+                contributions=tuple(contributions),
+            )
+        )
+    return tuple(observations)
+
+
+def interference_mapping_counts(
+    inspection: RecallInspectionResult,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> dict[str, int]:
+    """Count reported, mapped, and unmapped interference candidates and contributions."""
+    identity_to_memory: dict[tuple[str, str], object] = {}
+    for candidate in (*inspection.returned, *inspection.rejected):
+        memory = candidate.memory
+        identity_to_memory[(candidate.memory_kind.value, memory.memory_key)] = memory
+
+    candidates_reported = 0
+    candidates_mapped = 0
+    candidates_unmapped = 0
+    contributions_reported = 0
+    contributions_mapped = 0
+    contributions_unmapped = 0
+
+    for candidate in (*inspection.returned, *inspection.rejected):
+        competition = getattr(candidate, "competition", None)
+        if competition is None or competition.interference is None:
+            continue
+        candidates_reported += 1
+        candidate_event_ids = _event_ids_for_memory(
+            candidate.memory,
+            observation_id_to_event_id=observation_id_to_event_id,
+        )
+        if candidate_event_ids:
+            candidates_mapped += 1
+        else:
+            candidates_unmapped += 1
+
+        for contribution in competition.interference.contributions:
+            contributions_reported += 1
+            competitor_memory = identity_to_memory.get(
+                (
+                    contribution.competitor_identity.memory_kind.value,
+                    contribution.competitor_identity.memory_key,
+                )
+            )
+            competitor_event_ids = (
+                _event_ids_for_memory(
+                    competitor_memory,
+                    observation_id_to_event_id=observation_id_to_event_id,
+                )
+                if competitor_memory is not None
+                else ()
+            )
+            if candidate_event_ids and competitor_event_ids:
+                contributions_mapped += 1
+            else:
+                contributions_unmapped += 1
+
+    return {
+        "interference_candidates_reported": candidates_reported,
+        "interference_candidates_mapped": candidates_mapped,
+        "interference_candidates_unmapped": candidates_unmapped,
+        "interference_contributions_reported": contributions_reported,
+        "interference_contributions_mapped": contributions_mapped,
+        "interference_contributions_unmapped": contributions_unmapped,
     }

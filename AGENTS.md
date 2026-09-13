@@ -85,17 +85,23 @@ uv run cogkura-bench run --dataset customer_decision_context_v1 --backend oracle
 uv run cogkura-bench validate-dataset interference_v1
 uv run cogkura-bench run --dataset interference_v1 --backend oracle --quiet
 uv run cogkura-bench run --dataset interference_v1 --backend cogkura --quiet
+uv run cogkura-bench validate-dataset transient_interference_v1
+uv run cogkura-bench run --dataset transient_interference_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura --quiet
+uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-interference --quiet
 ```
 
-## Interference diagnostics (0.3.4)
+## Interference diagnostics (0.3.4 / 0.3.5)
 
 - `Capability.INTERFERENCE` scores competition **detection** only; not interference penalties or inhibition.
-- Competition ground truth is query-specific (`expected_competitions`, `forbidden_competitions`); do not retrofit into existing datasets.
-- Metrics operate on neutral `CompetitionObservation` values, not CogKura `backend_metadata`.
-- Unsupported backends report interference metrics as N/A.
+- `Capability.TRANSIENT_INTERFERENCE` scores behavioural consequence only (`cogkura-interference` profile).
+- Competition ground truth is query-specific (`expected_competitions`, `forbidden_competitions`); behavioural ground truth uses `expected_interference_effects` / `forbidden_interference_effects` on `transient_interference_v1` only.
+- Metrics operate on neutral observations, not CogKura `backend_metadata`.
+- Unsupported backends and the control `cogkura` profile report transient interference metrics as N/A.
 - Pair matching uses event-ID intersection; direction is scored separately.
-- Canonical `interference_v1` runs must have `competition_pairs_unmapped == 0`.
-- Compare CogKura competition results in [0.3.4 findings](docs/findings/interference-0.3.4.md).
+- Canonical `interference_v1` runs must have `competition_pairs_unmapped == 0`; `transient_interference_v1` must have `interference_contributions_unmapped == 0`.
+- Do not modify `interference_v1` when evaluating 0.17.1 hardening.
+- Compare results in [0.3.5 findings](docs/findings/interference-0.3.5.md) and [0.3.4 findings](docs/findings/interference-0.3.4.md).
 
 ## Customer decision context guidance
 

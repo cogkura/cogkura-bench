@@ -43,6 +43,16 @@ uv run cogkura-bench run --dataset interference_v1 --backend cogkura --quiet
 uv run cogkura-bench inspect interference-deploy-current --dataset interference_v1 --backend cogkura
 ```
 
+## Transient interference (`transient_interference_v1`)
+
+Controlled behavioural fixture (20 events, 10 queries) for proactive/retroactive suppression, isolation, rank movement, threshold crossing, support-lineage non-multiplication, co-temporal zero penalty, and semantic supersession boundaries. Uses `Capability.TRANSIENT_INTERFERENCE` with `cogkura-interference`; control `cogkura` reports behavioural metrics as N/A. `interference_v1` remains unchanged for hardening comparison.
+
+```bash
+uv run cogkura-bench validate-dataset transient_interference_v1
+uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-interference --quiet
+uv run cogkura-bench inspect ti-proactive --dataset transient_interference_v1 --backend cogkura-interference
+```
+
 ## Customer Decision Context (`customer_decision_context_v1`)
 
 Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.

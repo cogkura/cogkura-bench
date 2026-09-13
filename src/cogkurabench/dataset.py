@@ -27,6 +27,7 @@ from cogkurabench.models import (
     ProjectEvent,
     QueryAction,
     SemanticFact,
+    TransientInterferenceExpectation,
 )
 
 
@@ -141,6 +142,7 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
                     )
         errors.extend(_validate_evidence_groups(query, events_by_id))
         errors.extend(_validate_competitions(query, events_by_id))
+        errors.extend(_validate_interference_effects(query, events_by_id))
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -160,6 +162,95 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
     sequences = [(event.timestamp, event.sequence, event.id) for event in dataset.events]
     if len({(ts, seq) for ts, seq, _ in sequences}) != len(sequences):
         errors.append("event (timestamp, sequence) pairs are not unique")
+
+    return errors
+
+
+def _validate_interference_effects(
+    query: BenchmarkQuery,
+    events_by_id: dict[str, ProjectEvent],
+) -> list[str]:
+    """Validate transient interference expectation references for one query."""
+    errors: list[str] = []
+    has_interference_fields = bool(
+        query.expected_interference_effects or query.forbidden_interference_effects
+    )
+    if has_interference_fields and query.capability is not Capability.TRANSIENT_INTERFERENCE:
+        errors.append(
+            f"query {query.id} declares interference effects but capability is "
+            f"{query.capability.value}"
+        )
+    if query.capability is Capability.TRANSIENT_INTERFERENCE and not (
+        query.expected_interference_effects or query.forbidden_interference_effects
+    ):
+        errors.append(
+            f"query {query.id} has transient_interference capability but no interference effects"
+        )
+
+    seen_signatures: set[tuple[tuple[str, ...], tuple[str, ...], str]] = set()
+    expected_signatures: set[tuple[tuple[str, ...], tuple[str, ...], str]] = set()
+
+    for label, expectations in (
+        ("expected", query.expected_interference_effects),
+        ("forbidden", query.forbidden_interference_effects),
+    ):
+        for expectation in expectations:
+            signature = (
+                tuple(sorted(expectation.candidate_event_ids)),
+                tuple(sorted(expectation.competitor_event_ids)),
+                expectation.direction.value,
+            )
+            if signature in seen_signatures:
+                errors.append(
+                    f"query {query.id} interference expectation {expectation.id} duplicates "
+                    "an existing interference declaration"
+                )
+            seen_signatures.add(signature)
+            if label == "expected":
+                expected_signatures.add(signature)
+
+            for event_id in (*expectation.candidate_event_ids, *expectation.competitor_event_ids):
+                if event_id not in events_by_id:
+                    errors.append(
+                        f"query {query.id} interference expectation {expectation.id} "
+                        f"references unknown event {event_id}"
+                    )
+                elif label == "expected":
+                    evidence_event = events_by_id[event_id]
+                    if evidence_event.timestamp > query.timestamp:
+                        errors.append(
+                            f"query {query.id} interference expectation {expectation.id} "
+                            f"references future event {event_id}"
+                        )
+                    if query.valid_at is not None and evidence_event.timestamp > query.valid_at:
+                        errors.append(
+                            f"query {query.id} interference expectation {expectation.id} "
+                            f"references event {event_id} after valid_at"
+                        )
+
+    for forbidden in query.forbidden_interference_effects:
+        forbidden_signature = (
+            tuple(sorted(forbidden.candidate_event_ids)),
+            tuple(sorted(forbidden.competitor_event_ids)),
+            forbidden.direction.value,
+        )
+        if forbidden_signature in expected_signatures:
+            errors.append(
+                f"query {query.id} interference expectation {forbidden.id} conflicts with "
+                "an expected interference declaration"
+            )
+
+    for expectation in query.expected_interference_effects:
+        if (
+            expectation.expect_threshold_suppression is not None
+            and expectation.expect_rank_worsening is not None
+            and expectation.expect_threshold_suppression
+            and expectation.expect_rank_worsening
+        ):
+            errors.append(
+                f"query {query.id} interference expectation {expectation.id} cannot require "
+                "both threshold suppression and rank worsening"
+            )
 
     return errors
 
@@ -391,6 +482,12 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         forbidden_evidence_groups=_parse_evidence_groups(data.get("forbidden_evidence_groups", [])),
         expected_competitions=_parse_competitions(data.get("expected_competitions", [])),
         forbidden_competitions=_parse_competitions(data.get("forbidden_competitions", [])),
+        expected_interference_effects=_parse_interference_effects(
+            data.get("expected_interference_effects", [])
+        ),
+        forbidden_interference_effects=_parse_interference_effects(
+            data.get("forbidden_interference_effects", [])
+        ),
     )
 
 
@@ -402,6 +499,27 @@ def _parse_feedback(data: dict[str, Any]) -> BenchmarkFeedback:
         outcome=FeedbackOutcome(str(data["outcome"])),
         target_event_ids=tuple(str(item) for item in data.get("target_event_ids", [])),
     )
+
+
+def _parse_interference_effects(
+    items: list[dict[str, Any]],
+) -> tuple[TransientInterferenceExpectation, ...]:
+    expectations: list[TransientInterferenceExpectation] = []
+    for item in items:
+        threshold = item.get("expect_threshold_suppression")
+        rank = item.get("expect_rank_worsening")
+        expectations.append(
+            TransientInterferenceExpectation(
+                id=str(item["id"]),
+                candidate_event_ids=tuple(str(value) for value in item["candidate_event_ids"]),
+                competitor_event_ids=tuple(str(value) for value in item["competitor_event_ids"]),
+                direction=CompetitionDirection(str(item["direction"])),
+                expect_negative_effect=bool(item.get("expect_negative_effect", True)),
+                expect_threshold_suppression=(bool(threshold) if threshold is not None else None),
+                expect_rank_worsening=bool(rank) if rank is not None else None,
+            )
+        )
+    return tuple(expectations)
 
 
 def _parse_competitions(items: list[dict[str, Any]]) -> tuple[CompetitionExpectation, ...]:

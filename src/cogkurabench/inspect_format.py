@@ -10,6 +10,7 @@ from cogkurabench.models import (
     CompetitionExpectation,
     ProjectEvent,
     RetrievedItem,
+    TransientInterferenceExpectation,
 )
 
 
@@ -274,6 +275,80 @@ def format_competition_diagnostics_section(
     return "\n".join(lines)
 
 
+def _format_interference_expectation(expectation: TransientInterferenceExpectation) -> str:
+    candidate = ", ".join(expectation.candidate_event_ids)
+    competitor = ", ".join(expectation.competitor_event_ids)
+    return f"  {expectation.id}: {candidate} -> {competitor} [{expectation.direction.value}]"
+
+
+def format_transient_interference_section(
+    query: BenchmarkQuery,
+    query_result: QueryResult,
+) -> str:
+    """Render expected, forbidden, and observed transient interference effects."""
+    if not (
+        query.expected_interference_effects
+        or query.forbidden_interference_effects
+        or query_result.transient_interference_candidate_diagnostics
+        or query_result.transient_interference_diagnostics
+    ):
+        return ""
+
+    lines = ["Transient interference", ""]
+    lines.append("Expected:")
+    if query.expected_interference_effects:
+        lines.extend(
+            _format_interference_expectation(item) for item in query.expected_interference_effects
+        )
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Forbidden:")
+    if query.forbidden_interference_effects:
+        lines.extend(
+            _format_interference_expectation(item) for item in query.forbidden_interference_effects
+        )
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Candidates:")
+    if query_result.transient_interference_candidate_diagnostics:
+        for candidate in query_result.transient_interference_candidate_diagnostics:
+            candidate_ids = ", ".join(candidate.candidate_source_event_ids)
+            delta = candidate.activation_after - candidate.activation_before
+            lines.append(f"  {candidate_ids}")
+            lines.append(
+                f"    activation: {candidate.activation_before:.2f} -> "
+                f"{candidate.activation_after:.2f} (delta {delta:+.2f})"
+            )
+            lines.append(f"    total penalty: {candidate.total_penalty:.2f}")
+            if candidate.rank_before is not None and candidate.rank_after is not None:
+                lines.append(f"    rank: {candidate.rank_before} -> {candidate.rank_after}")
+            lines.append(
+                "    crossed threshold: "
+                f"{'yes' if candidate.crossed_activation_threshold else 'no'}"
+            )
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Contributions:")
+    if query_result.transient_interference_diagnostics:
+        for diag in query_result.transient_interference_diagnostics:
+            competitor = ", ".join(diag.competitor_source_event_ids)
+            lines.append(f"  -> {competitor}")
+            lines.append(f"    direction: {diag.direction.value}")
+            lines.append(f"    pressure: {diag.pressure:.2f}")
+            lines.append(f"    classification: {diag.classification}")
+    else:
+        lines.append("  (none)")
+
+    cogkura_meta = query_result.backend_metadata.get("cogkura", {})
+    if isinstance(cogkura_meta, Mapping):
+        unmapped = int(cogkura_meta.get("interference_contributions_unmapped", 0))
+        lines.extend(["", f"Unmapped contributions: {unmapped}"])
+    return "\n".join(lines)
+
+
 def format_cogkura_competition_inspection_section(
     backend_metadata: Mapping[str, object],
 ) -> str:
@@ -377,6 +452,9 @@ def format_query_inspection(
     competition_section = format_competition_diagnostics_section(query, query_result)
     if competition_section:
         sections.extend(["", competition_section])
+    transient_section = format_transient_interference_section(query, query_result)
+    if transient_section:
+        sections.extend(["", transient_section])
     cogkura_competition_section = format_cogkura_competition_inspection_section(
         query_result.backend_metadata
     )

@@ -27,6 +27,7 @@ from cogkurabench.evaluation.result import (
     QueryResult,
 )
 from cogkurabench.metrics.competition import finalize_competition_metrics
+from cogkurabench.metrics.transient_interference import finalize_transient_interference_metrics
 from cogkurabench.models import (
     AssessmentRequest,
     BenchmarkAction,
@@ -164,6 +165,12 @@ class BenchmarkRunner:
                             competition_diagnostics_supported=(
                                 backend.capabilities.competition_diagnostics
                             ),
+                            transient_interference_observations=(
+                                response.transient_interference_observations
+                            ),
+                            transient_interference_supported=(
+                                backend.capabilities.transient_interference
+                            ),
                         )
                     )
 
@@ -207,10 +214,32 @@ class BenchmarkRunner:
                 metrics=competition_metrics,
             )
 
+        transient_metrics = finalize_transient_interference_metrics(query_results)
+        if transient_metrics and Capability.TRANSIENT_INTERFERENCE.value in capability_results:
+            existing = capability_results[Capability.TRANSIENT_INTERFERENCE.value]
+            capability_results[Capability.TRANSIENT_INTERFERENCE.value] = type(existing)(
+                capability=existing.capability,
+                query_count=existing.query_count,
+                metrics={**dict(existing.metrics), **transient_metrics},
+            )
+        elif transient_metrics:
+            transient_count = sum(
+                1
+                for result in query_results
+                if result.capability is Capability.TRANSIENT_INTERFERENCE
+            )
+            capability_results[Capability.TRANSIENT_INTERFERENCE.value] = CapabilityResult(
+                capability=Capability.TRANSIENT_INTERFERENCE,
+                query_count=transient_count,
+                metrics=transient_metrics,
+            )
+
         backend_version = backend.version
         environment_metadata: dict[str, object] = {}
-        if backend.name == "cogkura" and backend_version is not None:
+        if backend.name.startswith("cogkura") and backend_version is not None:
             environment_metadata["cogkura_version"] = backend_version
+            if backend.name == "cogkura-interference":
+                environment_metadata["apply_interference"] = True
 
         result = BenchmarkResult(
             benchmark_version=__version__,

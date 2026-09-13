@@ -14,6 +14,8 @@ from cogkurabench.backends.cogkura_diagnostics import (
     competition_inspection_to_observations,
     competition_mapping_counts,
     dataclass_to_metadata,
+    interference_inspection_to_observations,
+    interference_mapping_counts,
     json_safe_metadata_value,
     map_ranked_recall_results,
     recall_mapping_metadata,
@@ -144,8 +146,16 @@ def _relationships_to_metadata(
 class CogKuraBackend:
     """Benchmark adapter for CogKura 0.17.x public memory API."""
 
-    def __init__(self, *, competition_enabled: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        competition_enabled: bool = True,
+        apply_interference: bool = False,
+        name: str | None = None,
+    ) -> None:
         self._competition_enabled = competition_enabled
+        self._apply_interference = apply_interference
+        self._backend_name = name or ("cogkura-interference" if apply_interference else "cogkura")
         self._memory: Memory | None = None
         self._observation_store: Any = None
         self._observation_id_to_event_id: dict[str, str] = {}
@@ -172,7 +182,7 @@ class CogKuraBackend:
 
     @property
     def name(self) -> str:
-        return "cogkura"
+        return self._backend_name
 
     @property
     def version(self) -> str | None:
@@ -188,6 +198,7 @@ class CogKuraBackend:
             forget=True,
             maintain=True,
             competition_diagnostics=self._competition_enabled,
+            transient_interference=self._apply_interference,
         )
 
     async def reset(self) -> None:
@@ -210,7 +221,10 @@ class CogKuraBackend:
             semantic_consolidator=ComplementaryLearningSemanticConsolidator(
                 minimum_supporting_episodes=1,
             ),
-            competition_config=CompetitionConfig(enabled=self._competition_enabled),
+            competition_config=CompetitionConfig(
+                enabled=self._competition_enabled,
+                apply_interference=self._apply_interference,
+            ),
         )
         self._observation_id_to_event_id.clear()
         self._events_ingested = 0
@@ -309,6 +323,14 @@ class CogKuraBackend:
             inspection,
             observation_id_to_event_id=self._observation_id_to_event_id,
         )
+        interference_observations = interference_inspection_to_observations(
+            inspection,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+        )
+        interference_counts = interference_mapping_counts(
+            inspection,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+        )
         backend_metadata = self._build_response_metadata(
             recall_mapping=mapping,
             snapshot_at=request.as_of,
@@ -316,11 +338,13 @@ class CogKuraBackend:
             retrieval_context=retrieval_context_diagnostics_to_metadata(inspection),
             competition_inspection=competition_inspection_to_metadata(inspection),
             competition_counts=competition_counts,
+            interference_counts=interference_counts,
         )
         return RetrievalResponse(
             items=mapping.items,
             latency_ms=latency_ms,
             competition_observations=competition_observations,
+            transient_interference_observations=interference_observations,
             backend_metadata=backend_metadata,
         )
 
@@ -559,6 +583,7 @@ class CogKuraBackend:
         retrieval_context: Mapping[str, object] | None = None,
         competition_inspection: Mapping[str, object] | None = None,
         competition_counts: Mapping[str, int] | None = None,
+        interference_counts: Mapping[str, int] | None = None,
     ) -> dict[str, object]:
         payload: dict[str, object] = {
             "cogkura": {
@@ -615,6 +640,10 @@ class CogKuraBackend:
             cogkura_payload["competition_inspection"] = dict(competition_inspection)
         if competition_counts is not None:
             cogkura_payload.update(dict(competition_counts))
+        if interference_counts is not None:
+            cogkura_payload.update(dict(interference_counts))
+        if self._apply_interference:
+            cogkura_payload["apply_interference"] = True
         return payload
 
     def _statement_for_result(self, result: RecallResult) -> str:

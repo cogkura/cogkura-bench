@@ -51,6 +51,15 @@ _CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
         "competition_direction_accuracy",
         "forbidden_competition_rate",
     ),
+    Capability.TRANSIENT_INTERFERENCE: (
+        "interference_effect_f1",
+        "interference_effect_precision",
+        "interference_effect_recall",
+        "interference_effect_direction_accuracy",
+        "unexpected_interference_rate",
+        "threshold_suppression_accuracy",
+        "rank_effect_accuracy",
+    ),
 }
 
 
@@ -115,12 +124,14 @@ def _secondary_metric_name(capability: Capability) -> str | None:
         return "temporal_historical_accuracy"
     if capability is Capability.INTERFERENCE:
         return "competition_pair_precision"
+    if capability is Capability.TRANSIENT_INTERFERENCE:
+        return "interference_effect_precision"
     return None
 
 
 def _format_metric_value(capability: Capability, metric_name: str, value: float | None) -> str:
     if value is None:
-        if capability is Capability.INTERFERENCE:
+        if capability in (Capability.INTERFERENCE, Capability.TRANSIENT_INTERFERENCE):
             return "N/A"
         return "0.000"
     return f"{value:.3f}"

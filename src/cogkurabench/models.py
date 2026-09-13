@@ -52,6 +52,7 @@ class Capability(StrEnum):
     LEARNING = "learning"
     METAMEMORY = "metamemory"
     INTERFERENCE = "interference"
+    TRANSIENT_INTERFERENCE = "transient_interference"
 
 
 class CompetitionDirection(StrEnum):
@@ -183,6 +184,75 @@ class CompetitionExpectation:
 
 
 @dataclass(frozen=True, slots=True)
+class TransientInterferenceExpectation:
+    """Query-level ground truth for a behavioural interference effect."""
+
+    id: str
+    candidate_event_ids: tuple[str, ...]
+    competitor_event_ids: tuple[str, ...]
+    direction: CompetitionDirection
+    expect_negative_effect: bool = True
+    expect_threshold_suppression: bool | None = None
+    expect_rank_worsening: bool | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("transient interference expectation id must not be empty.")
+        if not self.candidate_event_ids:
+            raise ValidationError(
+                f"transient interference expectation {self.id!r} must contain candidate event IDs."
+            )
+        if not self.competitor_event_ids:
+            raise ValidationError(
+                f"transient interference expectation {self.id!r} must contain competitor event IDs."
+            )
+        if set(self.candidate_event_ids) == set(self.competitor_event_ids):
+            raise ValidationError(
+                f"transient interference expectation {self.id!r} candidate and competitor "
+                "groups must not be identical."
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class InterferenceContributionObservation:
+    """One competitor contribution to transient interference on a candidate."""
+
+    competitor_source_event_ids: tuple[str, ...]
+    direction: CompetitionDirection
+    competition_strength: float
+    competitor_accessibility: float
+    pressure: float
+
+    def __post_init__(self) -> None:
+        if not self.competitor_source_event_ids:
+            raise ValidationError("competitor_source_event_ids must not be empty.")
+
+
+@dataclass(frozen=True, slots=True)
+class TransientInterferenceObservation:
+    """Backend-neutral observed transient interference on one recall candidate."""
+
+    candidate_source_event_ids: tuple[str, ...]
+    activation_before: float
+    activation_after: float
+    proactive_pressure: float
+    retroactive_pressure: float
+    proactive_penalty: float
+    retroactive_penalty: float
+    total_penalty: float
+    crossed_activation_threshold: bool
+    rank_before: int | None
+    rank_after: int | None
+    contributions: tuple[InterferenceContributionObservation, ...] = ()
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.candidate_source_event_ids:
+            raise ValidationError("candidate_source_event_ids must not be empty.")
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
 class CompetitionObservation:
     """Backend-neutral observed competition relationship."""
 
@@ -271,6 +341,8 @@ class BenchmarkQuery:
     forbidden_evidence_groups: tuple[EvidenceGroup, ...] = ()
     expected_competitions: tuple[CompetitionExpectation, ...] = ()
     forbidden_competitions: tuple[CompetitionExpectation, ...] = ()
+    expected_interference_effects: tuple[TransientInterferenceExpectation, ...] = ()
+    forbidden_interference_effects: tuple[TransientInterferenceExpectation, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -300,6 +372,17 @@ class BenchmarkQuery:
         ]
         if len(set(competition_ids)) != len(competition_ids):
             raise ValidationError(f"query {self.id} has duplicate competition expectation IDs.")
+        interference_ids = [
+            expectation.id
+            for expectation in (
+                *self.expected_interference_effects,
+                *self.forbidden_interference_effects,
+            )
+        ]
+        if len(set(interference_ids)) != len(interference_ids):
+            raise ValidationError(
+                f"query {self.id} has duplicate transient interference expectation IDs."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -350,6 +433,7 @@ class BackendCapabilities:
     forget: bool = False
     maintain: bool = False
     competition_diagnostics: bool = False
+    transient_interference: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -402,6 +486,7 @@ class RetrievalResponse:
     items: tuple[RetrievedItem, ...]
     latency_ms: float
     competition_observations: tuple[CompetitionObservation, ...] = ()
+    transient_interference_observations: tuple[TransientInterferenceObservation, ...] = ()
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

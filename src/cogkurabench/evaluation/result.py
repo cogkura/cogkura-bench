@@ -9,7 +9,16 @@ from types import MappingProxyType
 from typing import Any
 
 from cogkurabench.metrics.competition import CompetitionDiagnosticResult
-from cogkurabench.models import Capability, CompetitionObservation, RetrievedItem
+from cogkurabench.metrics.transient_interference import (
+    TransientInterferenceCandidateDiagnostic,
+    TransientInterferenceDiagnosticResult,
+)
+from cogkurabench.models import (
+    Capability,
+    CompetitionObservation,
+    RetrievedItem,
+    TransientInterferenceObservation,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +102,11 @@ class QueryResult:
     context_item_classifications: tuple[ItemGroupClassificationResult, ...] = ()
     competition_observations: tuple[CompetitionObservation, ...] = ()
     competition_diagnostics: tuple[CompetitionDiagnosticResult, ...] = ()
+    transient_interference_observations: tuple[TransientInterferenceObservation, ...] = ()
+    transient_interference_diagnostics: tuple[TransientInterferenceDiagnosticResult, ...] = ()
+    transient_interference_candidate_diagnostics: tuple[
+        TransientInterferenceCandidateDiagnostic, ...
+    ] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))

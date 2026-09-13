@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-09-13
+
+### Added
+
+- `Capability.TRANSIENT_INTERFERENCE` with behavioural effect metrics (`interference_effect_f1`, precision, recall, direction accuracy, unexpected rate, threshold/rank accuracy, invariant counters).
+- Neutral `TransientInterferenceExpectation`, `TransientInterferenceObservation`, `InterferenceContributionObservation`, and query-level `expected_interference_effects` / `forbidden_interference_effects`.
+- `BackendCapabilities.transient_interference` and `RetrievalResponse.transient_interference_observations`.
+- CogKura adapter mapping from `inspect_recall` interference diagnostics (including below-threshold candidates).
+- `cogkura-interference` backend profile (`apply_interference=True`) alongside control `cogkura`.
+- Dedicated `transient_interference_v1` dataset (scenarios A–J).
+- Inspect **Transient interference** section and `scripts/run_transient_interference_benchmark.py`.
+- [Interference 0.3.5 findings](docs/findings/interference-0.3.5.md).
+
+### Changed
+
+- CogKura extra requires `cogkura>=0.17.1,<0.18.0`.
+- `interference_v1` remains frozen for 0.3.4→0.3.5 hardening comparison.
+
+### Unchanged
+
+- `Capability.INTERFERENCE` still scores competition detection only.
+- Control `cogkura` profile keeps `apply_interference=False` (Core default).
+
 ## [0.3.4] - 2026-09-12
 
 ### Added

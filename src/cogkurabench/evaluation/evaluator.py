@@ -27,6 +27,9 @@ from cogkurabench.metrics.metamemory import (
 from cogkurabench.metrics.ranking import flatten_source_event_ids, order_retrieved_items
 from cogkurabench.metrics.retrieval import compute_retrieval_metrics
 from cogkurabench.metrics.temporal import compute_temporal_metrics
+from cogkurabench.metrics.transient_interference import (
+    compute_transient_interference_metrics,
+)
 from cogkurabench.metrics.updating import compute_update_metrics
 from cogkurabench.metrics.working_memory import compute_working_memory_metrics
 from cogkurabench.models import (
@@ -37,6 +40,7 @@ from cogkurabench.models import (
     ContextResponse,
     ProjectEvent,
     RetrievedItem,
+    TransientInterferenceObservation,
 )
 
 _RETRIEVAL_AGGREGATE_METRICS = frozenset(
@@ -116,6 +120,8 @@ def evaluate_query(
     context_items: Sequence[RetrievedItem] = (),
     competition_observations: Sequence[CompetitionObservation] = (),
     competition_diagnostics_supported: bool = False,
+    transient_interference_observations: Sequence[TransientInterferenceObservation] = (),
+    transient_interference_supported: bool = False,
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
     ordered_items = order_retrieved_items(retrieved_items)
@@ -211,6 +217,17 @@ def evaluate_query(
     )
     metrics.update(competition_metrics)
 
+    (
+        interference_metrics,
+        interference_diagnostics,
+        interference_candidate_diagnostics,
+    ) = compute_transient_interference_metrics(
+        query,
+        transient_interference_observations,
+        transient_interference_supported=transient_interference_supported,
+    )
+    metrics.update(interference_metrics)
+
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
@@ -265,6 +282,9 @@ def evaluate_query(
         ),
         competition_observations=tuple(competition_observations),
         competition_diagnostics=competition_diagnostics,
+        transient_interference_observations=tuple(transient_interference_observations),
+        transient_interference_diagnostics=interference_diagnostics,
+        transient_interference_candidate_diagnostics=interference_candidate_diagnostics,
     )
 
 
@@ -310,6 +330,11 @@ def apply_learning_deltas(
                 context_item_classifications=result.context_item_classifications,
                 competition_observations=result.competition_observations,
                 competition_diagnostics=result.competition_diagnostics,
+                transient_interference_observations=result.transient_interference_observations,
+                transient_interference_diagnostics=result.transient_interference_diagnostics,
+                transient_interference_candidate_diagnostics=(
+                    result.transient_interference_candidate_diagnostics
+                ),
             )
         )
     return updated

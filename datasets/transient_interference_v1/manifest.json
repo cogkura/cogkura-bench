@@ -1,0 +1,11 @@
+{
+  "name": "transient-interference-v1",
+  "schema_version": 1,
+  "events": 20,
+  "queries": 10,
+  "feedback": 0,
+  "description": "Controlled behavioural transient interference fixture for proactive, retroactive, isolation, rank, and threshold scenarios.",
+  "required_capabilities": [
+    "transient_interference"
+  ]
+}

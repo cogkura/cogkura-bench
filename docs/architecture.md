@@ -40,13 +40,17 @@ The runner calls `retrieve()` then `select_context()` when `prompt_budget_tokens
 
 ```mermaid
 flowchart TB
-    retrieve[Backend retrieve]
+    inspect[Backend inspect_recall]
     items[RetrievedItem ranked list]
     retrievalMetrics[Retrieval metrics]
-    diagnostics[CompetitionObservation list]
+    competitionObs[CompetitionObservation list]
     competitionMetrics[Competition diagnostic metrics]
-    retrieve --> items --> retrievalMetrics
-    retrieve --> diagnostics --> competitionMetrics
+    transientObs[TransientInterferenceObservation list]
+    transientMetrics[Transient interference metrics]
+    inspect --> items
+    items --> retrievalMetrics
+    inspect --> competitionObs --> competitionMetrics
+    inspect --> transientObs --> transientMetrics
 ```
 
-Retrieval scoring uses `RetrievedItem` ranks only. Competition observations are optional on `RetrievalResponse` and scored separately when `BackendCapabilities.competition_diagnostics` is true. CogKura maps `inspect_recall` competition evidence to benchmark event provenance; raw Core counters remain in `backend_metadata`.
+Retrieval scoring uses `RetrievedItem` ranks only. Competition and transient interference observations are optional on `RetrievalResponse` and scored under separate capabilities. CogKura maps `inspect_recall` diagnostics to benchmark event provenance; raw Core counters remain in `backend_metadata`. The `cogkura-interference` profile enables behavioural mapping; control `cogkura` keeps `apply_interference=False`.

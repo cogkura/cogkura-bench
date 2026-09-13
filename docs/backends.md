@@ -5,7 +5,8 @@
 | `oracle` | Returns declared expected evidence. Validation infrastructure. |
 | `token-overlap` | Shallow deterministic retrieval baseline. |
 | `full-history` | All visible events in chronological order. |
-| `cogkura` | CogKura 0.17.x adapter (optional extra). |
+| `cogkura` | CogKura 0.17.x adapter (competition on, `apply_interference=False`). |
+| `cogkura-interference` | Same adapter with transient behavioural interference enabled. |
 
 ## CogKura adapter
 
@@ -23,7 +24,7 @@ Ingest maps benchmark `entities` to observation `metadata["entity_ids"]` and opt
 
 Every `RetrievedItem.source_event_ids` value is a benchmark event ID, never a CogKura memory key. CogKura 0.14 stamps durable-memory `created_at` / `updated_at` from `as_of` on encode and consolidate, so the adapter uses CogKura's default in-memory stores. Ranking (gated slot admission, multi-entity association, superseded exclusion, distinctive episodic match) stays inside CogKura; the adapter does not post-filter hits.
 
-The adapter maps CogKura's public `RecallResult` fields into neutral `RetrievedItem.metadata` (activation, activation components, `reason`, and optional typed diagnostics when exposed). CogKura 0.17 `inspect_recall` competition diagnostics are mapped to neutral `CompetitionObservation` values on `RetrievalResponse` when `competition_diagnostics=True`. Raw competition counters and evidence remain in `backend_metadata["cogkura"]["competition_inspection"]`. CogKura 0.16/0.17 inspect/assessment contextual diagnostics are copied into `backend_metadata` when present. Diagnostics are observational only; primary scoring uses ranked `RetrievedItem` groups.
+The adapter maps CogKura's public `RecallResult` fields into neutral `RetrievedItem.metadata` (activation, activation components, `reason`, and optional typed diagnostics when exposed). CogKura 0.17 `inspect_recall` competition diagnostics are mapped to neutral `CompetitionObservation` values on `RetrievalResponse` when `competition_diagnostics=True`. When `apply_interference=True` (`cogkura-interference`), `inspect_recall` interference diagnostics (including below-threshold candidates) map to `TransientInterferenceObservation`. Raw counters remain in `backend_metadata["cogkura"]`. Diagnostics are observational only; primary retrieval scoring uses ranked `RetrievedItem` groups.
 
 Assessment maps CogKura flags to neutral booleans, including explicit `missing_knowledge` → `indicates_missing_knowledge`. Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 metamemory scores without an adapter-corrected baseline. Primary retrieval scores from 0.1.x are not directly comparable to 0.2.0 because top-K is item-based in 0.2.0.
 

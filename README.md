@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.4. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.5. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -19,7 +19,8 @@ Each query is tagged with a capability. Results are reported per capability. The
 | Working memory | Whether expected evidence fits the query's token budget |
 | Learning | Change in retrieval after explicit feedback |
 | Metamemory | Detection of missing knowledge and conflicts |
-| Interference | Whether a backend identifies query-relevant competing memories without introducing unrelated competitors (0.3.4 measures competition diagnostics only, not retrieval suppression) |
+| Interference | Whether a backend correctly identifies query-relevant competing memories |
+| Transient interference | Whether valid proactive/retroactive competition produces bounded current-retrieval suppression without affecting unrelated memories (`cogkura-interference` profile) |
 
 Expected evidence is always a benchmark event ID, never a backend-internal key.
 
@@ -174,10 +175,11 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 | `helios_v1` | 550 | 49 | 3 | Project Helios, about 180 simulated days, paraphrase and interference |
 | `customer_decision_context_v1` | 149 | 1 | 0 | Customer decision context, evidence-group working-memory diagnostics |
 | `interference_v1` | 16 | 8 | 0 | Competition diagnostics fixture (scenarios A–H) |
+| `transient_interference_v1` | 20 | 10 | 0 | Behavioural transient interference fixture (scenarios A–J) |
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
 
-Interference findings: [docs/findings/interference-0.3.4.md](docs/findings/interference-0.3.4.md).
+Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md) (hardening + transient behaviour; [0.3.4](docs/findings/interference-0.3.4.md) baseline).
 
 Customer decision context findings: [docs/findings/customer-decision-context-0.3.3.md](docs/findings/customer-decision-context-0.3.3.md) (structured relationships; see also [0.3.2 fixture integrity](docs/findings/customer-decision-context-0.3.2.md), [0.3.1 lifecycle](docs/findings/customer-decision-context-0.3.1.md) and [0.3.0 baseline](docs/findings/customer-decision-context-0.3.0.md)).
 
@@ -225,6 +227,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/scenarios.md`](docs/scenarios.md)
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
+- [`docs/findings/interference-0.3.5.md`](docs/findings/interference-0.3.5.md)
 - [`docs/findings/interference-0.3.4.md`](docs/findings/interference-0.3.4.md)
 - [`docs/findings/customer-decision-context-0.3.3.md`](docs/findings/customer-decision-context-0.3.3.md)
 - [`docs/findings/customer-decision-context-0.3.1.md`](docs/findings/customer-decision-context-0.3.1.md)

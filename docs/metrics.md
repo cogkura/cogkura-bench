@@ -27,6 +27,7 @@ Compare primary capability scores only within the same benchmark version. Retrie
 | Learning | `delta_recall@5`, `delta_mrr`, `delta_first_relevant_rank` |
 | Metamemory | `missing_knowledge_f1`, `conflict_f1` |
 | Interference | `competition_pair_f1` (primary); also precision, recall, direction accuracy, forbidden rate |
+| Transient interference | `interference_effect_f1` (primary); also precision, recall, direction accuracy, unexpected rate, threshold/rank accuracy |
 | Efficiency | `retrieval_latency_ms`, `memories_retrieved`, `memories_selected`, `total_context_tokens` |
 
 Metrics operate on benchmark event IDs and neutral `QueryResult` fields (`context_event_ids`, `indicates_missing_knowledge`, `indicates_conflict`). `RetrievedItem.metadata` and per-item diagnostics do not influence scoring. Unsupported backend capabilities are omitted.
@@ -93,3 +94,23 @@ Queries may declare `expected_competitions` and `forbidden_competitions` as dire
 - Grouped provenance: expected candidate group `{gha-001, gha-002}` matches an observation citing `gha-002` only.
 
 Backends without `competition_diagnostics` report interference metrics as **N/A**, not zero. Hand-calculated tests live in `tests/unit/test_metrics_competition.py`.
+
+## Transient interference (0.3.5)
+
+`Capability.TRANSIENT_INTERFERENCE` scores **behavioural consequence** only. Competition detection remains under `Capability.INTERFERENCE`.
+
+Queries on `transient_interference_v1` declare `expected_interference_effects` and `forbidden_interference_effects`. A contribution is behaviourally active when `pressure > 0` and the candidate `total_penalty < 0`. Matching uses provenance intersection; direction is scored separately.
+
+| Metric | Meaning |
+| --- | --- |
+| `interference_effect_precision` | Expected active pairs / all active pairs |
+| `interference_effect_recall` | Expected active pairs / declared expected pairs |
+| `interference_effect_f1` | Harmonic mean (primary) |
+| `interference_effect_direction_accuracy` | Correct proactive/retroactive on matched pairs |
+| `unexpected_interference_rate` | Unexpected or forbidden active pairs / all active pairs |
+| `threshold_suppression_accuracy` | Correct threshold outcome on labelled expectations |
+| `rank_effect_accuracy` | Rank worsening on labelled expectations |
+
+Invariant counters (`positive_penalty_violation_count`, `activation_increase_due_to_interference_count`, `cotemporal_penalty_violation_count`, `historical_future_interference_count`) must be zero on canonical runs.
+
+The control `cogkura` profile and unsupported backends report transient interference metrics as **N/A**. Tests: `tests/unit/test_metrics_transient_interference.py`.
