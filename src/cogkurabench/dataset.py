@@ -13,6 +13,7 @@ from cogkurabench.models import (
     BenchmarkDataset,
     BenchmarkFeedback,
     BenchmarkQuery,
+    BenchmarkUse,
     Capability,
     CompetitionDirection,
     CompetitionExpectation,
@@ -24,10 +25,13 @@ from cogkurabench.models import (
     FeedbackAction,
     FeedbackOutcome,
     IngestAction,
+    PersistentInhibitionComparison,
+    PersistentInhibitionExpectation,
     ProjectEvent,
     QueryAction,
     SemanticFact,
     TransientInterferenceExpectation,
+    UseAction,
 )
 
 
@@ -59,7 +63,8 @@ def load_dataset(name: str, root: Path | None = None) -> BenchmarkDataset:
     events = _load_events(dataset_dir / "events.jsonl")
     queries = _load_queries(dataset_dir / "queries.jsonl")
     feedback = _load_feedback(dataset_dir / "feedback.jsonl")
-    actions = _compile_actions(events, queries, feedback)
+    uses = _load_uses(dataset_dir / "uses.jsonl")
+    actions = _compile_actions(events, queries, feedback, uses)
 
     return BenchmarkDataset(
         manifest=manifest,
@@ -68,6 +73,7 @@ def load_dataset(name: str, root: Path | None = None) -> BenchmarkDataset:
         feedback=feedback,
         actions=actions,
         root=str(dataset_dir),
+        uses=uses,
     )
 
 
@@ -92,6 +98,10 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
     if len(set(feedback_ids)) != len(feedback_ids):
         errors.append("duplicate feedback IDs detected")
 
+    use_ids = [item.id for item in dataset.uses]
+    if len(set(use_ids)) != len(use_ids):
+        errors.append("duplicate use IDs detected")
+
     if len(dataset.events) != dataset.manifest.events:
         errors.append(
             f"manifest events count {dataset.manifest.events} "
@@ -106,6 +116,10 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
         errors.append(
             f"manifest feedback count {dataset.manifest.feedback} "
             f"does not match loaded {len(dataset.feedback)}"
+        )
+    if len(dataset.uses) != dataset.manifest.uses:
+        errors.append(
+            f"manifest uses count {dataset.manifest.uses} does not match loaded {len(dataset.uses)}"
         )
 
     present_capabilities = {query.capability for query in dataset.queries}
@@ -143,6 +157,7 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
         errors.extend(_validate_evidence_groups(query, events_by_id))
         errors.extend(_validate_competitions(query, events_by_id))
         errors.extend(_validate_interference_effects(query, events_by_id))
+        errors.extend(_validate_persistent_inhibition(query, events_by_id, queries_by_id))
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -150,6 +165,8 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
         for event_id in item.target_event_ids:
             if event_id not in events_by_id:
                 errors.append(f"feedback {item.id} references unknown event {event_id}")
+
+    errors.extend(_validate_uses(dataset.uses, events_by_id, queries_by_id))
 
     for event in dataset.events:
         for superseded_id in event.supersedes:
@@ -252,6 +269,131 @@ def _validate_interference_effects(
                 "both threshold suppression and rank worsening"
             )
 
+    return errors
+
+
+def _validate_uses(
+    uses: tuple[BenchmarkUse, ...],
+    events_by_id: dict[str, ProjectEvent],
+    queries_by_id: dict[str, BenchmarkQuery],
+) -> list[str]:
+    """Validate explicit-use actions against events and source queries."""
+    errors: list[str] = []
+    for use in uses:
+        query = queries_by_id.get(use.query_id)
+        if query is None:
+            errors.append(f"use {use.id} references unknown query {use.query_id}")
+        elif use.timestamp < query.timestamp:
+            errors.append(f"use {use.id} occurs before source query {use.query_id}")
+        for event_id in (
+            *use.selected_event_ids,
+            *use.expected_inhibited_event_ids,
+            *use.forbidden_inhibited_event_ids,
+        ):
+            if event_id not in events_by_id:
+                errors.append(f"use {use.id} references unknown event {event_id}")
+            elif query is not None and events_by_id[event_id].timestamp > query.timestamp:
+                errors.append(
+                    f"use {use.id} references event {event_id} that is after source query "
+                    f"{use.query_id}"
+                )
+    return errors
+
+
+def _validate_persistent_inhibition(
+    query: BenchmarkQuery,
+    events_by_id: dict[str, ProjectEvent],
+    queries_by_id: dict[str, BenchmarkQuery],
+) -> list[str]:
+    """Validate persistent-inhibition expectations and comparison links."""
+    errors: list[str] = []
+    has_fields = bool(
+        query.expected_persistent_inhibition
+        or query.forbidden_persistent_inhibition
+        or query.persistent_inhibition_comparisons
+    )
+    if has_fields and query.capability is not Capability.PERSISTENT_INHIBITION:
+        errors.append(
+            f"query {query.id} declares persistent inhibition but capability is "
+            f"{query.capability.value}"
+        )
+    if query.capability is Capability.PERSISTENT_INHIBITION and not (
+        query.expected_persistent_inhibition or query.forbidden_persistent_inhibition
+    ):
+        errors.append(
+            f"query {query.id} has persistent_inhibition capability but no inhibition expectations"
+        )
+
+    seen_signatures: set[tuple[tuple[str, ...], tuple[str, ...]]] = set()
+    expected_signatures: set[tuple[tuple[str, ...], tuple[str, ...]]] = set()
+    for label, expectations in (
+        ("expected", query.expected_persistent_inhibition),
+        ("forbidden", query.forbidden_persistent_inhibition),
+    ):
+        for expectation in expectations:
+            signature = (
+                tuple(sorted(expectation.candidate_event_ids)),
+                tuple(sorted(expectation.selected_event_ids)),
+            )
+            if signature in seen_signatures:
+                errors.append(
+                    f"query {query.id} persistent inhibition expectation {expectation.id} "
+                    "duplicates an existing declaration"
+                )
+            seen_signatures.add(signature)
+            if label == "expected":
+                expected_signatures.add(signature)
+            for event_id in (*expectation.candidate_event_ids, *expectation.selected_event_ids):
+                if event_id not in events_by_id:
+                    errors.append(
+                        f"query {query.id} persistent inhibition expectation {expectation.id} "
+                        f"references unknown event {event_id}"
+                    )
+                elif label == "expected" and events_by_id[event_id].timestamp > query.timestamp:
+                    errors.append(
+                        f"query {query.id} persistent inhibition expectation {expectation.id} "
+                        f"references future event {event_id}"
+                    )
+            if label == "expected" and query.valid_at is not None:
+                for event_id in expectation.candidate_event_ids:
+                    evidence_event = events_by_id.get(event_id)
+                    if evidence_event is not None and evidence_event.timestamp > query.valid_at:
+                        errors.append(
+                            f"query {query.id} persistent inhibition expectation {expectation.id} "
+                            f"references candidate {event_id} after valid_at"
+                        )
+            if expectation.expect_threshold_suppression and expectation.expect_rank_worsening:
+                errors.append(
+                    f"query {query.id} persistent inhibition expectation {expectation.id} "
+                    "cannot require both threshold suppression and rank worsening"
+                )
+
+    for forbidden in query.forbidden_persistent_inhibition:
+        forbidden_signature = (
+            tuple(sorted(forbidden.candidate_event_ids)),
+            tuple(sorted(forbidden.selected_event_ids)),
+        )
+        if forbidden_signature in expected_signatures:
+            errors.append(
+                f"query {query.id} persistent inhibition expectation {forbidden.id} conflicts "
+                "with an expected declaration"
+            )
+
+    for comparison in query.persistent_inhibition_comparisons:
+        for event_id in comparison.candidate_event_ids:
+            if event_id not in events_by_id:
+                errors.append(
+                    f"query {query.id} persistent inhibition comparison references unknown "
+                    f"event {event_id}"
+                )
+        for link_id in (comparison.stronger_than_query_id, comparison.weaker_than_query_id):
+            if link_id is None:
+                continue
+            linked = queries_by_id.get(link_id)
+            if linked is None:
+                errors.append(f"query {query.id} comparison references unknown query {link_id}")
+            elif linked.timestamp > query.timestamp:
+                errors.append(f"query {query.id} comparison references later query {link_id}")
     return errors
 
 
@@ -371,6 +513,7 @@ def _load_manifest(path: Path) -> DatasetManifest:
         feedback=int(data.get("feedback", 0)),
         description=str(data.get("description", "")),
         required_capabilities=capabilities,
+        uses=int(data.get("uses", 0)),
     )
 
 
@@ -392,10 +535,18 @@ def _load_feedback(path: Path) -> tuple[BenchmarkFeedback, ...]:
     return tuple(_parse_feedback(record) for record in records)
 
 
+def _load_uses(path: Path) -> tuple[BenchmarkUse, ...]:
+    if not path.is_file():
+        return ()
+    records = _read_jsonl(path)
+    return tuple(_parse_use(record) for record in records)
+
+
 def _compile_actions(
     events: tuple[ProjectEvent, ...],
     queries: tuple[BenchmarkQuery, ...],
     feedback: tuple[BenchmarkFeedback, ...],
+    uses: tuple[BenchmarkUse, ...] = (),
 ) -> tuple[BenchmarkAction, ...]:
     actions: list[BenchmarkAction] = [
         IngestAction(timestamp=event.timestamp, sequence=event.sequence, event=event)
@@ -404,6 +555,10 @@ def _compile_actions(
     actions.extend(
         QueryAction(timestamp=query.timestamp, sequence=10_000 + index, query=query)
         for index, query in enumerate(queries)
+    )
+    actions.extend(
+        UseAction(timestamp=item.timestamp, sequence=15_000 + index, use=item)
+        for index, item in enumerate(uses)
     )
     actions.extend(
         FeedbackAction(timestamp=item.timestamp, sequence=20_000 + index, feedback=item)
@@ -417,6 +572,8 @@ def _action_sort_key(action: BenchmarkAction) -> tuple[datetime, int, str]:
         suffix = f"ingest:{action.event.id}"
     elif isinstance(action, QueryAction):
         suffix = f"query:{action.query.id}"
+    elif isinstance(action, UseAction):
+        suffix = f"use:{action.use.id}"
     elif isinstance(action, FeedbackAction):
         suffix = f"feedback:{action.feedback.id}"
     else:
@@ -488,7 +645,75 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         forbidden_interference_effects=_parse_interference_effects(
             data.get("forbidden_interference_effects", [])
         ),
+        expected_persistent_inhibition=_parse_persistent_inhibition(
+            data.get("expected_persistent_inhibition", [])
+        ),
+        forbidden_persistent_inhibition=_parse_persistent_inhibition(
+            data.get("forbidden_persistent_inhibition", [])
+        ),
+        persistent_inhibition_comparisons=_parse_persistent_inhibition_comparisons(
+            data.get("persistent_inhibition_comparisons", [])
+        ),
     )
+
+
+def _parse_use(data: dict[str, Any]) -> BenchmarkUse:
+    request_id = data.get("request_id")
+    return BenchmarkUse(
+        id=str(data["id"]),
+        timestamp=_parse_datetime(data["timestamp"]),
+        query_id=str(data["query_id"]),
+        selected_event_ids=tuple(str(item) for item in data.get("selected_event_ids", [])),
+        request_id=str(request_id) if request_id is not None else None,
+        expected_inhibited_event_ids=tuple(
+            str(item) for item in data.get("expected_inhibited_event_ids", [])
+        ),
+        forbidden_inhibited_event_ids=tuple(
+            str(item) for item in data.get("forbidden_inhibited_event_ids", [])
+        ),
+    )
+
+
+def _parse_persistent_inhibition(
+    items: list[dict[str, Any]],
+) -> tuple[PersistentInhibitionExpectation, ...]:
+    expectations: list[PersistentInhibitionExpectation] = []
+    for item in items:
+        threshold = item.get("expect_threshold_suppression")
+        rank = item.get("expect_rank_worsening")
+        expectations.append(
+            PersistentInhibitionExpectation(
+                id=str(item["id"]),
+                candidate_event_ids=tuple(str(value) for value in item["candidate_event_ids"]),
+                selected_event_ids=tuple(
+                    str(value) for value in item.get("selected_event_ids", [])
+                ),
+                expect_negative_effect=bool(item.get("expect_negative_effect", True)),
+                expect_threshold_suppression=(bool(threshold) if threshold is not None else None),
+                expect_rank_worsening=bool(rank) if rank is not None else None,
+            )
+        )
+    return tuple(expectations)
+
+
+def _parse_persistent_inhibition_comparisons(
+    items: list[dict[str, Any]],
+) -> tuple[PersistentInhibitionComparison, ...]:
+    comparisons: list[PersistentInhibitionComparison] = []
+    for item in items:
+        stronger = item.get("stronger_than_query_id")
+        weaker = item.get("weaker_than_query_id")
+        comparisons.append(
+            PersistentInhibitionComparison(
+                candidate_event_ids=tuple(str(value) for value in item["candidate_event_ids"]),
+                stronger_than_query_id=str(stronger) if stronger is not None else None,
+                weaker_than_query_id=str(weaker) if weaker is not None else None,
+                scope_isolation=bool(item.get("scope_isolation", False)),
+                pre_induction=bool(item.get("pre_induction", False)),
+                current_cognitive_state=bool(item.get("current_cognitive_state", False)),
+            )
+        )
+    return tuple(comparisons)
 
 
 def _parse_feedback(data: dict[str, Any]) -> BenchmarkFeedback:

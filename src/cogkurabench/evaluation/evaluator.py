@@ -24,6 +24,9 @@ from cogkurabench.metrics.metamemory import (
     conflict_detection,
     missing_knowledge_detection,
 )
+from cogkurabench.metrics.persistent_inhibition import (
+    compute_persistent_inhibition_metrics,
+)
 from cogkurabench.metrics.ranking import flatten_source_event_ids, order_retrieved_items
 from cogkurabench.metrics.retrieval import compute_retrieval_metrics
 from cogkurabench.metrics.temporal import compute_temporal_metrics
@@ -38,6 +41,7 @@ from cogkurabench.models import (
     Capability,
     CompetitionObservation,
     ContextResponse,
+    PersistentInhibitionObservation,
     ProjectEvent,
     RetrievedItem,
     TransientInterferenceObservation,
@@ -122,6 +126,8 @@ def evaluate_query(
     competition_diagnostics_supported: bool = False,
     transient_interference_observations: Sequence[TransientInterferenceObservation] = (),
     transient_interference_supported: bool = False,
+    persistent_inhibition_observations: Sequence[PersistentInhibitionObservation] = (),
+    persistent_inhibition_supported: bool = False,
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
     ordered_items = order_retrieved_items(retrieved_items)
@@ -228,6 +234,13 @@ def evaluate_query(
     )
     metrics.update(interference_metrics)
 
+    inhibition_metrics, inhibition_diagnostics = compute_persistent_inhibition_metrics(
+        query,
+        persistent_inhibition_observations,
+        persistent_inhibition_supported=persistent_inhibition_supported,
+    )
+    metrics.update(inhibition_metrics)
+
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
@@ -285,6 +298,8 @@ def evaluate_query(
         transient_interference_observations=tuple(transient_interference_observations),
         transient_interference_diagnostics=interference_diagnostics,
         transient_interference_candidate_diagnostics=interference_candidate_diagnostics,
+        persistent_inhibition_observations=tuple(persistent_inhibition_observations),
+        persistent_inhibition_diagnostics=inhibition_diagnostics,
     )
 
 
@@ -335,6 +350,8 @@ def apply_learning_deltas(
                 transient_interference_candidate_diagnostics=(
                     result.transient_interference_candidate_diagnostics
                 ),
+                persistent_inhibition_observations=result.persistent_inhibition_observations,
+                persistent_inhibition_diagnostics=result.persistent_inhibition_diagnostics,
             )
         )
     return updated

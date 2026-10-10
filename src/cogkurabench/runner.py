@@ -25,8 +25,15 @@ from cogkurabench.evaluation.result import (
     CapabilityResult,
     EnvironmentInfo,
     QueryResult,
+    UseResult,
 )
+from cogkurabench.exceptions import ValidationError
 from cogkurabench.metrics.competition import finalize_competition_metrics
+from cogkurabench.metrics.persistent_inhibition import (
+    compute_inhibition_trace_metrics,
+    finalize_inhibition_trace_metrics,
+    finalize_persistent_inhibition_metrics,
+)
 from cogkurabench.metrics.transient_interference import finalize_transient_interference_metrics
 from cogkurabench.models import (
     AssessmentRequest,
@@ -38,6 +45,9 @@ from cogkurabench.models import (
     ProjectEvent,
     QueryAction,
     RetrievalRequest,
+    RetrievalResponse,
+    UseAction,
+    UseRequest,
 )
 
 
@@ -65,6 +75,8 @@ class BenchmarkRunner:
         queries_by_id = dataset.query_by_id()
 
         query_results: list[QueryResult] = []
+        use_results: list[UseResult] = []
+        retrievals_by_query_id: dict[str, RetrievalResponse] = {}
         actions_by_time: dict[datetime, list[BenchmarkAction]] = defaultdict(list)
         for action in dataset.actions:
             actions_by_time[action.timestamp].append(action)
@@ -91,7 +103,7 @@ class BenchmarkRunner:
 
             for action in sorted(
                 actions_by_time[timestamp],
-                key=lambda item: (item.sequence, type(item).__name__),
+                key=lambda item: item.sequence,
             ):
                 if isinstance(action, QueryAction):
                     query = action.query
@@ -107,6 +119,7 @@ class BenchmarkRunner:
                         object_value=query.object_value,
                     )
                     response = await backend.retrieve(request)
+                    retrievals_by_query_id[query.id] = response
 
                     context_response = None
                     should_select_context = (
@@ -171,6 +184,48 @@ class BenchmarkRunner:
                             transient_interference_supported=(
                                 backend.capabilities.transient_interference
                             ),
+                            persistent_inhibition_observations=(
+                                response.persistent_inhibition_observations
+                            ),
+                            persistent_inhibition_supported=(
+                                backend.capabilities.persistent_inhibition
+                            ),
+                        )
+                    )
+
+                elif isinstance(action, UseAction):
+                    use = action.use
+                    if use.query_id not in retrievals_by_query_id:
+                        raise ValidationError(
+                            f"use {use.id} has no retrieval for source query {use.query_id}"
+                        )
+                    if not backend.capabilities.record_use:
+                        continue
+                    use_response = await backend.record_use(
+                        UseRequest(
+                            use_id=use.id,
+                            source_query_id=use.query_id,
+                            selected_event_ids=use.selected_event_ids,
+                            as_of=clock.current,
+                            request_id=use.request_id,
+                        )
+                    )
+                    if use_response is None or not backend.capabilities.inhibition_traces:
+                        continue
+                    trace_metrics, trace_diagnostics = compute_inhibition_trace_metrics(
+                        use,
+                        use_response.inhibition_traces,
+                    )
+                    use_results.append(
+                        UseResult(
+                            use_id=use.id,
+                            source_query_id=use.query_id,
+                            selected_event_ids=use.selected_event_ids,
+                            expected_inhibited_event_ids=use.expected_inhibited_event_ids,
+                            inhibition_traces=use_response.inhibition_traces,
+                            metrics=trace_metrics,
+                            diagnostics=trace_diagnostics,
+                            backend_metadata=dict(use_response.backend_metadata),
                         )
                     )
 
@@ -234,12 +289,38 @@ class BenchmarkRunner:
                 metrics=transient_metrics,
             )
 
+        inhibition_metrics = finalize_persistent_inhibition_metrics(query_results, queries_by_id)
+        trace_metrics = finalize_inhibition_trace_metrics(use_results)
+        combined_inhibition = {**inhibition_metrics, **trace_metrics}
+        if combined_inhibition and Capability.PERSISTENT_INHIBITION.value in capability_results:
+            existing = capability_results[Capability.PERSISTENT_INHIBITION.value]
+            capability_results[Capability.PERSISTENT_INHIBITION.value] = type(existing)(
+                capability=existing.capability,
+                query_count=existing.query_count,
+                metrics={**dict(existing.metrics), **combined_inhibition},
+            )
+        elif combined_inhibition:
+            inhibition_count = sum(
+                1
+                for result in query_results
+                if result.capability is Capability.PERSISTENT_INHIBITION
+            )
+            capability_results[Capability.PERSISTENT_INHIBITION.value] = CapabilityResult(
+                capability=Capability.PERSISTENT_INHIBITION,
+                query_count=inhibition_count,
+                metrics=combined_inhibition,
+            )
+
         backend_version = backend.version
         environment_metadata: dict[str, object] = {}
         if backend.name.startswith("cogkura") and backend_version is not None:
             environment_metadata["cogkura_version"] = backend_version
             if backend.name == "cogkura-interference":
                 environment_metadata["apply_interference"] = True
+            if backend.name in ("cogkura-inhibition-recording", "cogkura-inhibition"):
+                environment_metadata["inhibition_enabled"] = True
+            if backend.name == "cogkura-inhibition":
+                environment_metadata["apply_inhibition"] = True
 
         result = BenchmarkResult(
             benchmark_version=__version__,
@@ -257,6 +338,7 @@ class BenchmarkRunner:
                 git_dirty=_git_dirty(),
                 backend_configuration=environment_metadata,
             ),
+            use_results=tuple(use_results),
         )
 
         if write_results:

@@ -16,6 +16,8 @@ from cogkurabench.models import (
     ProjectEvent,
     RetrievalRequest,
     RetrievalResponse,
+    UseRequest,
+    UseResponse,
 )
 
 
@@ -63,6 +65,10 @@ class MemoryBackend(Protocol):
 
     async def apply_feedback(self, feedback: BenchmarkFeedback) -> None:
         """Apply learning feedback, if supported."""
+        ...
+
+    async def record_use(self, request: UseRequest) -> UseResponse | None:
+        """Record explicit use of a prior retrieval, if supported."""
         ...
 
     async def maintain(self, *, as_of: datetime) -> None:

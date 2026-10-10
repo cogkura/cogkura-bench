@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -14,28 +15,36 @@ from cogkurabench.backends.cogkura_diagnostics import (
     competition_inspection_to_observations,
     competition_mapping_counts,
     dataclass_to_metadata,
+    event_ids_for_memory,
     interference_inspection_to_observations,
     interference_mapping_counts,
     json_safe_metadata_value,
     map_ranked_recall_results,
+    persistent_inhibition_inspection_to_observations,
+    persistent_inhibition_mapping_counts,
     recall_mapping_metadata,
     recall_result_to_metadata,
     relationship_inspection_to_metadata,
     retrieval_context_diagnostics_to_metadata,
 )
+from cogkurabench.exceptions import ValidationError
 from cogkurabench.models import (
     AssessmentRequest,
     AssessmentResponse,
     BackendCapabilities,
     BenchmarkFeedback,
+    CompetitionDirection,
     ContextRequest,
     ContextResponse,
     EntityRelationship,
     FeedbackOutcome,
+    InhibitionTraceObservation,
     ProjectEvent,
     RetrievalRequest,
     RetrievalResponse,
     SemanticFact,
+    UseRequest,
+    UseResponse,
 )
 
 if TYPE_CHECKING:
@@ -45,6 +54,16 @@ if TYPE_CHECKING:
 
 TENANT_ID = "benchmark"
 SOURCE_NAMESPACE = "cogkurabench.events"
+
+
+@dataclass(slots=True)
+class _CachedRetrieval:
+    """Original recall results retained for a later explicit use."""
+
+    results: tuple[Any, ...]
+    event_ids: tuple[tuple[str, ...], ...]
+    memories_by_identity: dict[tuple[str, str], Any]
+
 
 MISSING_KNOWLEDGE_FLAGS: frozenset[str] = frozenset(
     {
@@ -151,13 +170,27 @@ class CogKuraBackend:
         *,
         competition_enabled: bool = True,
         apply_interference: bool = False,
+        inhibition_enabled: bool = False,
+        apply_inhibition: bool = False,
         name: str | None = None,
     ) -> None:
         self._competition_enabled = competition_enabled
         self._apply_interference = apply_interference
-        self._backend_name = name or ("cogkura-interference" if apply_interference else "cogkura")
+        self._inhibition_enabled = inhibition_enabled or apply_inhibition
+        self._apply_inhibition = apply_inhibition
+        if name is not None:
+            self._backend_name = name
+        elif apply_interference:
+            self._backend_name = "cogkura-interference"
+        elif apply_inhibition:
+            self._backend_name = "cogkura-inhibition"
+        elif self._inhibition_enabled:
+            self._backend_name = "cogkura-inhibition-recording"
+        else:
+            self._backend_name = "cogkura"
         self._memory: Memory | None = None
         self._observation_store: Any = None
+        self._recall_cache: dict[str, _CachedRetrieval] = {}
         self._observation_id_to_event_id: dict[str, str] = {}
         self._version: str | None = None
         self._bench_version: str | None = None
@@ -199,6 +232,9 @@ class CogKuraBackend:
             maintain=True,
             competition_diagnostics=self._competition_enabled,
             transient_interference=self._apply_interference,
+            record_use=True,
+            inhibition_traces=self._inhibition_enabled,
+            persistent_inhibition=self._apply_inhibition,
         )
 
     async def reset(self) -> None:
@@ -208,7 +244,7 @@ class CogKuraBackend:
         from cogkura.algorithms.semantic import (
             ComplementaryLearningSemanticConsolidator,  # noqa: PLC0415
         )
-        from cogkura.models import CompetitionConfig  # noqa: PLC0415
+        from cogkura.models import CompetitionConfig, InhibitionConfig  # noqa: PLC0415
         from cogkura.storage.in_memory_observation import InMemoryObservationStore  # noqa: PLC0415
 
         self._version = _installed_cogkura_version(cogkura)
@@ -225,8 +261,13 @@ class CogKuraBackend:
                 enabled=self._competition_enabled,
                 apply_interference=self._apply_interference,
             ),
+            inhibition_config=InhibitionConfig(
+                enabled=self._inhibition_enabled,
+                apply_to_recall=self._apply_inhibition,
+            ),
         )
         self._observation_id_to_event_id.clear()
+        self._recall_cache.clear()
         self._events_ingested = 0
         self._relationships_ingested = 0
         self._ingest_calls = 0
@@ -331,6 +372,28 @@ class CogKuraBackend:
             inspection,
             observation_id_to_event_id=self._observation_id_to_event_id,
         )
+        inhibition_observations = persistent_inhibition_inspection_to_observations(
+            inspection,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+        )
+        inhibition_counts = persistent_inhibition_mapping_counts(
+            inspection,
+            observation_id_to_event_id=self._observation_id_to_event_id,
+        )
+        self._recall_cache[request.query_id] = _CachedRetrieval(
+            results=tuple(results),
+            event_ids=tuple(
+                event_ids_for_memory(
+                    result.memory,
+                    observation_id_to_event_id=self._observation_id_to_event_id,
+                )
+                for result in results
+            ),
+            memories_by_identity={
+                (candidate.memory_kind.value, candidate.memory.memory_key): candidate.memory
+                for candidate in (*inspection.returned, *inspection.rejected)
+            },
+        )
         backend_metadata = self._build_response_metadata(
             recall_mapping=mapping,
             snapshot_at=request.as_of,
@@ -339,12 +402,14 @@ class CogKuraBackend:
             competition_inspection=competition_inspection_to_metadata(inspection),
             competition_counts=competition_counts,
             interference_counts=interference_counts,
+            inhibition_counts=inhibition_counts,
         )
         return RetrievalResponse(
             items=mapping.items,
             latency_ms=latency_ms,
             competition_observations=competition_observations,
             transient_interference_observations=interference_observations,
+            persistent_inhibition_observations=inhibition_observations,
             backend_metadata=backend_metadata,
         )
 
@@ -434,6 +499,153 @@ class CogKuraBackend:
             signals=signals,
             flags=flags,
             backend_metadata=assessment_metadata,
+        )
+
+    async def record_use(self, request: UseRequest) -> UseResponse | None:
+        cached = self._recall_cache.get(request.source_query_id)
+        if cached is None:
+            raise ValidationError(
+                f"use {request.use_id} has no cached retrieval for query {request.source_query_id}"
+            )
+        selected = self._resolve_selected_results(cached, request)
+        memory = self._require_memory()
+        await memory.record_access(
+            selected,
+            tenant_id=TENANT_ID,
+            referenced_at=request.as_of,
+            request_id=request.request_id,
+        )
+        traces: tuple[InhibitionTraceObservation, ...] = ()
+        trace_counts = {
+            "inhibition_traces_reported": 0,
+            "inhibition_traces_mapped": 0,
+            "inhibition_traces_unmapped": 0,
+        }
+        if self._inhibition_enabled:
+            traces, trace_counts = await self._persisted_trace_observations(
+                cached,
+                selected,
+                request,
+            )
+        return UseResponse(
+            inhibition_traces=traces,
+            backend_metadata={"cogkura": trace_counts},
+        )
+
+    def _resolve_selected_results(
+        self,
+        cached: _CachedRetrieval,
+        request: UseRequest,
+    ) -> list[Any]:
+        chosen: list[Any] = []
+        seen: set[tuple[str, str]] = set()
+        for event_id in request.selected_event_ids:
+            matches: dict[tuple[str, str], Any] = {}
+            for result, event_ids in zip(cached.results, cached.event_ids, strict=True):
+                if event_id not in event_ids:
+                    continue
+                identity = (result.memory_kind.value, result.memory.memory_key)
+                matches[identity] = result
+            if not matches:
+                raise ValidationError(
+                    f"use {request.use_id} selected event {event_id} was not in the cached "
+                    f"retrieval for query {request.source_query_id}"
+                )
+            if len(matches) > 1:
+                raise ValidationError(
+                    f"use {request.use_id} selected event {event_id} matches multiple memories"
+                )
+            identity, result = next(iter(matches.items()))
+            if identity not in seen:
+                chosen.append(result)
+                seen.add(identity)
+        return chosen
+
+    async def _persisted_trace_observations(
+        self,
+        cached: _CachedRetrieval,
+        selected: Sequence[Any],
+        request: UseRequest,
+    ) -> tuple[tuple[InhibitionTraceObservation, ...], dict[str, int]]:
+        memory = self._require_memory()
+        competitor_keys: list[tuple[Any, str]] = []
+        seen_competitors: set[tuple[str, str]] = set()
+        for result in selected:
+            diagnostics = result.diagnostics
+            if diagnostics is None:
+                continue
+            for snapshot in diagnostics.inhibition_candidates:
+                identity = snapshot.competitor_identity
+                key = (identity.memory_kind.value, identity.memory_key)
+                if key in seen_competitors:
+                    continue
+                seen_competitors.add(key)
+                competitor_keys.append((identity.memory_kind, identity.memory_key))
+
+        reported = 0
+        mapped = 0
+        unmapped = 0
+        observations: list[InhibitionTraceObservation] = []
+        for memory_kind, memory_key in competitor_keys:
+            persisted = await memory.list_inhibition_traces(
+                tenant_id=TENANT_ID,
+                memory_kind=memory_kind,
+                memory_key=memory_key,
+                as_of=request.as_of,
+            )
+            for trace in persisted:
+                if trace.request_id != request.request_id:
+                    continue
+                reported += 1
+                selected_ids = self._event_ids_for_identity(
+                    cached,
+                    trace.selected_identity.memory_kind.value,
+                    trace.selected_identity.memory_key,
+                )
+                inhibited_ids = self._event_ids_for_identity(
+                    cached,
+                    trace.inhibited_identity.memory_kind.value,
+                    trace.inhibited_identity.memory_key,
+                )
+                if not selected_ids or not inhibited_ids:
+                    unmapped += 1
+                    continue
+                mapped += 1
+                observations.append(
+                    InhibitionTraceObservation(
+                        use_id=request.use_id,
+                        selected_source_event_ids=selected_ids,
+                        inhibited_source_event_ids=inhibited_ids,
+                        direction=CompetitionDirection(trace.direction.value),
+                        induction_pressure=trace.induction_pressure,
+                        structural_anchor=trace.scope.structural_anchor.value,
+                        scope_key=trace.scope.scope_key,
+                    )
+                )
+        return tuple(observations), {
+            "inhibition_traces_reported": reported,
+            "inhibition_traces_mapped": mapped,
+            "inhibition_traces_unmapped": unmapped,
+        }
+
+    def _event_ids_for_identity(
+        self,
+        cached: _CachedRetrieval,
+        memory_kind: str,
+        memory_key: str,
+    ) -> tuple[str, ...]:
+        memory_obj = cached.memories_by_identity.get((memory_kind, memory_key))
+        if memory_obj is None:
+            for result, event_ids in zip(cached.results, cached.event_ids, strict=True):
+                if (
+                    result.memory_kind.value == memory_kind
+                    and result.memory.memory_key == memory_key
+                ):
+                    return event_ids
+            return ()
+        return event_ids_for_memory(
+            memory_obj,
+            observation_id_to_event_id=self._observation_id_to_event_id,
         )
 
     async def apply_feedback(self, feedback: BenchmarkFeedback) -> None:
@@ -584,6 +796,7 @@ class CogKuraBackend:
         competition_inspection: Mapping[str, object] | None = None,
         competition_counts: Mapping[str, int] | None = None,
         interference_counts: Mapping[str, int] | None = None,
+        inhibition_counts: Mapping[str, int] | None = None,
     ) -> dict[str, object]:
         payload: dict[str, object] = {
             "cogkura": {
@@ -642,8 +855,14 @@ class CogKuraBackend:
             cogkura_payload.update(dict(competition_counts))
         if interference_counts is not None:
             cogkura_payload.update(dict(interference_counts))
+        if inhibition_counts is not None:
+            cogkura_payload.update(dict(inhibition_counts))
         if self._apply_interference:
             cogkura_payload["apply_interference"] = True
+        if self._inhibition_enabled:
+            cogkura_payload["inhibition_enabled"] = True
+        if self._apply_inhibition:
+            cogkura_payload["apply_inhibition"] = True
         return payload
 
     def _statement_for_result(self, result: RecallResult) -> str:

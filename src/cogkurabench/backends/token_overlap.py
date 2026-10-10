@@ -19,6 +19,8 @@ from cogkurabench.models import (
     RetrievalRequest,
     RetrievalResponse,
     RetrievedItem,
+    UseRequest,
+    UseResponse,
 )
 
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
@@ -101,6 +103,9 @@ class TokenOverlapBackend:
         return None
 
     async def apply_feedback(self, feedback: BenchmarkFeedback) -> None:
+        return None
+
+    async def record_use(self, request: UseRequest) -> UseResponse | None:
         return None
 
     async def maintain(self, *, as_of: datetime) -> None:

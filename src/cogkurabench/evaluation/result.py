@@ -9,6 +9,10 @@ from types import MappingProxyType
 from typing import Any
 
 from cogkurabench.metrics.competition import CompetitionDiagnosticResult
+from cogkurabench.metrics.persistent_inhibition import (
+    InhibitionTraceDiagnostic,
+    PersistentInhibitionDiagnosticResult,
+)
 from cogkurabench.metrics.transient_interference import (
     TransientInterferenceCandidateDiagnostic,
     TransientInterferenceDiagnosticResult,
@@ -16,6 +20,8 @@ from cogkurabench.metrics.transient_interference import (
 from cogkurabench.models import (
     Capability,
     CompetitionObservation,
+    InhibitionTraceObservation,
+    PersistentInhibitionObservation,
     RetrievedItem,
     TransientInterferenceObservation,
 )
@@ -107,6 +113,8 @@ class QueryResult:
     transient_interference_candidate_diagnostics: tuple[
         TransientInterferenceCandidateDiagnostic, ...
     ] = ()
+    persistent_inhibition_observations: tuple[PersistentInhibitionObservation, ...] = ()
+    persistent_inhibition_diagnostics: tuple[PersistentInhibitionDiagnosticResult, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))
@@ -136,6 +144,24 @@ class CapabilityResult:
 
 
 @dataclass(frozen=True, slots=True)
+class UseResult:
+    """Outcome of one explicit use action."""
+
+    use_id: str
+    source_query_id: str
+    selected_event_ids: tuple[str, ...]
+    expected_inhibited_event_ids: tuple[str, ...]
+    inhibition_traces: tuple[InhibitionTraceObservation, ...]
+    metrics: Mapping[str, float]
+    diagnostics: tuple[InhibitionTraceDiagnostic, ...] = ()
+    backend_metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))
+        object.__setattr__(self, "backend_metadata", MappingProxyType(dict(self.backend_metadata)))
+
+
+@dataclass(frozen=True, slots=True)
 class BenchmarkResult:
     """Complete benchmark run result."""
 
@@ -148,6 +174,7 @@ class BenchmarkResult:
     capability_results: Mapping[str, CapabilityResult]
     query_results: tuple[QueryResult, ...]
     environment: EnvironmentInfo
+    use_results: tuple[UseResult, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(

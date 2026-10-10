@@ -53,6 +53,7 @@ class Capability(StrEnum):
     METAMEMORY = "metamemory"
     INTERFERENCE = "interference"
     TRANSIENT_INTERFERENCE = "transient_interference"
+    PERSISTENT_INHIBITION = "persistent_inhibition"
 
 
 class CompetitionDirection(StrEnum):
@@ -214,6 +215,59 @@ class TransientInterferenceExpectation:
 
 
 @dataclass(frozen=True, slots=True)
+class PersistentInhibitionExpectation:
+    """Query-level ground truth for a persistent inhibition effect."""
+
+    id: str
+    candidate_event_ids: tuple[str, ...]
+    selected_event_ids: tuple[str, ...] = ()
+    expect_negative_effect: bool = True
+    expect_threshold_suppression: bool | None = None
+    expect_rank_worsening: bool | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("persistent inhibition expectation id must not be empty.")
+        if not self.candidate_event_ids:
+            raise ValidationError(
+                f"persistent inhibition expectation {self.id!r} must contain candidate event IDs."
+            )
+        if set(self.candidate_event_ids) & set(self.selected_event_ids):
+            raise ValidationError(
+                f"persistent inhibition expectation {self.id!r} candidate and selected "
+                "event IDs must not overlap."
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class PersistentInhibitionComparison:
+    """Cross-query behavioural check for one inhibited candidate."""
+
+    candidate_event_ids: tuple[str, ...]
+    stronger_than_query_id: str | None = None
+    weaker_than_query_id: str | None = None
+    scope_isolation: bool = False
+    pre_induction: bool = False
+    current_cognitive_state: bool = False
+
+    def __post_init__(self) -> None:
+        if not self.candidate_event_ids:
+            raise ValidationError("persistent inhibition comparison requires candidate event IDs.")
+        if self.stronger_than_query_id is not None and not self.stronger_than_query_id.strip():
+            raise ValidationError("stronger_than_query_id must not be empty when provided.")
+        if self.weaker_than_query_id is not None and not self.weaker_than_query_id.strip():
+            raise ValidationError("weaker_than_query_id must not be empty when provided.")
+        if (
+            self.stronger_than_query_id is None
+            and self.weaker_than_query_id is None
+            and not self.scope_isolation
+            and not self.pre_induction
+            and not self.current_cognitive_state
+        ):
+            raise ValidationError("persistent inhibition comparison must declare a check.")
+
+
+@dataclass(frozen=True, slots=True)
 class InterferenceContributionObservation:
     """One competitor contribution to transient interference on a candidate."""
 
@@ -267,6 +321,80 @@ class CompetitionObservation:
             raise ValidationError("candidate_source_event_ids must not be empty.")
         if not self.competitor_source_event_ids:
             raise ValidationError("competitor_source_event_ids must not be empty.")
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class PersistentInhibitionContributionObservation:
+    """One earlier selective use contributing to persistent inhibition."""
+
+    selected_source_event_ids: tuple[str, ...]
+    direction: CompetitionDirection
+    induction_pressure: float
+    age_seconds: float
+    remaining_strength: float
+    scope_key: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.selected_source_event_ids:
+            raise ValidationError("selected_source_event_ids must not be empty.")
+        if self.age_seconds < 0:
+            raise ValidationError("age_seconds must not be negative.")
+
+
+@dataclass(frozen=True, slots=True)
+class PersistentInhibitionObservation:
+    """Backend-neutral persistent inhibition applied to one recall candidate."""
+
+    candidate_source_event_ids: tuple[str, ...]
+    activation_before: float
+    activation_after: float
+    stored_trace_count: int
+    evaluated_trace_count: int
+    matched_trace_count: int
+    effective_trace_count: int
+    inhibition_pressure: float
+    penalty: float
+    crossed_activation_threshold: bool
+    rank_before: int | None = None
+    rank_after: int | None = None
+    contributions: tuple[PersistentInhibitionContributionObservation, ...] = ()
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.candidate_source_event_ids:
+            raise ValidationError("candidate_source_event_ids must not be empty.")
+        for label, value in (
+            ("stored_trace_count", self.stored_trace_count),
+            ("evaluated_trace_count", self.evaluated_trace_count),
+            ("matched_trace_count", self.matched_trace_count),
+            ("effective_trace_count", self.effective_trace_count),
+        ):
+            if value < 0:
+                raise ValidationError(f"{label} must not be negative.")
+        object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class InhibitionTraceObservation:
+    """Persisted inhibitory trace projected onto benchmark event IDs."""
+
+    use_id: str
+    selected_source_event_ids: tuple[str, ...]
+    inhibited_source_event_ids: tuple[str, ...]
+    direction: CompetitionDirection
+    induction_pressure: float
+    structural_anchor: str | None = None
+    scope_key: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.use_id.strip():
+            raise ValidationError("use_id must not be empty.")
+        if not self.selected_source_event_ids:
+            raise ValidationError("selected_source_event_ids must not be empty.")
+        if not self.inhibited_source_event_ids:
+            raise ValidationError("inhibited_source_event_ids must not be empty.")
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
 
@@ -343,6 +471,9 @@ class BenchmarkQuery:
     forbidden_competitions: tuple[CompetitionExpectation, ...] = ()
     expected_interference_effects: tuple[TransientInterferenceExpectation, ...] = ()
     forbidden_interference_effects: tuple[TransientInterferenceExpectation, ...] = ()
+    expected_persistent_inhibition: tuple[PersistentInhibitionExpectation, ...] = ()
+    forbidden_persistent_inhibition: tuple[PersistentInhibitionExpectation, ...] = ()
+    persistent_inhibition_comparisons: tuple[PersistentInhibitionComparison, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -383,6 +514,17 @@ class BenchmarkQuery:
             raise ValidationError(
                 f"query {self.id} has duplicate transient interference expectation IDs."
             )
+        inhibition_ids = [
+            expectation.id
+            for expectation in (
+                *self.expected_persistent_inhibition,
+                *self.forbidden_persistent_inhibition,
+            )
+        ]
+        if len(set(inhibition_ids)) != len(inhibition_ids):
+            raise ValidationError(
+                f"query {self.id} has duplicate persistent inhibition expectation IDs."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -404,6 +546,49 @@ class BenchmarkFeedback:
 
 
 @dataclass(frozen=True, slots=True)
+class BenchmarkUse:
+    """Explicit consumption of a prior retrieval result."""
+
+    id: str
+    timestamp: datetime
+    query_id: str
+    selected_event_ids: tuple[str, ...]
+    request_id: str | None = None
+    expected_inhibited_event_ids: tuple[str, ...] = ()
+    forbidden_inhibited_event_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("use id must not be empty.")
+        if not self.query_id.strip():
+            raise ValidationError("use query_id must not be empty.")
+        if not self.selected_event_ids:
+            raise ValidationError(f"use {self.id!r} must select at least one event.")
+        if len(set(self.selected_event_ids)) != len(self.selected_event_ids):
+            raise ValidationError(f"use {self.id!r} contains duplicate selected event IDs.")
+        object.__setattr__(self, "timestamp", _require_tzaware("timestamp", self.timestamp))
+        if self.request_id is None:
+            object.__setattr__(self, "request_id", self.id)
+        elif not self.request_id.strip():
+            raise ValidationError(f"use {self.id!r} request_id must not be empty when provided.")
+        overlap = set(self.expected_inhibited_event_ids) & set(self.forbidden_inhibited_event_ids)
+        if overlap:
+            raise ValidationError(
+                f"use {self.id!r} assigns event IDs to both expected and forbidden inhibition: "
+                f"{sorted(overlap)}"
+            )
+        selected = set(self.selected_event_ids)
+        inhibited_overlap = selected & (
+            set(self.expected_inhibited_event_ids) | set(self.forbidden_inhibited_event_ids)
+        )
+        if inhibited_overlap:
+            raise ValidationError(
+                f"use {self.id!r} selected events overlap inhibited expectations: "
+                f"{sorted(inhibited_overlap)}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class DatasetManifest:
     """Versioned dataset metadata."""
 
@@ -414,6 +599,7 @@ class DatasetManifest:
     feedback: int
     description: str
     required_capabilities: tuple[Capability, ...] = ()
+    uses: int = 0
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -434,6 +620,9 @@ class BackendCapabilities:
     maintain: bool = False
     competition_diagnostics: bool = False
     transient_interference: bool = False
+    record_use: bool = False
+    inhibition_traces: bool = False
+    persistent_inhibition: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -487,11 +676,45 @@ class RetrievalResponse:
     latency_ms: float
     competition_observations: tuple[CompetitionObservation, ...] = ()
     transient_interference_observations: tuple[TransientInterferenceObservation, ...] = ()
+    persistent_inhibition_observations: tuple[PersistentInhibitionObservation, ...] = ()
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.latency_ms < 0:
             raise ValidationError("latency_ms must not be negative.")
+        object.__setattr__(self, "backend_metadata", MappingProxyType(dict(self.backend_metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class UseRequest:
+    """Neutral request to record explicit use of a prior retrieval."""
+
+    use_id: str
+    source_query_id: str
+    selected_event_ids: tuple[str, ...]
+    as_of: datetime
+    request_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.use_id.strip():
+            raise ValidationError("use_id must not be empty.")
+        if not self.source_query_id.strip():
+            raise ValidationError("source_query_id must not be empty.")
+        if not self.selected_event_ids:
+            raise ValidationError("selected_event_ids must not be empty.")
+        object.__setattr__(self, "as_of", _require_tzaware("as_of", self.as_of))
+        if self.request_id is not None and not self.request_id.strip():
+            raise ValidationError("request_id must not be empty when provided.")
+
+
+@dataclass(frozen=True, slots=True)
+class UseResponse:
+    """Neutral response after recording explicit use."""
+
+    inhibition_traces: tuple[InhibitionTraceObservation, ...] = ()
+    backend_metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
         object.__setattr__(self, "backend_metadata", MappingProxyType(dict(self.backend_metadata)))
 
 
@@ -602,6 +825,15 @@ class FeedbackAction:
 
 
 @dataclass(frozen=True, slots=True)
+class UseAction:
+    """Record explicit use of a prior retrieval."""
+
+    timestamp: datetime
+    sequence: int
+    use: BenchmarkUse
+
+
+@dataclass(frozen=True, slots=True)
 class MaintenanceAction:
     """Scheduled memory maintenance."""
 
@@ -609,7 +841,7 @@ class MaintenanceAction:
     sequence: int
 
 
-BenchmarkAction = IngestAction | QueryAction | FeedbackAction | MaintenanceAction
+BenchmarkAction = IngestAction | QueryAction | UseAction | FeedbackAction | MaintenanceAction
 
 
 @dataclass(frozen=True, slots=True)
@@ -622,6 +854,7 @@ class BenchmarkDataset:
     feedback: tuple[BenchmarkFeedback, ...]
     actions: tuple[BenchmarkAction, ...]
     root: str
+    uses: tuple[BenchmarkUse, ...] = ()
 
     @property
     def name(self) -> str:

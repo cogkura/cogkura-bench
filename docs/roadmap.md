@@ -53,6 +53,18 @@
 - [x] `interference_v1` controlled fixture and CogKura 0.17.x adapter mapping
 - [x] Interference 0.3.4 findings
 
+## 0.3.5
+
+- [x] Transient behavioural interference (`Capability.TRANSIENT_INTERFERENCE`)
+- [x] `transient_interference_v1` and `cogkura-interference`
+- [x] Interference 0.3.5 findings
+
+## 0.3.6
+
+- [x] Explicit use actions and `Capability.PERSISTENT_INHIBITION`
+- [x] `persistent_inhibition_v1` with recording and application CogKura profiles
+- [x] Inhibition 0.3.6 findings
+
 ## Future
 
 - Vector/RAG baseline

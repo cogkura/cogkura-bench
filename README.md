@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.5. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.6. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -21,6 +21,7 @@ Each query is tagged with a capability. Results are reported per capability. The
 | Metamemory | Detection of missing knowledge and conflicts |
 | Interference | Whether a backend correctly identifies query-relevant competing memories |
 | Transient interference | Whether valid proactive/retroactive competition produces bounded current-retrieval suppression without affecting unrelated memories (`cogkura-interference` profile) |
+| Persistent inhibition | Whether explicit selective use creates a scoped inhibitory trace that later reduces the unselected competitor's accessibility, then recovers (`cogkura-inhibition` profile) |
 
 Expected evidence is always a benchmark event ID, never a backend-internal key.
 
@@ -45,7 +46,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.17.0,<0.18.0`.
+The CogKura extra pins `cogkura>=0.17.4,<0.18.0`.
 
 ## First run
 
@@ -179,7 +180,7 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
 
-Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md) (hardening + transient behaviour; [0.3.4](docs/findings/interference-0.3.4.md) baseline).
+Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md) (hardening + transient behaviour; [0.3.4](docs/findings/interference-0.3.4.md) baseline). Persistent inhibition findings: [docs/findings/inhibition-0.3.6.md](docs/findings/inhibition-0.3.6.md).
 
 Customer decision context findings: [docs/findings/customer-decision-context-0.3.3.md](docs/findings/customer-decision-context-0.3.3.md) (structured relationships; see also [0.3.2 fixture integrity](docs/findings/customer-decision-context-0.3.2.md), [0.3.1 lifecycle](docs/findings/customer-decision-context-0.3.1.md) and [0.3.0 baseline](docs/findings/customer-decision-context-0.3.0.md)).
 
@@ -191,6 +192,9 @@ Customer decision context findings: [docs/findings/customer-decision-context-0.3
 | `token-overlap` | Shallow deterministic lexical baseline |
 | `full-history` | All currently visible events, in chronological order |
 | `cogkura` | Optional CogKura 0.17.x adapter |
+| `cogkura-interference` | CogKura adapter with transient behavioural interference enabled |
+| `cogkura-inhibition-recording` | CogKura adapter that records inhibitory traces without applying them |
+| `cogkura-inhibition` | CogKura adapter with persistent inhibition applied to recall |
 
 Unsupported optional capabilities return `None`. Backends must not fake features they do not provide.
 
@@ -227,6 +231,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/scenarios.md`](docs/scenarios.md)
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
+- [`docs/findings/inhibition-0.3.6.md`](docs/findings/inhibition-0.3.6.md)
 - [`docs/findings/interference-0.3.5.md`](docs/findings/interference-0.3.5.md)
 - [`docs/findings/interference-0.3.4.md`](docs/findings/interference-0.3.4.md)
 - [`docs/findings/customer-decision-context-0.3.3.md`](docs/findings/customer-decision-context-0.3.3.md)

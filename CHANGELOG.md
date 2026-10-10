@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-10
+
+### Added
+
+- `Capability.PERSISTENT_INHIBITION` with separate trace-induction and behavioural-effect metrics.
+- Neutral `BenchmarkUse`, `UseAction`, and optional `uses.jsonl`. Existing datasets stay valid without it.
+- `MemoryBackend.record_use` plus `UseRequest` / `UseResponse`. Unsupported backends skip use actions and report inhibition metrics as N/A.
+- CogKura profiles `cogkura-inhibition-recording` and `cogkura-inhibition`. Control `cogkura` still records explicit positive use.
+- `persistent_inhibition_v1` for selective induction, co-consumption, scope isolation, repetition, and recovery.
+- Inspect sections for persistent inhibition and explicit use.
+- `scripts/run_persistent_inhibition_benchmark.py` and [inhibition 0.3.6 findings](docs/findings/inhibition-0.3.6.md).
+
+### Changed
+
+- CogKura extra requires `cogkura>=0.17.4,<0.18.0`.
+- Same-timestamp action order is the compiled sequence: ingest, query, use, feedback.
+
+### Unchanged
+
+- `interference_v1` and `transient_interference_v1` are unchanged.
+- `INTERFERENCE` and `TRANSIENT_INTERFERENCE` keep their existing meanings.
+- `cogkura-interference` does not enable persistent inhibition.
+
 ## [0.3.5] - 2026-09-13
 
 ### Added

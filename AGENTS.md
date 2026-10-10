@@ -89,6 +89,11 @@ uv run cogkura-bench validate-dataset transient_interference_v1
 uv run cogkura-bench run --dataset transient_interference_v1 --backend oracle --quiet
 uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura --quiet
 uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-interference --quiet
+uv run cogkura-bench validate-dataset persistent_inhibition_v1
+uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-inhibition-recording --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-inhibition --quiet
 ```
 
 ## Interference diagnostics (0.3.4 / 0.3.5)
@@ -102,6 +107,16 @@ uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-i
 - Canonical `interference_v1` runs must have `competition_pairs_unmapped == 0`; `transient_interference_v1` must have `interference_contributions_unmapped == 0`.
 - Do not modify `interference_v1` when evaluating 0.17.1 hardening.
 - Compare results in [0.3.5 findings](docs/findings/interference-0.3.5.md) and [0.3.4 findings](docs/findings/interference-0.3.4.md).
+
+## Persistent inhibition (0.3.6)
+
+- `Capability.PERSISTENT_INHIBITION` is separate from `INTERFERENCE` and `TRANSIENT_INTERFERENCE`.
+- Explicit `UseAction`s are required. Retrieval does not imply use.
+- Use recording consumes the cached retrieval. Do not recall again inside `record_use`.
+- `cogkura-inhibition-recording` scores trace induction only. `cogkura-inhibition` scores behavioural effects. Control `cogkura` still records positive use and reports both metric families as N/A.
+- Do not modify `interference_v1` or `transient_interference_v1` for this release.
+- Bench does not reimplement Core's inhibition formula.
+- Compare results in [0.3.6 findings](docs/findings/inhibition-0.3.6.md).
 
 ## Customer decision context guidance
 

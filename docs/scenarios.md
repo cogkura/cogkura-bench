@@ -53,6 +53,17 @@ uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-i
 uv run cogkura-bench inspect ti-proactive --dataset transient_interference_v1 --backend cogkura-interference
 ```
 
+## Persistent inhibition (`persistent_inhibition_v1`)
+
+Small mechanism fixture for selective use, co-consumption, scope isolation, repetition, recovery, and the factual-time versus cognitive-time distinction. Queries use `Capability.PERSISTENT_INHIBITION`. `interference_v1` and `transient_interference_v1` stay unchanged. Use actions live in `uses.jsonl` and run after their source query. Effect scoring uses `cogkura-inhibition`. `cogkura-inhibition-recording` records traces without applying them. Control `cogkura` still records positive use and reports inhibition metrics as N/A.
+
+```bash
+uv run cogkura-bench validate-dataset persistent_inhibition_v1
+uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-inhibition --quiet
+uv run cogkura-bench inspect pi-immediate --dataset persistent_inhibition_v1 --backend cogkura-inhibition
+uv run cogkura-bench inspect pi-use-gha-1 --dataset persistent_inhibition_v1 --backend cogkura-inhibition
+```
+
 ## Customer Decision Context (`customer_decision_context_v1`)
 
 Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.

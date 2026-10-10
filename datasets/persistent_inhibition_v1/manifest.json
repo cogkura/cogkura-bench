@@ -1,0 +1,10 @@
+{
+  "name": "persistent-inhibition-v1",
+  "schema_version": 1,
+  "events": 7,
+  "queries": 14,
+  "feedback": 0,
+  "uses": 4,
+  "description": "Controlled persistent inhibition fixture for selective induction, scope isolation, repetition, and recovery.",
+  "required_capabilities": ["persistent_inhibition"]
+}

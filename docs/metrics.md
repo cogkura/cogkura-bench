@@ -114,3 +114,24 @@ Queries on `transient_interference_v1` declare `expected_interference_effects` a
 Invariant counters (`positive_penalty_violation_count`, `activation_increase_due_to_interference_count`, `cotemporal_penalty_violation_count`, `historical_future_interference_count`) must be zero on canonical runs.
 
 The control `cogkura` profile and unsupported backends report transient interference metrics as **N/A**. Tests: `tests/unit/test_metrics_transient_interference.py`.
+
+## Persistent inhibition (0.3.6)
+
+`Capability.PERSISTENT_INHIBITION` scores two separate paths. Trace metrics come from explicit `UseAction`s when `inhibition_traces` is supported. Effect metrics come from later queries when `persistent_inhibition` is supported. Bench does not recompute Core's half-life or noisy-OR formula.
+
+A behavioural effect is an observation with `penalty < 0`. Matching uses candidate provenance intersection, plus selected provenance on a contribution when the expectation names a selected memory.
+
+| Metric | Meaning |
+| --- | --- |
+| `inhibition_trace_precision` / `recall` / `f1` | Persisted losers versus the use's expected inhibited event IDs |
+| `unexpected_inhibition_trace_rate` | Traces that are not the expected loser |
+| `persistent_inhibition_effect_precision` / `recall` / `f1` | Behavioural suppression versus query expectations (F1 is primary) |
+| `unexpected_persistent_inhibition_rate` | Behavioural effects that are not expected |
+| `persistent_inhibition_scope_isolation_accuracy` | Designated negative-control queries with no penalty |
+| `persistent_inhibition_history_accuracy` | Pre-induction queries see no penalty; current `as_of` with historical `valid_at` still does |
+| `repetition_strengthening_accuracy` | A later designated query has a larger penalty magnitude than its baseline |
+| `inhibition_recovery_order_accuracy` | Each designated later query has a smaller penalty magnitude than the previous one |
+
+Invariant counters (`positive_inhibition_penalty_violations`, `activation_increase_due_to_inhibition`, `out_of_scope_inhibition_count`, `future_trace_visibility_count`) must be zero on the canonical fixture. Rank and threshold accuracies are reported only when a query sets those expectation flags.
+
+`cogkura-inhibition-recording` reports trace metrics and effect metrics as **N/A**. Control `cogkura` and unsupported backends report both as **N/A**. Tests: `tests/unit/test_metrics_persistent_inhibition.py`.

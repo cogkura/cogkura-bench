@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from cogkurabench.evaluation.result import QueryResult
+from cogkurabench.evaluation.result import QueryResult, UseResult
 from cogkurabench.models import (
     BenchmarkQuery,
     CompetitionExpectation,
@@ -349,6 +349,111 @@ def format_transient_interference_section(
     return "\n".join(lines)
 
 
+def format_persistent_inhibition_section(
+    query: BenchmarkQuery,
+    query_result: QueryResult,
+) -> str:
+    """Render persistent inhibition diagnostics for one query."""
+    if not (
+        query.expected_persistent_inhibition
+        or query.forbidden_persistent_inhibition
+        or query_result.persistent_inhibition_observations
+        or query_result.persistent_inhibition_diagnostics
+    ):
+        return ""
+
+    lines = ["Persistent inhibition", ""]
+    lines.append("Expected:")
+    if query.expected_persistent_inhibition:
+        for expectation in query.expected_persistent_inhibition:
+            selected = ", ".join(expectation.selected_event_ids) or "(unspecified)"
+            candidate = ", ".join(expectation.candidate_event_ids)
+            lines.append(f"  {expectation.id}: {selected} inhibits {candidate}")
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Forbidden:")
+    if query.forbidden_persistent_inhibition:
+        for expectation in query.forbidden_persistent_inhibition:
+            candidate = ", ".join(expectation.candidate_event_ids)
+            lines.append(f"  {expectation.id}: {candidate}")
+    else:
+        lines.append("  (none)")
+    lines.append("")
+    lines.append("Candidates:")
+    if query_result.persistent_inhibition_observations:
+        classifications = {
+            tuple(diag.candidate_source_event_ids): diag.classification
+            for diag in query_result.persistent_inhibition_diagnostics
+        }
+        for observation in query_result.persistent_inhibition_observations:
+            candidate = ", ".join(observation.candidate_source_event_ids)
+            delta = observation.activation_after - observation.activation_before
+            lines.append(f"  {candidate}")
+            lines.append(f"    before: {observation.activation_before:.2f}")
+            lines.append(f"    after:  {observation.activation_after:.2f}")
+            lines.append(f"    delta:  {delta:+.2f}")
+            lines.append(
+                "    traces: "
+                f"stored {observation.stored_trace_count}, "
+                f"evaluated {observation.evaluated_trace_count}, "
+                f"matched {observation.matched_trace_count}, "
+                f"effective {observation.effective_trace_count}"
+            )
+            lines.append(f"    pressure: {observation.inhibition_pressure:.2f}")
+            lines.append(f"    penalty: {observation.penalty:.2f}")
+            if observation.rank_before is not None or observation.rank_after is not None:
+                lines.append(f"    rank: {observation.rank_before} -> {observation.rank_after}")
+            classification = classifications.get(observation.candidate_source_event_ids, "observed")
+            lines.append(f"    classification: {classification}")
+            for contribution in observation.contributions:
+                selected = ", ".join(contribution.selected_source_event_ids)
+                lines.append(
+                    f"    contribution: {selected} age {contribution.age_seconds:.0f}s "
+                    f"remaining {contribution.remaining_strength:.2f}"
+                )
+    else:
+        lines.append("  (none)")
+    cogkura_meta = query_result.backend_metadata.get("cogkura", {})
+    if isinstance(cogkura_meta, Mapping):
+        unmapped = int(cogkura_meta.get("persistent_inhibition_contributions_unmapped", 0))
+        lines.extend(["", f"Unmapped contributions: {unmapped}"])
+    return "\n".join(lines)
+
+
+def format_use_inspection(use_result: UseResult) -> str:
+    """Render one explicit use and its persisted inhibitory traces."""
+    lines = [
+        "Use",
+        "",
+        f"  {use_result.use_id}",
+        "",
+        "Source query:",
+        f"  {use_result.source_query_id}",
+        "",
+        "Selected:",
+        f"  {', '.join(use_result.selected_event_ids)}",
+        "",
+        "Expected inhibited:",
+        f"  {', '.join(use_result.expected_inhibited_event_ids) or '(none)'}",
+        "",
+        "Persisted:",
+    ]
+    if use_result.diagnostics:
+        for diagnostic in use_result.diagnostics:
+            inhibited = ", ".join(diagnostic.inhibited_source_event_ids)
+            lines.append(f"  {inhibited}")
+            lines.append(f"    pressure: {diagnostic.induction_pressure:.2f}")
+            lines.append(f"    classification: {diagnostic.classification}")
+    elif use_result.inhibition_traces:
+        for trace in use_result.inhibition_traces:
+            lines.append(f"  {', '.join(trace.inhibited_source_event_ids)}")
+            lines.append(f"    pressure: {trace.induction_pressure:.2f}")
+    else:
+        lines.append("  (none)")
+    return "\n".join(lines)
+
+
 def format_cogkura_competition_inspection_section(
     backend_metadata: Mapping[str, object],
 ) -> str:
@@ -455,6 +560,9 @@ def format_query_inspection(
     transient_section = format_transient_interference_section(query, query_result)
     if transient_section:
         sections.extend(["", transient_section])
+    inhibition_section = format_persistent_inhibition_section(query, query_result)
+    if inhibition_section:
+        sections.extend(["", inhibition_section])
     cogkura_competition_section = format_cogkura_competition_inspection_section(
         query_result.backend_metadata
     )

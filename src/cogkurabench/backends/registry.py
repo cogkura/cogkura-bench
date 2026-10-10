@@ -19,6 +19,8 @@ def create_backend(name: str, dataset: BenchmarkDataset) -> MemoryBackend:
         "full-history": lambda _data: FullHistoryBackend(),
         "cogkura": _create_cogkura_backend,
         "cogkura-interference": _create_cogkura_interference_backend,
+        "cogkura-inhibition-recording": _create_cogkura_inhibition_recording_backend,
+        "cogkura-inhibition": _create_cogkura_inhibition_backend,
     }
     try:
         factory = factories[name]
@@ -40,6 +42,30 @@ def _create_cogkura_interference_backend(_dataset: BenchmarkDataset) -> MemoryBa
     return CogKuraBackend(apply_interference=True)
 
 
+def _create_cogkura_inhibition_recording_backend(_dataset: BenchmarkDataset) -> MemoryBackend:
+    from cogkurabench.backends.cogkura import CogKuraBackend  # noqa: PLC0415
+
+    return CogKuraBackend(inhibition_enabled=True, name="cogkura-inhibition-recording")
+
+
+def _create_cogkura_inhibition_backend(_dataset: BenchmarkDataset) -> MemoryBackend:
+    from cogkurabench.backends.cogkura import CogKuraBackend  # noqa: PLC0415
+
+    return CogKuraBackend(
+        inhibition_enabled=True,
+        apply_inhibition=True,
+        name="cogkura-inhibition",
+    )
+
+
 def available_backends() -> tuple[str, ...]:
     """Return supported backend names."""
-    return ("oracle", "token-overlap", "full-history", "cogkura", "cogkura-interference")
+    return (
+        "oracle",
+        "token-overlap",
+        "full-history",
+        "cogkura",
+        "cogkura-interference",
+        "cogkura-inhibition-recording",
+        "cogkura-inhibition",
+    )

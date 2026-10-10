@@ -10,6 +10,8 @@ from cogkurabench.models import (
     CompetitionDirection,
     CompetitionObservation,
     InterferenceContributionObservation,
+    PersistentInhibitionContributionObservation,
+    PersistentInhibitionObservation,
     RetrievedItem,
     TransientInterferenceObservation,
 )
@@ -634,4 +636,170 @@ def interference_mapping_counts(
         "interference_contributions_reported": contributions_reported,
         "interference_contributions_mapped": contributions_mapped,
         "interference_contributions_unmapped": contributions_unmapped,
+    }
+
+
+def event_ids_for_memory(
+    memory: object,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> tuple[str, ...]:
+    """Map a CogKura memory's observation evidence to benchmark event IDs."""
+    return _event_ids_for_memory(
+        memory,
+        observation_id_to_event_id=observation_id_to_event_id,
+    )
+
+
+def _inhibition_identity_index(
+    inspection: RecallInspectionResult,
+) -> dict[tuple[str, str], object]:
+    identity_to_memory: dict[tuple[str, str], object] = {}
+    for candidate in (*inspection.returned, *inspection.rejected):
+        memory = candidate.memory
+        identity_to_memory[(candidate.memory_kind.value, memory.memory_key)] = memory
+    return identity_to_memory
+
+
+def _has_persistent_inhibition(diagnostics: object | None) -> bool:
+    inhibition = getattr(diagnostics, "persistent_inhibition", None)
+    if inhibition is None:
+        return False
+    return bool(
+        inhibition.penalty < 0.0
+        or inhibition.stored_trace_count > 0
+        or inhibition.matched_trace_count > 0
+    )
+
+
+def persistent_inhibition_inspection_to_observations(
+    inspection: RecallInspectionResult,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> tuple[PersistentInhibitionObservation, ...]:
+    """Map CogKura persistent inhibition diagnostics to benchmark observations."""
+    identity_to_memory = _inhibition_identity_index(inspection)
+    observations: list[PersistentInhibitionObservation] = []
+    for candidate in (*inspection.returned, *inspection.rejected):
+        diagnostics = candidate.diagnostics
+        if not _has_persistent_inhibition(diagnostics):
+            continue
+        candidate_event_ids = _event_ids_for_memory(
+            candidate.memory,
+            observation_id_to_event_id=observation_id_to_event_id,
+        )
+        if not candidate_event_ids or diagnostics is None:
+            continue
+        inhibition = diagnostics.persistent_inhibition
+        if inhibition is None:
+            continue
+        activation_before = candidate.activation
+        if diagnostics.activation_before_inhibition is not None:
+            activation_before = diagnostics.activation_before_inhibition
+        contributions: list[PersistentInhibitionContributionObservation] = []
+        for contribution in inhibition.contributions:
+            selected_memory = identity_to_memory.get(
+                (
+                    contribution.selected_identity.memory_kind.value,
+                    contribution.selected_identity.memory_key,
+                )
+            )
+            if selected_memory is None:
+                continue
+            selected_event_ids = _event_ids_for_memory(
+                selected_memory,
+                observation_id_to_event_id=observation_id_to_event_id,
+            )
+            if not selected_event_ids:
+                continue
+            contributions.append(
+                PersistentInhibitionContributionObservation(
+                    selected_source_event_ids=selected_event_ids,
+                    direction=_bench_direction(contribution.direction),
+                    induction_pressure=contribution.induction_pressure,
+                    age_seconds=contribution.age_seconds,
+                    remaining_strength=contribution.remaining_strength,
+                    scope_key=contribution.scope_key,
+                )
+            )
+        observations.append(
+            PersistentInhibitionObservation(
+                candidate_source_event_ids=candidate_event_ids,
+                activation_before=activation_before,
+                activation_after=candidate.activation,
+                stored_trace_count=inhibition.stored_trace_count,
+                evaluated_trace_count=inhibition.evaluated_trace_count,
+                matched_trace_count=inhibition.matched_trace_count,
+                effective_trace_count=inhibition.effective_trace_count,
+                inhibition_pressure=inhibition.inhibition_pressure,
+                penalty=inhibition.penalty,
+                crossed_activation_threshold=bool(
+                    diagnostics.crossed_activation_threshold_due_to_inhibition
+                ),
+                rank_before=candidate.rank_before_inhibition,
+                rank_after=candidate.rank_after_inhibition or candidate.rank,
+                contributions=tuple(contributions),
+            )
+        )
+    return tuple(observations)
+
+
+def persistent_inhibition_mapping_counts(
+    inspection: RecallInspectionResult,
+    *,
+    observation_id_to_event_id: Mapping[str, str],
+) -> dict[str, int]:
+    """Count reported, mapped, and unmapped persistent-inhibition diagnostics."""
+    identity_to_memory = _inhibition_identity_index(inspection)
+    candidates_reported = 0
+    candidates_mapped = 0
+    candidates_unmapped = 0
+    contributions_reported = 0
+    contributions_mapped = 0
+    contributions_unmapped = 0
+
+    for candidate in (*inspection.returned, *inspection.rejected):
+        diagnostics = candidate.diagnostics
+        if not _has_persistent_inhibition(diagnostics):
+            continue
+        candidates_reported += 1
+        candidate_event_ids = _event_ids_for_memory(
+            candidate.memory,
+            observation_id_to_event_id=observation_id_to_event_id,
+        )
+        if candidate_event_ids:
+            candidates_mapped += 1
+        else:
+            candidates_unmapped += 1
+        inhibition = diagnostics.persistent_inhibition if diagnostics is not None else None
+        if inhibition is None:
+            continue
+        for contribution in inhibition.contributions:
+            contributions_reported += 1
+            selected_memory = identity_to_memory.get(
+                (
+                    contribution.selected_identity.memory_kind.value,
+                    contribution.selected_identity.memory_key,
+                )
+            )
+            selected_event_ids = (
+                _event_ids_for_memory(
+                    selected_memory,
+                    observation_id_to_event_id=observation_id_to_event_id,
+                )
+                if selected_memory is not None
+                else ()
+            )
+            if candidate_event_ids and selected_event_ids:
+                contributions_mapped += 1
+            else:
+                contributions_unmapped += 1
+
+    return {
+        "persistent_inhibition_candidates_reported": candidates_reported,
+        "persistent_inhibition_candidates_mapped": candidates_mapped,
+        "persistent_inhibition_candidates_unmapped": candidates_unmapped,
+        "persistent_inhibition_contributions_reported": contributions_reported,
+        "persistent_inhibition_contributions_mapped": contributions_mapped,
+        "persistent_inhibition_contributions_unmapped": contributions_unmapped,
     }

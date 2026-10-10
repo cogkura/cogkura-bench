@@ -15,6 +15,8 @@ from cogkurabench.models import (
     ProjectEvent,
     RetrievalRequest,
     RetrievalResponse,
+    UseRequest,
+    UseResponse,
 )
 from cogkurabench.runner import BenchmarkRunner
 
@@ -68,6 +70,9 @@ class _SpyBackend(MemoryBackend):
         return None
 
     async def apply_feedback(self, feedback: BenchmarkFeedback) -> None:
+        return None
+
+    async def record_use(self, request: UseRequest) -> UseResponse | None:
         return None
 
     async def maintain(self, *, as_of: datetime) -> None:
