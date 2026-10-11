@@ -113,7 +113,9 @@ Queries on `transient_interference_v1` declare `expected_interference_effects` a
 
 Invariant counters (`positive_penalty_violation_count`, `activation_increase_due_to_interference_count`, `cotemporal_penalty_violation_count`, `historical_future_interference_count`) must be zero on canonical runs.
 
-The control `cogkura` profile and unsupported backends report transient interference metrics as **N/A**. Tests: `tests/unit/test_metrics_transient_interference.py`.
+The control `cogkura` profile and unsupported backends report transient interference metrics as **N/A**. When nothing is observed, precision stays 1.0. If expected effects exist, recall and F1 are 0, so a zero-effect run does not pass the v2 gate. Opposite directed effects in one query are both expected when both candidates remain eligible. Tests: `tests/unit/test_metrics_transient_interference.py`.
+
+`transient_interference_v1` is the frozen historical fixture. `transient_interference_v2` is the current behavioural fixture. Both use `Capability.TRANSIENT_INTERFERENCE` and these metrics.
 
 ## Persistent inhibition (0.3.6)
 

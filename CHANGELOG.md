@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-10-11
+
+### Added
+
+- `transient_interference_v2`, a controlled fixture for the current behavioural-eligibility contract.
+- Candidate-directed proactive and retroactive ground truth, including both directions on one query.
+- Accessibility-asymmetry and multi-competitor comparisons in the v2 findings runner.
+- Dataset validation coverage that allows opposite directions and rejects the same directed pair as both expected and forbidden.
+- [Transient interference 0.3.7 findings](docs/findings/transient-interference-0.3.7.md).
+
+### Changed
+
+- CogKura extra requires `cogkura>=0.17.6,<0.18.0`.
+
+### Preserved
+
+- `transient_interference_v1` is unchanged.
+- Transient-interference metric definitions and `Capability.TRANSIENT_INTERFERENCE`.
+- `cogkura-interference` remains the isolated transient profile.
+- Persistent-inhibition fixture and metrics.
+
 ## [0.3.6] - 2026-10-10
 
 ### Added

@@ -92,6 +92,18 @@ jobs:
       - name: Run transient interference benchmark (cogkura-interference)
         run: uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-interference --quiet
 
+      - name: Validate transient_interference_v2 dataset
+        run: uv run cogkura-bench validate-dataset transient_interference_v2
+
+      - name: Run transient interference v2 benchmark (oracle)
+        run: uv run cogkura-bench run --dataset transient_interference_v2 --backend oracle --quiet
+
+      - name: Run transient interference v2 benchmark (cogkura)
+        run: uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura --quiet
+
+      - name: Run transient interference v2 benchmark (cogkura-interference)
+        run: uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura-interference --quiet
+
       - name: Validate persistent_inhibition_v1 dataset
         run: uv run cogkura-bench validate-dataset persistent_inhibition_v1
 

@@ -142,3 +142,101 @@ def test_wrong_direction_keeps_pair_but_lowers_direction_accuracy() -> None:
     assert metrics["interference_effect_recall"] == 1.0
     assert diagnostics[0].classification == "expected"
     assert metrics["interference_effect_direction_accuracy"] == 0.0
+
+
+def test_opposite_directions_in_one_query_both_match() -> None:
+    query = _query(
+        expected_interference_effects=(
+            TransientInterferenceExpectation(
+                id="pro",
+                candidate_event_ids=("gha",),
+                competitor_event_ids=("jenkins",),
+                direction=CompetitionDirection.PROACTIVE,
+            ),
+            TransientInterferenceExpectation(
+                id="retro",
+                candidate_event_ids=("jenkins",),
+                competitor_event_ids=("gha",),
+                direction=CompetitionDirection.RETROACTIVE,
+            ),
+        )
+    )
+    metrics, diagnostics, _ = compute_transient_interference_metrics(
+        query,
+        [
+            _observation(("gha",), ("jenkins",), CompetitionDirection.PROACTIVE),
+            _observation(("jenkins",), ("gha",), CompetitionDirection.RETROACTIVE),
+        ],
+        transient_interference_supported=True,
+    )
+    assert metrics["interference_effect_recall"] == 1.0
+    assert metrics["interference_effect_precision"] == 1.0
+    assert metrics["interference_effect_direction_accuracy"] == 1.0
+    assert {item.classification for item in diagnostics} == {"expected"}
+
+
+def test_missing_direction_lowers_recall() -> None:
+    query = _query(
+        expected_interference_effects=(
+            TransientInterferenceExpectation(
+                id="pro",
+                candidate_event_ids=("gha",),
+                competitor_event_ids=("jenkins",),
+                direction=CompetitionDirection.PROACTIVE,
+            ),
+            TransientInterferenceExpectation(
+                id="retro",
+                candidate_event_ids=("jenkins",),
+                competitor_event_ids=("gha",),
+                direction=CompetitionDirection.RETROACTIVE,
+            ),
+        )
+    )
+    metrics, _, _ = compute_transient_interference_metrics(
+        query,
+        [_observation(("gha",), ("jenkins",), CompetitionDirection.PROACTIVE)],
+        transient_interference_supported=True,
+    )
+    assert metrics["interference_effect_recall"] == 0.5
+    assert metrics["interference_effect_f1"] < 1.0
+
+
+def test_zero_observations_with_expectations_fail_recall_and_f1() -> None:
+    query = _query(
+        expected_interference_effects=(
+            TransientInterferenceExpectation(
+                id="pro",
+                candidate_event_ids=("gha",),
+                competitor_event_ids=("jenkins",),
+                direction=CompetitionDirection.PROACTIVE,
+            ),
+        )
+    )
+    metrics, diagnostics, _ = compute_transient_interference_metrics(
+        query,
+        [],
+        transient_interference_supported=True,
+    )
+    assert diagnostics == ()
+    assert metrics["interference_effect_precision"] == 1.0
+    assert metrics["interference_effect_recall"] == 0.0
+    assert metrics["interference_effect_f1"] == 0.0
+
+
+def test_cotemporal_active_contribution_is_a_violation() -> None:
+    query = _query(
+        forbidden_interference_effects=(
+            TransientInterferenceExpectation(
+                id="co",
+                candidate_event_ids=("a",),
+                competitor_event_ids=("b",),
+                direction=CompetitionDirection.CO_TEMPORAL,
+            ),
+        )
+    )
+    metrics, _, _ = compute_transient_interference_metrics(
+        query,
+        [_observation(("a",), ("b",), CompetitionDirection.CO_TEMPORAL)],
+        transient_interference_supported=True,
+    )
+    assert metrics["cotemporal_penalty_violation_count"] == 1.0

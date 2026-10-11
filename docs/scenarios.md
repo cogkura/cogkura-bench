@@ -53,6 +53,16 @@ uv run cogkura-bench run --dataset transient_interference_v1 --backend cogkura-i
 uv run cogkura-bench inspect ti-proactive --dataset transient_interference_v1 --backend cogkura-interference
 ```
 
+## Transient interference v2 (`transient_interference_v2`)
+
+Current behavioural fixture for candidate-directed proactive and retroactive effects, accessibility asymmetry, multiple competitors, and negative controls. `transient_interference_v1` stays frozen. Scoring uses `cogkura-interference`. The control profile is `cogkura`. Rank and threshold flags are omitted unless a dedicated pair moves deterministically.
+
+```bash
+uv run cogkura-bench validate-dataset transient_interference_v2
+uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura-interference --quiet
+uv run cogkura-bench inspect ti2-pair --dataset transient_interference_v2 --backend cogkura-interference
+```
+
 ## Persistent inhibition (`persistent_inhibition_v1`)
 
 Small mechanism fixture for selective use, co-consumption, scope isolation, repetition, recovery, and the factual-time versus cognitive-time distinction. Queries use `Capability.PERSISTENT_INHIBITION`. `interference_v1` and `transient_interference_v1` stay unchanged. Use actions live in `uses.jsonl` and run after their source query. Effect scoring uses `cogkura-inhibition`. `cogkura-inhibition-recording` records traces without applying them. Control `cogkura` still records positive use and reports inhibition metrics as N/A.

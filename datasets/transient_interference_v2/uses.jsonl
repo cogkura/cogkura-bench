@@ -1,0 +1,2 @@
+{"id": "v2-use-jenkins", "timestamp": "2026-06-01T12:00:00+00:00", "query_id": "ti2-source", "selected_event_ids": ["v2-jenkins"]}
+{"id": "v2-use-backup", "timestamp": "2026-06-01T14:00:00+00:00", "query_id": "ti2-backup", "selected_event_ids": ["v2-backup"]}

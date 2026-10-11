@@ -65,6 +65,12 @@
 - [x] `persistent_inhibition_v1` with recording and application CogKura profiles
 - [x] Inhibition 0.3.6 findings
 
+## 0.3.7
+
+- [x] `transient_interference_v2` for the current behavioural contract
+- [x] Frozen `transient_interference_v1` retained for longitudinal comparison
+- [x] Transient interference 0.3.7 findings
+
 ## Future
 
 - Vector/RAG baseline

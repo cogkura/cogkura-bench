@@ -1,0 +1,10 @@
+{
+  "name": "transient-interference-v2",
+  "schema_version": 1,
+  "events": 13,
+  "queries": 12,
+  "feedback": 0,
+  "uses": 2,
+  "description": "Current behavioural transient-interference fixture. Candidate-directed proactive and retroactive effects, with negative controls. transient_interference_v1 stays frozen.",
+  "required_capabilities": ["transient_interference"]
+}

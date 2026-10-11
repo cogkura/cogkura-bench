@@ -94,6 +94,10 @@ uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend oracle --q
 uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura --quiet
 uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-inhibition-recording --quiet
 uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-inhibition --quiet
+uv run cogkura-bench validate-dataset transient_interference_v2
+uv run cogkura-bench run --dataset transient_interference_v2 --backend oracle --quiet
+uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura --quiet
+uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura-interference --quiet
 ```
 
 ## Interference diagnostics (0.3.4 / 0.3.5)
@@ -117,6 +121,15 @@ uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-in
 - Do not modify `interference_v1` or `transient_interference_v1` for this release.
 - Bench does not reimplement Core's inhibition formula.
 - Compare results in [0.3.6 findings](docs/findings/inhibition-0.3.6.md).
+
+## Transient interference v2 (0.3.7)
+
+- `transient_interference_v1` is frozen. Do not edit it to match the current eligibility contract.
+- `transient_interference_v2` uses `Capability.TRANSIENT_INTERFERENCE` and the existing transient metrics.
+- Proactive and retroactive are candidate-relative. Both may be expected on one query.
+- The v2 gate needs recall and F1 of 1.0, not precision alone.
+- Primary profile is `cogkura-interference`. Persistent inhibition stays off for that run.
+- Compare results in [0.3.7 findings](docs/findings/transient-interference-0.3.7.md).
 
 ## Customer decision context guidance
 

@@ -337,6 +337,8 @@ def format_transient_interference_section(
             competitor = ", ".join(diag.competitor_source_event_ids)
             lines.append(f"  -> {competitor}")
             lines.append(f"    direction: {diag.direction.value}")
+            lines.append(f"    competition strength: {diag.competition_strength:.2f}")
+            lines.append(f"    competitor accessibility: {diag.competitor_accessibility:.2f}")
             lines.append(f"    pressure: {diag.pressure:.2f}")
             lines.append(f"    classification: {diag.classification}")
     else:
