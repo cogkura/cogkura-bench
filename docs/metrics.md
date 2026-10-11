@@ -137,3 +137,9 @@ A behavioural effect is an observation with `penalty < 0`. Matching uses candida
 Invariant counters (`positive_inhibition_penalty_violations`, `activation_increase_due_to_inhibition`, `out_of_scope_inhibition_count`, `future_trace_visibility_count`) must be zero on the canonical fixture. Rank and threshold accuracies are reported only when a query sets those expectation flags.
 
 `cogkura-inhibition-recording` reports trace metrics and effect metrics as **N/A**. Control `cogkura` and unsupported backends report both as **N/A**. Tests: `tests/unit/test_metrics_persistent_inhibition.py`.
+
+### Workload summary (0.3.8)
+
+`summarize_persistent_inhibition_workload` aggregates an application run, optionally compared with recording-only and control runs. A logical trace pair is the sorted selected event IDs, the sorted inhibited event IDs, and the scope key. `repeated_trace_count` is `trace_count - unique_trace_pair_count`. Repetition is reported. It is not a failure.
+
+`recording_only_control_drift_count` counts retrieval identity, order, or score differences between control and recording-only. `unattributed_change_count` counts application retrieval differences that no mapped `penalty < 0` explains. Both must be 0 on the canonical workloads. Rank changes, threshold crossings, returned-set changes, and saturation (32 traces on one use, or 64 stored traces on one candidate) are observational. Tests: `tests/unit/test_metrics_persistent_inhibition_workload.py`.

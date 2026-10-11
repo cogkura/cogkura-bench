@@ -84,7 +84,9 @@ async def test_persistent_inhibition_gate_still_holds() -> None:
         write_results=False,
     )
     metrics = result.capability_results[Capability.PERSISTENT_INHIBITION.value].metrics
+    assert metrics["inhibition_trace_precision"] == 1.0
     assert metrics["inhibition_trace_recall"] == 1.0
+    assert metrics["unexpected_inhibition_trace_rate"] == 0.0
     assert metrics["persistent_inhibition_effect_precision"] == 1.0
     assert metrics["persistent_inhibition_effect_recall"] == 1.0
     assert metrics["unexpected_persistent_inhibition_rate"] == 0.0

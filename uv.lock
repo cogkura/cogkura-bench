@@ -295,7 +295,7 @@ wheels = [
 
 [[package]]
 name = "cogkurabench"
-version = "0.3.7"
+version = "0.3.8"
 source = { editable = "." }
 
 [package.optional-dependencies]

@@ -55,7 +55,7 @@ flowchart TB
 
 Retrieval scoring uses `RetrievedItem` ranks only. Competition and transient interference observations are optional on `RetrievalResponse` and scored under separate capabilities. CogKura maps `inspect_recall` diagnostics to benchmark event provenance; raw Core counters remain in `backend_metadata`. The `cogkura-interference` profile enables behavioural mapping; control `cogkura` keeps `apply_interference=False`. `transient_interference_v2` is the current fixture for that profile. `transient_interference_v1` remains the frozen historical fixture.
 
-Persistent inhibition is stateful. A `UseAction` records explicit consumption of a cached retrieval. The CogKura adapter calls `record_access` on the original `RecallResult` objects and does not recall again. A later `QueryAction` can then observe `PersistentInhibitionObservation` values.
+Persistent inhibition is stateful. A `UseAction` records explicit consumption of a cached retrieval. The CogKura adapter calls `record_access` on the original `RecallResult` objects and does not recall again. A later `QueryAction` can then observe `PersistentInhibitionObservation` values. Workload summaries in 0.3.8 are computed from those `UseResult` and `QueryResult` observations. They do not read a Core store dump.
 
 ```text
 QueryAction

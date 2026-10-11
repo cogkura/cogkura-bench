@@ -98,6 +98,16 @@ uv run cogkura-bench validate-dataset transient_interference_v2
 uv run cogkura-bench run --dataset transient_interference_v2 --backend oracle --quiet
 uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura --quiet
 uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura-interference --quiet
+uv run cogkura-bench validate-dataset persistent_inhibition_software_v1
+uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura-inhibition-recording --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura-inhibition --quiet
+uv run cogkura-bench validate-dataset persistent_inhibition_customer_v1
+uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition-recording --quiet
+uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition --quiet
 ```
 
 ## Interference diagnostics (0.3.4 / 0.3.5)
@@ -121,6 +131,14 @@ uv run cogkura-bench run --dataset transient_interference_v2 --backend cogkura-i
 - Do not modify `interference_v1` or `transient_interference_v1` for this release.
 - Bench does not reimplement Core's inhibition formula.
 - Compare results in [0.3.6 findings](docs/findings/inhibition-0.3.6.md).
+
+## Persistent-inhibition workloads (0.3.8)
+
+- `persistent_inhibition_v1` stays the controlled fixture. Do not edit it, `transient_interference_v1`, `transient_interference_v2`, or `interference_v1` for workload runs.
+- `persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1` are longer stateful workloads. Uses are fixed event IDs, identical across profiles.
+- Workload summaries are derived from `UseResult` and `QueryResult`. They do not dump Core stores.
+- Recording-only versus control drift and unattributed application changes must be 0. Repetition, rank changes, threshold counts, and latency are reported only.
+- Compare results in [0.3.8 findings](docs/findings/persistent-inhibition-workloads-0.3.8.md).
 
 ## Transient interference v2 (0.3.7)
 

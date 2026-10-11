@@ -71,6 +71,12 @@
 - [x] Frozen `transient_interference_v1` retained for longitudinal comparison
 - [x] Transient interference 0.3.7 findings
 
+## 0.3.8
+
+- [x] `persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1`
+- [x] Workload summary from existing use and retrieval observations
+- [x] Persistent-inhibition workload 0.3.8 findings
+
 ## Future
 
 - Vector/RAG baseline

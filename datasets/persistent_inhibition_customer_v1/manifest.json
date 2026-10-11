@@ -1,0 +1,12 @@
+{
+  "name": "persistent-inhibition-customer-v1",
+  "schema_version": 1,
+  "events": 14,
+  "queries": 18,
+  "feedback": 0,
+  "uses": 8,
+  "description": "Broader customer-decision persistent inhibition workload with preference selection, category isolation, co-consumption, recovery, and re-selection.",
+  "required_capabilities": [
+    "persistent_inhibition"
+  ]
+}

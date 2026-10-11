@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.7. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.8. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -178,10 +178,13 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 | `interference_v1` | 16 | 8 | 0 | Competition diagnostics fixture (scenarios A–H) |
 | `transient_interference_v1` | 20 | 10 | 0 | Frozen historical transient-interference fixture from Core 0.17.1 |
 | `transient_interference_v2` | 13 | 12 | 0 | Current behavioural transient-interference fixture for the 0.17.6 contract |
+| `persistent_inhibition_v1` | 7 | 14 | 0 | Controlled persistent-inhibition fixture (4 uses) |
+| `persistent_inhibition_software_v1` | 24 | 23 | 0 | Software persistent-inhibition workload (11 uses) |
+| `persistent_inhibition_customer_v1` | 14 | 18 | 0 | Customer persistent-inhibition workload (8 uses) |
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
 
-`transient_interference_v1` stays frozen for longitudinal comparison. `transient_interference_v2` is the current behavioural fixture for the 0.17.2+ eligibility contract and the Core 0.17.6 reachability correction. Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md). Transient v2 findings: [docs/findings/transient-interference-0.3.7.md](docs/findings/transient-interference-0.3.7.md). Persistent inhibition findings: [docs/findings/inhibition-0.3.6.md](docs/findings/inhibition-0.3.6.md).
+`transient_interference_v1` stays frozen for longitudinal comparison. `transient_interference_v2` is the current behavioural fixture for the 0.17.2+ eligibility contract and the Core 0.17.6 reachability correction. Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md). Transient v2 findings: [docs/findings/transient-interference-0.3.7.md](docs/findings/transient-interference-0.3.7.md). `persistent_inhibition_v1` is the controlled persistent-inhibition fixture. `persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1` are the longer stateful workloads. Persistent inhibition findings: [docs/findings/inhibition-0.3.6.md](docs/findings/inhibition-0.3.6.md) and [docs/findings/persistent-inhibition-workloads-0.3.8.md](docs/findings/persistent-inhibition-workloads-0.3.8.md).
 
 Customer decision context findings: [docs/findings/customer-decision-context-0.3.3.md](docs/findings/customer-decision-context-0.3.3.md) (structured relationships; see also [0.3.2 fixture integrity](docs/findings/customer-decision-context-0.3.2.md), [0.3.1 lifecycle](docs/findings/customer-decision-context-0.3.1.md) and [0.3.0 baseline](docs/findings/customer-decision-context-0.3.0.md)).
 
@@ -233,6 +236,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
 - [`docs/findings/transient-interference-0.3.7.md`](docs/findings/transient-interference-0.3.7.md)
+- [`docs/findings/persistent-inhibition-workloads-0.3.8.md`](docs/findings/persistent-inhibition-workloads-0.3.8.md)
 - [`docs/findings/inhibition-0.3.6.md`](docs/findings/inhibition-0.3.6.md)
 - [`docs/findings/interference-0.3.5.md`](docs/findings/interference-0.3.5.md)
 - [`docs/findings/interference-0.3.4.md`](docs/findings/interference-0.3.4.md)

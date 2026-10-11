@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-10-11
+
+### Added
+
+- `persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1`, longer stateful workloads on the existing persistent-inhibition capability.
+- `PersistentInhibitionWorkloadSummary`, built from use and query observations already produced by the runner.
+- Workload runner `scripts/run_persistent_inhibition_workloads.py`.
+- [Persistent-inhibition workload 0.3.8 findings](docs/findings/persistent-inhibition-workloads-0.3.8.md).
+
 ### Changed
 
 - CogKura extra requires `cogkura>=0.17.6.1,<0.18.0`.
+
+### Preserved
+
+- `persistent_inhibition_v1`, `transient_interference_v1`, `transient_interference_v2`, and `interference_v1` are unchanged.
+- `Capability.PERSISTENT_INHIBITION` and the recording and application profiles.
 
 ## [0.3.7] - 2026-10-11
 

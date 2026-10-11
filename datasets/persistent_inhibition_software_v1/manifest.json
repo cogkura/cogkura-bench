@@ -1,0 +1,12 @@
+{
+  "name": "persistent-inhibition-software-v1",
+  "schema_version": 1,
+  "events": 24,
+  "queries": 23,
+  "feedback": 0,
+  "uses": 11,
+  "description": "Broader software-project persistent inhibition workload with repeated selection, isolation, co-consumption, recovery, and re-selection.",
+  "required_capabilities": [
+    "persistent_inhibition"
+  ]
+}

@@ -74,6 +74,19 @@ uv run cogkura-bench inspect pi-immediate --dataset persistent_inhibition_v1 --b
 uv run cogkura-bench inspect pi-use-gha-1 --dataset persistent_inhibition_v1 --backend cogkura-inhibition
 ```
 
+## Persistent-inhibition workloads (0.3.8)
+
+`persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1` keep the same capability, profiles, and fixed-use protocol as the controlled fixture. They add longer software and customer histories: repeated selection, cross-slot isolation, co-consumption with no mutual traces, recovery across about one and two half-lives, and a later re-selection of the previously inhibited alternative. Selected event IDs are declared in `uses.jsonl` and are the same for every profile. The controlled fixture and the transient fixtures stay unchanged.
+
+```bash
+uv run cogkura-bench validate-dataset persistent_inhibition_software_v1
+uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura-inhibition --quiet
+uv run cogkura-bench validate-dataset persistent_inhibition_customer_v1
+uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition --quiet
+```
+
+Findings: [findings/persistent-inhibition-workloads-0.3.8.md](findings/persistent-inhibition-workloads-0.3.8.md).
+
 ## Customer Decision Context (`customer_decision_context_v1`)
 
 Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.

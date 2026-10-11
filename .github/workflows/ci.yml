@@ -118,3 +118,33 @@ jobs:
 
       - name: Run persistent inhibition benchmark (cogkura-inhibition)
         run: uv run cogkura-bench run --dataset persistent_inhibition_v1 --backend cogkura-inhibition --quiet
+
+      - name: Validate persistent_inhibition_software_v1 dataset
+        run: uv run cogkura-bench validate-dataset persistent_inhibition_software_v1
+
+      - name: Run software inhibition workload (oracle)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend oracle --quiet
+
+      - name: Run software inhibition workload (cogkura)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura --quiet
+
+      - name: Run software inhibition workload (cogkura-inhibition-recording)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura-inhibition-recording --quiet
+
+      - name: Run software inhibition workload (cogkura-inhibition)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_software_v1 --backend cogkura-inhibition --quiet
+
+      - name: Validate persistent_inhibition_customer_v1 dataset
+        run: uv run cogkura-bench validate-dataset persistent_inhibition_customer_v1
+
+      - name: Run customer inhibition workload (oracle)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend oracle --quiet
+
+      - name: Run customer inhibition workload (cogkura)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura --quiet
+
+      - name: Run customer inhibition workload (cogkura-inhibition-recording)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition-recording --quiet
+
+      - name: Run customer inhibition workload (cogkura-inhibition)
+        run: uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition --quiet
