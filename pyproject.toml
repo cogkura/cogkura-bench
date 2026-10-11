@@ -30,7 +30,7 @@ dependencies = []
 
 [project.optional-dependencies]
 cogkura = [
-  "cogkura>=0.17.6,<0.18.0",
+  "cogkura>=0.17.6.1,<0.18.0",
 ]
 
 [project.scripts]
