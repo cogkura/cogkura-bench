@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CogKura extra requires `cogkura>=0.17.7,<0.18.0`.
+
 ## [0.3.8] - 2026-10-11
 
 ### Added

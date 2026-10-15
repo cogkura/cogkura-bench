@@ -46,7 +46,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.17.6.1,<0.18.0`.
+The CogKura extra pins `cogkura>=0.17.7,<0.18.0`.
 
 ## First run
 
