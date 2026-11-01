@@ -23,6 +23,7 @@ from cogkurabench.models import (
     InhibitionTraceObservation,
     PersistentInhibitionObservation,
     RetrievedItem,
+    SourceAuthorityObservation,
     TransientInterferenceObservation,
 )
 
@@ -115,6 +116,7 @@ class QueryResult:
     ] = ()
     persistent_inhibition_observations: tuple[PersistentInhibitionObservation, ...] = ()
     persistent_inhibition_diagnostics: tuple[PersistentInhibitionDiagnosticResult, ...] = ()
+    source_authority_observations: tuple[SourceAuthorityObservation, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metrics", MappingProxyType(dict(self.metrics)))

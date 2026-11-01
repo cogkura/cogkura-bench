@@ -77,6 +77,12 @@
 - [x] Workload summary from existing use and retrieval observations
 - [x] Persistent-inhibition workload 0.3.8 findings
 
+## 0.3.9
+
+- [x] `source_authority_v1` with authority-on and authority-off profiles
+- [x] Durable semantic admission metrics
+- [x] Source authority 0.3.9 findings
+
 ## Future
 
 - Vector/RAG baseline

@@ -43,6 +43,7 @@ from cogkurabench.models import (
     RetrievalRequest,
     RetrievalResponse,
     SemanticFact,
+    SourceAuthorityObservation,
     UseRequest,
     UseResponse,
 )
@@ -142,6 +143,10 @@ def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[st
             entry["valid_from"] = fact.valid_from.isoformat()
         if fact.valid_until is not None:
             entry["valid_until"] = fact.valid_until.isoformat()
+        if fact.confidence is not None:
+            entry["confidence"] = fact.confidence
+        if fact.authority is not None:
+            entry["authority"] = {"basis": fact.authority.basis}
         payload.append(entry)
     return payload
 
@@ -163,7 +168,7 @@ def _relationships_to_metadata(
 
 
 class CogKuraBackend:
-    """Benchmark adapter for CogKura 0.17.x public memory API."""
+    """Benchmark adapter for CogKura's public memory API."""
 
     def __init__(
         self,
@@ -172,12 +177,18 @@ class CogKuraBackend:
         apply_interference: bool = False,
         inhibition_enabled: bool = False,
         apply_inhibition: bool = False,
+        minimum_supporting_episodes: int = 1,
+        allow_authoritative_single_episode: bool = False,
+        inspect_source_authority: bool = False,
         name: str | None = None,
     ) -> None:
         self._competition_enabled = competition_enabled
         self._apply_interference = apply_interference
         self._inhibition_enabled = inhibition_enabled or apply_inhibition
         self._apply_inhibition = apply_inhibition
+        self._minimum_supporting_episodes = minimum_supporting_episodes
+        self._allow_authoritative_single_episode = allow_authoritative_single_episode
+        self._inspect_source_authority = inspect_source_authority
         if name is not None:
             self._backend_name = name
         elif apply_interference:
@@ -186,12 +197,19 @@ class CogKuraBackend:
             self._backend_name = "cogkura-inhibition"
         elif self._inhibition_enabled:
             self._backend_name = "cogkura-inhibition-recording"
+        elif allow_authoritative_single_episode:
+            self._backend_name = "cogkura-authority"
+        elif inspect_source_authority:
+            self._backend_name = "cogkura-authority-control"
         else:
             self._backend_name = "cogkura"
         self._memory: Memory | None = None
         self._observation_store: Any = None
         self._recall_cache: dict[str, _CachedRetrieval] = {}
         self._observation_id_to_event_id: dict[str, str] = {}
+        self._revision_to_event_id: dict[tuple[str, int], str] = {}
+        self._tenants: set[str] = set()
+        self._last_consolidation_by_tenant: dict[str, dict[str, int]] = {}
         self._version: str | None = None
         self._bench_version: str | None = None
         self._events_ingested = 0
@@ -235,6 +253,8 @@ class CogKuraBackend:
             record_use=True,
             inhibition_traces=self._inhibition_enabled,
             persistent_inhibition=self._apply_inhibition,
+            source_authority=self._inspect_source_authority,
+            explicit_source_authority=self._allow_authoritative_single_episode,
         )
 
     async def reset(self) -> None:
@@ -255,7 +275,8 @@ class CogKuraBackend:
         self._memory = cogkura.Memory(
             observation_store=self._observation_store,
             semantic_consolidator=ComplementaryLearningSemanticConsolidator(
-                minimum_supporting_episodes=1,
+                minimum_supporting_episodes=self._minimum_supporting_episodes,
+                allow_authoritative_single_episode=self._allow_authoritative_single_episode,
             ),
             competition_config=CompetitionConfig(
                 enabled=self._competition_enabled,
@@ -267,6 +288,9 @@ class CogKuraBackend:
             ),
         )
         self._observation_id_to_event_id.clear()
+        self._revision_to_event_id.clear()
+        self._tenants.clear()
+        self._last_consolidation_by_tenant.clear()
         self._recall_cache.clear()
         self._events_ingested = 0
         self._relationships_ingested = 0
@@ -293,6 +317,8 @@ class CogKuraBackend:
 
         memory = self._require_memory()
         for event in events:
+            tenant_id = event.tenant_id or TENANT_ID
+            self._tenants.add(tenant_id)
             metadata: dict[str, object] = {}
             if event.semantic_facts:
                 metadata["semantic_facts"] = _semantic_facts_to_metadata(event.semantic_facts)
@@ -305,35 +331,53 @@ class CogKuraBackend:
             if event.relationships:
                 metadata["relationships"] = _relationships_to_metadata(event.relationships)
                 self._relationships_ingested += len(event.relationships)
+            if event.source_ref is not None:
+                metadata["source_ref"] = event.source_ref
+            if event.status is not None:
+                metadata["status"] = event.status
             await memory.observe(
                 ObservationInput(
-                    tenant_id=TENANT_ID,
+                    tenant_id=tenant_id,
                     subject_id=event.subject_id,
                     source_namespace=SOURCE_NAMESPACE,
-                    source_record_id=event.id,
+                    source_record_id=event.source_record_id or event.id,
+                    source_version=event.source_version,
                     event_type=event.event_type.value,
                     content=event.content,
                     observed_at=event.timestamp,
                     metadata=metadata,
                 )
             )
+            await self._bind_observation_revision(event)
         self._events_ingested += len(events)
         self._ingest_calls += 1
-        await self._refresh_observation_map()
+        self._refresh_observation_map()
 
-    async def prepare(self, *, as_of: datetime) -> None:
+    async def prepare(self, *, as_of: datetime, encode_episodes: bool = True) -> None:
         memory = self._require_memory()
-        episode_result = await memory.encode_episodes(tenant_id=TENANT_ID, as_of=as_of)
-        semantic_result = await memory.consolidate_semantics(tenant_id=TENANT_ID, as_of=as_of)
+        tenants = sorted(self._tenants or {TENANT_ID})
+        episode_result = None
+        semantic_result = None
+        for tenant_id in tenants:
+            if encode_episodes:
+                episode_result = await memory.encode_episodes(tenant_id=tenant_id, as_of=as_of)
+            semantic_result = await memory.consolidate_semantics(tenant_id=tenant_id, as_of=as_of)
+            self._remember_consolidation(tenant_id, semantic_result)
         self._prepare_calls += 1
         self._last_prepare_at = as_of
-        self._last_episode_encoding = dataclass_to_metadata(episode_result)
-        self._last_semantic_consolidation = dataclass_to_metadata(semantic_result)
-        await self._refresh_observation_map()
+        if episode_result is not None:
+            self._last_episode_encoding = dataclass_to_metadata(episode_result)
+        if semantic_result is not None:
+            self._last_semantic_consolidation = dataclass_to_metadata(semantic_result)
+        self._refresh_observation_map()
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:
         start = time.perf_counter()
         memory = self._require_memory()
+        tenant_id = request.tenant_id
+        if request.repeat_consolidation:
+            repeated = await memory.consolidate_semantics(tenant_id=tenant_id, as_of=request.as_of)
+            self._remember_consolidation(tenant_id, repeated)
         cue = _build_retrieval_cue(
             query=request.query,
             entity_ids=request.entity_ids,
@@ -342,14 +386,14 @@ class CogKuraBackend:
         )
         results = await memory.recall(
             cue,
-            tenant_id=TENANT_ID,
+            tenant_id=tenant_id,
             limit=request.limit,
             as_of=request.as_of,
             valid_at=request.valid_at,
         )
         inspection = await memory.inspect_recall(
             cue,
-            tenant_id=TENANT_ID,
+            tenant_id=tenant_id,
             limit=request.limit,
             as_of=request.as_of,
             valid_at=request.valid_at,
@@ -404,12 +448,32 @@ class CogKuraBackend:
             interference_counts=interference_counts,
             inhibition_counts=inhibition_counts,
         )
+        authority_observations: tuple[SourceAuthorityObservation, ...] = ()
+        if self._inspect_source_authority:
+            authority_observations = await self._source_authority_observations(
+                tenant_id=tenant_id,
+                subject_id=request.subject_id,
+                query=request.query,
+                as_of=request.as_of,
+            )
+            counters = self._last_consolidation_by_tenant.get(tenant_id, {})
+            backend_metadata = {
+                **dict(backend_metadata),
+                "source_authority": {
+                    "authority_invalid_count": counters.get("authority_invalid", 0),
+                    "authority_deferred_count": counters.get("authority_deferred_conflict", 0),
+                    "authority_promoted_this_pass": counters.get("authority_promoted", 0),
+                    "created": counters.get("created", 0),
+                    "unchanged": counters.get("unchanged", 0),
+                },
+            }
         return RetrievalResponse(
             items=mapping.items,
             latency_ms=latency_ms,
             competition_observations=competition_observations,
             transient_interference_observations=interference_observations,
             persistent_inhibition_observations=inhibition_observations,
+            source_authority_observations=authority_observations,
             backend_metadata=backend_metadata,
         )
 
@@ -763,13 +827,98 @@ class CogKuraBackend:
             raise RuntimeError("CogKura backend has not been reset.")
         return self._memory
 
-    async def _refresh_observation_map(self) -> None:
-        if self._observation_store is None:
-            return
-        observations = await self._observation_store.list(tenant_id=TENANT_ID)
-        self._observation_id_to_event_id = {
-            observation.id: observation.source_record_id for observation in observations
+    def _remember_consolidation(self, tenant_id: str, result: Any) -> None:
+        self._last_consolidation_by_tenant[tenant_id] = {
+            "authority_invalid": int(result.authority_invalid),
+            "authority_deferred_conflict": int(result.authority_deferred_conflict),
+            "authority_promoted": int(result.authority_promoted),
+            "created": int(result.created),
+            "unchanged": int(result.unchanged),
         }
+
+    async def _bind_observation_revision(self, event: ProjectEvent) -> None:
+        store = self._observation_store
+        if store is None:
+            return
+        tenant_id = event.tenant_id or TENANT_ID
+        stored = await store.get_by_source(
+            tenant_id=tenant_id,
+            source_namespace=SOURCE_NAMESPACE,
+            source_record_id=event.source_record_id or event.id,
+        )
+        if stored is None:
+            return
+        revision = int(stored.current_revision)
+        self._revision_to_event_id[(stored.id, revision)] = event.id
+        self._observation_id_to_event_id[stored.id] = event.id
+
+    def _refresh_observation_map(self) -> None:
+        latest: dict[str, tuple[int, str]] = {}
+        for (observation_id, revision), event_id in self._revision_to_event_id.items():
+            current = latest.get(observation_id)
+            if current is None or revision >= current[0]:
+                latest[observation_id] = (revision, event_id)
+        self._observation_id_to_event_id = {
+            observation_id: event_id for observation_id, (_, event_id) in latest.items()
+        }
+
+    async def _source_authority_observations(
+        self,
+        *,
+        tenant_id: str,
+        subject_id: str | None,
+        query: str,
+        as_of: datetime,
+    ) -> tuple[SourceAuthorityObservation, ...]:
+        memory = self._require_memory()
+        from cogkura.models import semantic_promotion_from_metadata  # noqa: PLC0415
+
+        memories = await memory.list_semantic_memories(
+            tenant_id=tenant_id,
+            subject_id=subject_id,
+        )
+        revisions = await memory.list_semantic_revisions(
+            tenant_id=tenant_id,
+            subject_id=subject_id,
+        )
+        revision_counts: dict[str, int] = {}
+        for revision in revisions:
+            revision_counts[revision.memory_key] = revision_counts.get(revision.memory_key, 0) + 1
+        context = await memory.prepare_context(query, tenant_id=tenant_id, as_of=as_of)
+        rendered = context.render()
+        if "explicit_source_authority" in rendered or "application_asserted" in rendered:
+            raise ValidationError("working-memory render acquired authority-specific prose.")
+        observations: list[SourceAuthorityObservation] = []
+        for item in memories:
+            if not item.is_active:
+                continue
+            promotion = semantic_promotion_from_metadata(item.metadata)
+            supporting: list[str] = []
+            for evidence in item.observation_evidence:
+                event_id = self._revision_to_event_id.get(
+                    (evidence.observation_id, evidence.observation_revision)
+                )
+                if event_id is not None and event_id not in supporting:
+                    supporting.append(event_id)
+            subject = item.subject_entity_id or item.subject_id or ""
+            observations.append(
+                SourceAuthorityObservation(
+                    subject=subject,
+                    predicate=item.predicate,
+                    object=item.object_value,
+                    status=item.status.value,
+                    support_count=item.support_count,
+                    promotion_basis=None if promotion is None else promotion.basis.value,
+                    promotion_support_count=(
+                        None if promotion is None else promotion.support_count
+                    ),
+                    supporting_event_ids=tuple(supporting),
+                    semantic_revision_count=revision_counts.get(item.memory_key, 0),
+                    confidence=item.confidence,
+                    importance=item.importance,
+                )
+            )
+        return tuple(observations)
 
     def _map_recall_results(
         self,

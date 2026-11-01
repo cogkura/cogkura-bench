@@ -57,6 +57,8 @@ Retrieval scoring uses `RetrievedItem` ranks only. Competition and transient int
 
 Persistent inhibition is stateful. A `UseAction` records explicit consumption of a cached retrieval. The CogKura adapter calls `record_access` on the original `RecallResult` objects and does not recall again. A later `QueryAction` can then observe `PersistentInhibitionObservation` values. Workload summaries in 0.3.8 are computed from those `UseResult` and `QueryResult` observations. They do not read a Core store dump.
 
+Source authority is scored from listed semantic memories and public promotion provenance after consolidation. An optional fact authority declaration is passed through only when the fixture supplies it. Existing profiles keep a one-episode recurrence threshold. `cogkura-authority-control` and `cogkura-authority` both use two episodes; only the latter allows a single authoritative episode.
+
 ```text
 QueryAction
     -> RetrievalResponse

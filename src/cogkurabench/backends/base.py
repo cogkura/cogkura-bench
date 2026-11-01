@@ -47,7 +47,7 @@ class MemoryBackend(Protocol):
         """Ingest newly visible project events."""
         ...
 
-    async def prepare(self, *, as_of: datetime) -> None:
+    async def prepare(self, *, as_of: datetime, encode_episodes: bool = True) -> None:
         """Prepare memory state as of the simulated time."""
         ...
 

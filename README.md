@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.8. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current release is 0.3.9. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -22,6 +22,7 @@ Each query is tagged with a capability. Results are reported per capability. The
 | Interference | Whether a backend correctly identifies query-relevant competing memories |
 | Transient interference | Whether valid proactive/retroactive competition produces bounded current-retrieval suppression without affecting unrelated memories (`cogkura-interference` profile) |
 | Persistent inhibition | Whether explicit selective use creates a scoped inhibitory trace that later reduces the unselected competitor's accessibility, then recovers (`cogkura-inhibition` profile) |
+| Source authority | Whether one explicitly authorised fact becomes semantic memory while ordinary single observations still require recurrence (`cogkura-authority` profile) |
 
 Expected evidence is always a benchmark event ID, never a backend-internal key.
 
@@ -46,7 +47,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.17.7,<0.18.0`.
+The CogKura extra pins `cogkura>=0.18.1,<0.19.0`.
 
 ## First run
 
@@ -181,10 +182,11 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 | `persistent_inhibition_v1` | 7 | 14 | 0 | Controlled persistent-inhibition fixture (4 uses) |
 | `persistent_inhibition_software_v1` | 24 | 23 | 0 | Software persistent-inhibition workload (11 uses) |
 | `persistent_inhibition_customer_v1` | 14 | 18 | 0 | Customer persistent-inhibition workload (8 uses) |
+| `source_authority_v1` | 27 | 19 | 0 | Controlled source-authority admission fixture |
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
 
-`transient_interference_v1` stays frozen for longitudinal comparison. `transient_interference_v2` is the current behavioural fixture for the 0.17.2+ eligibility contract and the Core 0.17.6 reachability correction. Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md). Transient v2 findings: [docs/findings/transient-interference-0.3.7.md](docs/findings/transient-interference-0.3.7.md). `persistent_inhibition_v1` is the controlled persistent-inhibition fixture. `persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1` are the longer stateful workloads. Persistent inhibition findings: [docs/findings/inhibition-0.3.6.md](docs/findings/inhibition-0.3.6.md) and [docs/findings/persistent-inhibition-workloads-0.3.8.md](docs/findings/persistent-inhibition-workloads-0.3.8.md).
+`transient_interference_v1` stays frozen for longitudinal comparison. `transient_interference_v2` is the current behavioural fixture for the 0.17.2+ eligibility contract and the Core 0.17.6 reachability correction. Interference findings: [docs/findings/interference-0.3.5.md](docs/findings/interference-0.3.5.md). Transient v2 findings: [docs/findings/transient-interference-0.3.7.md](docs/findings/transient-interference-0.3.7.md). `persistent_inhibition_v1` is the controlled persistent-inhibition fixture. `persistent_inhibition_software_v1` and `persistent_inhibition_customer_v1` are the longer stateful workloads. Persistent inhibition findings: [docs/findings/inhibition-0.3.6.md](docs/findings/inhibition-0.3.6.md) and [docs/findings/persistent-inhibition-workloads-0.3.8.md](docs/findings/persistent-inhibition-workloads-0.3.8.md). `source_authority_v1` is the controlled fixture for explicit source authority. Findings: [docs/findings/source-authority-0.3.9.md](docs/findings/source-authority-0.3.9.md).
 
 Customer decision context findings: [docs/findings/customer-decision-context-0.3.3.md](docs/findings/customer-decision-context-0.3.3.md) (structured relationships; see also [0.3.2 fixture integrity](docs/findings/customer-decision-context-0.3.2.md), [0.3.1 lifecycle](docs/findings/customer-decision-context-0.3.1.md) and [0.3.0 baseline](docs/findings/customer-decision-context-0.3.0.md)).
 
@@ -199,6 +201,8 @@ Customer decision context findings: [docs/findings/customer-decision-context-0.3
 | `cogkura-interference` | CogKura adapter with transient behavioural interference enabled |
 | `cogkura-inhibition-recording` | CogKura adapter that records inhibitory traces without applying them |
 | `cogkura-inhibition` | CogKura adapter with persistent inhibition applied to recall |
+| `cogkura-authority-control` | CogKura adapter with a two-episode recurrence threshold and authority bypass off |
+| `cogkura-authority` | CogKura adapter with a two-episode recurrence threshold and authority bypass on |
 
 Unsupported optional capabilities return `None`. Backends must not fake features they do not provide.
 
@@ -236,6 +240,7 @@ Metamemory scores from CogKuraBench 0.1.0 are not comparable to 0.1.1 without a 
 - [`docs/backends.md`](docs/backends.md)
 - [`docs/roadmap.md`](docs/roadmap.md)
 - [`docs/findings/transient-interference-0.3.7.md`](docs/findings/transient-interference-0.3.7.md)
+- [`docs/findings/source-authority-0.3.9.md`](docs/findings/source-authority-0.3.9.md)
 - [`docs/findings/persistent-inhibition-workloads-0.3.8.md`](docs/findings/persistent-inhibition-workloads-0.3.8.md)
 - [`docs/findings/inhibition-0.3.6.md`](docs/findings/inhibition-0.3.6.md)
 - [`docs/findings/interference-0.3.5.md`](docs/findings/interference-0.3.5.md)

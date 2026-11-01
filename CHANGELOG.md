@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-11-01
+
+### Added
+
+- `source_authority_v1`, a controlled fixture for fact-scoped source-authority admission.
+- `cogkura-authority-control` and `cogkura-authority`, both using a two-episode recurrence threshold.
+- Source-authority admission metrics from durable semantic state and public promotion provenance.
+- [Source authority 0.3.9 findings](docs/findings/source-authority-0.3.9.md).
+
 ### Changed
 
-- CogKura extra requires `cogkura>=0.17.7,<0.18.0`.
+- CogKura extra requires `cogkura>=0.18.1,<0.19.0`.
+
+### Preserved
+
+- Existing CogKura profiles still consolidate with `minimum_supporting_episodes=1`.
+- Frozen retrieval, interference, and persistent-inhibition datasets are unchanged.
 
 ## [0.3.8] - 2026-10-11
 

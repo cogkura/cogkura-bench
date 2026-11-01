@@ -48,7 +48,7 @@ class FullHistoryBackend:
         self._events.extend(events)
         self._events.sort(key=lambda event: (event.timestamp, event.sequence, event.id))
 
-    async def prepare(self, *, as_of: datetime) -> None:
+    async def prepare(self, *, as_of: datetime, encode_episodes: bool = True) -> None:
         return None
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:

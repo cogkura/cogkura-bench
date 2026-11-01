@@ -30,6 +30,8 @@ from cogkurabench.models import (
     ProjectEvent,
     QueryAction,
     SemanticFact,
+    SourceAuthority,
+    SourceAuthorityExpectation,
     TransientInterferenceExpectation,
     UseAction,
 )
@@ -130,6 +132,11 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
     for event in dataset.events:
         if event.timestamp.tzinfo is None:
             errors.append(f"event {event.id} timestamp is not timezone-aware")
+    source_identities = [
+        (event.tenant_id, event.source_record_id, event.source_version) for event in dataset.events
+    ]
+    if len(set(source_identities)) != len(source_identities):
+        errors.append("duplicate (tenant_id, source_record_id, source_version) identities")
 
     for query in dataset.queries:
         if query.timestamp.tzinfo is None:
@@ -158,6 +165,7 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
         errors.extend(_validate_competitions(query, events_by_id))
         errors.extend(_validate_interference_effects(query, events_by_id))
         errors.extend(_validate_persistent_inhibition(query, events_by_id, queries_by_id))
+        errors.extend(_validate_source_authority(query, events_by_id))
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -587,6 +595,11 @@ def _parse_event(data: dict[str, Any]) -> ProjectEvent:
         _parse_entity_relationship(item) for item in data.get("relationships", [])
     )
     session_id = data.get("session_id")
+    source_record_id = data.get("source_record_id")
+    source_version = data.get("source_version")
+    source_ref = data.get("source_ref")
+    tenant_id = data.get("tenant_id")
+    status = data.get("status")
     return ProjectEvent(
         id=str(data["id"]),
         timestamp=_parse_datetime(data["timestamp"]),
@@ -601,6 +614,11 @@ def _parse_event(data: dict[str, Any]) -> ProjectEvent:
         related_events=tuple(str(item) for item in data.get("related_events", [])),
         session_id=str(session_id) if session_id is not None else None,
         relationships=relationships,
+        source_record_id=str(source_record_id) if source_record_id is not None else None,
+        source_version=str(source_version) if source_version is not None else None,
+        source_ref=str(source_ref) if source_ref is not None else None,
+        tenant_id=str(tenant_id) if tenant_id is not None else None,
+        status=str(status) if status is not None else None,
     )
 
 
@@ -654,7 +672,81 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         persistent_inhibition_comparisons=_parse_persistent_inhibition_comparisons(
             data.get("persistent_inhibition_comparisons", [])
         ),
+        expected_source_authority=_parse_source_authority(
+            data.get("expected_source_authority", [])
+        ),
+        tenant_id=str(data.get("tenant_id", "benchmark")),
+        subject_id=str(data["subject_id"]) if data.get("subject_id") is not None else None,
+        skip_episode_encoding=bool(data.get("skip_episode_encoding", False)),
+        repeat_consolidation=bool(data.get("repeat_consolidation", False)),
     )
+
+
+def _validate_source_authority(
+    query: BenchmarkQuery,
+    events_by_id: dict[str, ProjectEvent],
+) -> list[str]:
+    errors: list[str] = []
+    if query.capability is Capability.SOURCE_AUTHORITY and not query.expected_source_authority:
+        errors.append(
+            f"query {query.id} has source_authority capability but no authority expectations"
+        )
+    for expectation in query.expected_source_authority:
+        for event_id in expectation.supporting_event_ids:
+            if event_id not in events_by_id:
+                errors.append(
+                    f"query {query.id} source authority expectation {expectation.id} "
+                    f"references unknown event {event_id}"
+                )
+    return errors
+
+
+def _parse_source_authority(
+    items: list[dict[str, Any]],
+) -> tuple[SourceAuthorityExpectation, ...]:
+    expectations: list[SourceAuthorityExpectation] = []
+    for item in items:
+        expectations.append(
+            SourceAuthorityExpectation(
+                id=str(item["id"]),
+                subject=str(item["subject"]),
+                predicate=str(item["predicate"]),
+                object=str(item["object"]),
+                admission=str(item["admission"]),
+                control_admission=(
+                    str(item["control_admission"])
+                    if item.get("control_admission") is not None
+                    else None
+                ),
+                support_count=(
+                    int(item["support_count"]) if item.get("support_count") is not None else None
+                ),
+                promotion_support_count=(
+                    int(item["promotion_support_count"])
+                    if item.get("promotion_support_count") is not None
+                    else None
+                ),
+                supporting_event_ids=tuple(
+                    str(value) for value in item.get("supporting_event_ids", [])
+                ),
+                semantic_revision_count=(
+                    int(item["semantic_revision_count"])
+                    if item.get("semantic_revision_count") is not None
+                    else None
+                ),
+                authority_invalid_count=(
+                    int(item["authority_invalid_count"])
+                    if item.get("authority_invalid_count") is not None
+                    else None
+                ),
+                authority_deferred_count=(
+                    int(item["authority_deferred_count"])
+                    if item.get("authority_deferred_count") is not None
+                    else None
+                ),
+            )
+        )
+    return tuple(expectations)
 
 
 def _parse_use(data: dict[str, Any]) -> BenchmarkUse:
@@ -789,6 +881,8 @@ def _parse_entity_relationship(data: dict[str, Any]) -> EntityRelationship:
 def _parse_semantic_fact(data: dict[str, Any]) -> SemanticFact:
     valid_from = data.get("valid_from")
     valid_until = data.get("valid_until")
+    authority = _parse_source_authority_declaration(data.get("authority"))
+    confidence = data.get("confidence")
     return SemanticFact(
         subject=str(data["subject"]),
         predicate=str(data["predicate"]),
@@ -798,7 +892,21 @@ def _parse_semantic_fact(data: dict[str, Any]) -> SemanticFact:
         qualifiers={str(k): str(v) for k, v in dict(data.get("qualifiers", {})).items()},
         valid_from=_parse_datetime(valid_from) if valid_from is not None else None,
         valid_until=_parse_datetime(valid_until) if valid_until is not None else None,
+        authority=authority,
+        confidence=float(confidence) if confidence is not None else None,
     )
+
+
+def _parse_source_authority_declaration(value: Any) -> SourceAuthority | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValidationError("semantic fact authority must be an object.")
+    if "basis" not in value or not isinstance(value.get("basis"), str):
+        raise ValidationError("semantic fact authority requires a string basis.")
+    if set(value) != {"basis"}:
+        raise ValidationError("semantic fact authority may contain only basis.")
+    return SourceAuthority(basis=str(value["basis"]))
 
 
 def _parse_datetime(value: str | datetime) -> datetime:

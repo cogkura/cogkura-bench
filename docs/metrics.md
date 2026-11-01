@@ -143,3 +143,19 @@ Invariant counters (`positive_inhibition_penalty_violations`, `activation_increa
 `summarize_persistent_inhibition_workload` aggregates an application run, optionally compared with recording-only and control runs. A logical trace pair is the sorted selected event IDs, the sorted inhibited event IDs, and the scope key. `repeated_trace_count` is `trace_count - unique_trace_pair_count`. Repetition is reported. It is not a failure.
 
 `recording_only_control_drift_count` counts retrieval identity, order, or score differences between control and recording-only. `unattributed_change_count` counts application retrieval differences that no mapped `penalty < 0` explains. Both must be 0 on the canonical workloads. Rank changes, threshold crossings, returned-set changes, and saturation (32 traces on one use, or 64 stored traces on one candidate) are observational. Tests: `tests/unit/test_metrics_persistent_inhibition_workload.py`.
+
+## Source authority (0.3.9)
+
+`Capability.SOURCE_AUTHORITY` scores durable semantic admission. Bench does not recompute Core's eligibility rule. A declared promotion is `recurrence`, `explicit_source_authority`, or absent. Precision and recall are omitted when their denominators are empty.
+
+| Metric | Meaning |
+| --- | --- |
+| `source_authority_admission_precision` / `recall` | Promoted claims that were declared, and declared promotions that were created |
+| `source_authority_promotion_basis_accuracy` | Recurrence versus explicit authority on matched claims |
+| `source_authority_unauthorized_promotion_count` | Promotions with no matching declared claim |
+| `source_authority_deferral_accuracy` | Competing authority cases report the expected deferral count |
+| `source_authority_revision_binding_accuracy` | Promotion evidence maps to the declared observation revision |
+| `source_authority_idempotency_violations` | Repeat consolidation changed durable support or revision counts |
+| `source_authority_scope_leakage_count` | A claim appeared outside its declared fact |
+
+The hard gate is zero unauthorized promotions, zero wrong authority assignments, and zero declared-case mismatches. Oracle reports the capability as N/A. Tests: `tests/unit/test_metrics_source_authority.py`.

@@ -70,6 +70,16 @@ _CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
         "repetition_strengthening_accuracy",
         "inhibition_recovery_order_accuracy",
     ),
+    Capability.SOURCE_AUTHORITY: (
+        "source_authority_admission_precision",
+        "source_authority_admission_recall",
+        "source_authority_promotion_basis_accuracy",
+        "source_authority_unauthorized_promotion_count",
+        "source_authority_deferral_accuracy",
+        "source_authority_revision_binding_accuracy",
+        "source_authority_idempotency_violations",
+        "source_authority_scope_leakage_count",
+    ),
 }
 
 
@@ -138,6 +148,8 @@ def _secondary_metric_name(capability: Capability) -> str | None:
         return "interference_effect_precision"
     if capability is Capability.PERSISTENT_INHIBITION:
         return "persistent_inhibition_effect_precision"
+    if capability is Capability.SOURCE_AUTHORITY:
+        return "source_authority_admission_recall"
     return None
 
 
@@ -147,6 +159,7 @@ def _format_metric_value(capability: Capability, metric_name: str, value: float 
             Capability.INTERFERENCE,
             Capability.TRANSIENT_INTERFERENCE,
             Capability.PERSISTENT_INHIBITION,
+            Capability.SOURCE_AUTHORITY,
         ):
             return "N/A"
         return "0.000"

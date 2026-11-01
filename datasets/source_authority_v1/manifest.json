@@ -1,0 +1,11 @@
+{
+  "name": "source-authority-v1",
+  "schema_version": 1,
+  "events": 27,
+  "queries": 19,
+  "feedback": 0,
+  "description": "Controlled source-authority fixture for single-observation semantic admission.",
+  "required_capabilities": [
+    "source_authority"
+  ]
+}

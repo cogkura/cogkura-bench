@@ -148,3 +148,15 @@ jobs:
 
       - name: Run customer inhibition workload (cogkura-inhibition)
         run: uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition --quiet
+
+      - name: Validate source_authority_v1 dataset
+        run: uv run cogkura-bench validate-dataset source_authority_v1
+
+      - name: Run source authority benchmark (oracle)
+        run: uv run cogkura-bench run --dataset source_authority_v1 --backend oracle --quiet
+
+      - name: Run source authority benchmark (cogkura-authority-control)
+        run: uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority-control --quiet
+
+      - name: Run source authority benchmark (cogkura-authority)
+        run: uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority --quiet

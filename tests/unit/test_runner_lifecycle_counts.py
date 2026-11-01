@@ -57,7 +57,7 @@ class _SpyBackend(MemoryBackend):
         self.ingest_calls += 1
         self.ingested_event_count += len(events)
 
-    async def prepare(self, *, as_of: datetime) -> None:
+    async def prepare(self, *, as_of: datetime, encode_episodes: bool = True) -> None:
         self.prepare_calls += 1
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:

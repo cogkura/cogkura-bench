@@ -56,7 +56,7 @@ class _UseSpy(MemoryBackend):
     async def ingest(self, events: list[ProjectEvent]) -> None:
         return None
 
-    async def prepare(self, *, as_of: datetime) -> None:
+    async def prepare(self, *, as_of: datetime, encode_episodes: bool = True) -> None:
         return None
 
     async def retrieve(self, request: RetrievalRequest) -> RetrievalResponse:

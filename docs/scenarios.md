@@ -87,6 +87,18 @@ uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend c
 
 Findings: [findings/persistent-inhibition-workloads-0.3.8.md](findings/persistent-inhibition-workloads-0.3.8.md).
 
+## Source authority (`source_authority_v1`)
+
+Controlled fixture for CogKura 0.18.1 source-authority admission. `cogkura-authority-control` and `cogkura-authority` both require two supporting episodes. Only `cogkura-authority` can admit one explicitly authorised fact. Ordinary single observations stay episodic. Existing profiles keep their one-episode threshold. Correction and historical supersession are not labelled.
+
+```bash
+uv run cogkura-bench validate-dataset source_authority_v1
+uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority --quiet
+uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority-control --quiet
+```
+
+Findings: [findings/source-authority-0.3.9.md](findings/source-authority-0.3.9.md).
+
 ## Customer Decision Context (`customer_decision_context_v1`)
 
 Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.

@@ -29,6 +29,7 @@ from cogkurabench.metrics.persistent_inhibition import (
 )
 from cogkurabench.metrics.ranking import flatten_source_event_ids, order_retrieved_items
 from cogkurabench.metrics.retrieval import compute_retrieval_metrics
+from cogkurabench.metrics.source_authority import compute_source_authority_metrics
 from cogkurabench.metrics.temporal import compute_temporal_metrics
 from cogkurabench.metrics.transient_interference import (
     compute_transient_interference_metrics,
@@ -44,8 +45,17 @@ from cogkurabench.models import (
     PersistentInhibitionObservation,
     ProjectEvent,
     RetrievedItem,
+    SourceAuthorityObservation,
     TransientInterferenceObservation,
 )
+
+
+def _authority_counter(metadata: Mapping[str, object], key: str) -> int:
+    value = metadata.get(key, 0)
+    if isinstance(value, bool) or not isinstance(value, int):
+        return 0
+    return value
+
 
 _RETRIEVAL_AGGREGATE_METRICS = frozenset(
     {
@@ -128,6 +138,9 @@ def evaluate_query(
     transient_interference_supported: bool = False,
     persistent_inhibition_observations: Sequence[PersistentInhibitionObservation] = (),
     persistent_inhibition_supported: bool = False,
+    source_authority_observations: Sequence[SourceAuthorityObservation] = (),
+    source_authority_supported: bool = False,
+    explicit_source_authority: bool = False,
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
     ordered_items = order_retrieved_items(retrieved_items)
@@ -241,6 +254,18 @@ def evaluate_query(
     )
     metrics.update(inhibition_metrics)
 
+    raw_authority = (backend_metadata or {}).get("source_authority", {})
+    authority_meta = raw_authority if isinstance(raw_authority, Mapping) else {}
+    authority_metrics = compute_source_authority_metrics(
+        query,
+        source_authority_observations,
+        source_authority_supported=source_authority_supported,
+        authority_enabled=explicit_source_authority,
+        authority_invalid_count=_authority_counter(authority_meta, "authority_invalid_count"),
+        authority_deferred_count=_authority_counter(authority_meta, "authority_deferred_count"),
+    )
+    metrics.update(authority_metrics)
+
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
@@ -300,6 +325,7 @@ def evaluate_query(
         transient_interference_candidate_diagnostics=interference_candidate_diagnostics,
         persistent_inhibition_observations=tuple(persistent_inhibition_observations),
         persistent_inhibition_diagnostics=inhibition_diagnostics,
+        source_authority_observations=tuple(source_authority_observations),
     )
 
 

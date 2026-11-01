@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cogkurabench"
-version = "0.3.8"
+version = "0.3.9"
 description = "Deterministic benchmark for evaluating long-term AI memory systems."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,7 +30,7 @@ dependencies = []
 
 [project.optional-dependencies]
 cogkura = [
-  "cogkura>=0.17.7,<0.18.0",
+  "cogkura>=0.18.1,<0.19.0",
 ]
 
 [project.scripts]
@@ -72,6 +72,9 @@ include = [
   "src/cogkurabench/py.typed",
   "tests/**/*.py",
 ]
+
+[tool.uv.sources]
+cogkura = { git = "https://github.com/cogkura/cogkura.git", rev = "d45627e" }
 
 [tool.ruff]
 line-length = 100

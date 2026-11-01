@@ -54,6 +54,7 @@ class Capability(StrEnum):
     INTERFERENCE = "interference"
     TRANSIENT_INTERFERENCE = "transient_interference"
     PERSISTENT_INHIBITION = "persistent_inhibition"
+    SOURCE_AUTHORITY = "source_authority"
 
 
 class CompetitionDirection(StrEnum):
@@ -109,6 +110,25 @@ class EntityRelationship:
             )
 
 
+_SOURCE_AUTHORITY_ADMISSIONS = frozenset({"none", "recurrence", "authority"})
+
+
+@dataclass(frozen=True, slots=True)
+class SourceAuthority:
+    """Explicit authority declaration bound to one semantic fact.
+
+    The basis is stored as supplied. Bench does not infer authority from event
+    type, tags, confidence, status, or source references, and it does not decide
+    whether the basis is one Core will accept.
+    """
+
+    basis: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.basis, str) or not self.basis.strip():
+            raise ValidationError("source authority basis must be a non-empty string.")
+
+
 @dataclass(frozen=True, slots=True)
 class SemanticFact:
     """Atomic semantic proposition attached to a benchmark event."""
@@ -121,6 +141,8 @@ class SemanticFact:
     qualifiers: Mapping[str, str] = field(default_factory=dict)
     valid_from: datetime | None = None
     valid_until: datetime | None = None
+    authority: SourceAuthority | None = None
+    confidence: float | None = None
 
     def __post_init__(self) -> None:
         if not self.subject.strip():
@@ -136,6 +158,8 @@ class SemanticFact:
             object.__setattr__(
                 self, "valid_until", _require_tzaware("valid_until", self.valid_until)
             )
+        if self.confidence is not None and not 0.0 <= self.confidence <= 1.0:
+            raise ValidationError("semantic fact confidence must be between 0.0 and 1.0.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -399,6 +423,71 @@ class InhibitionTraceObservation:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceAuthorityExpectation:
+    """Query-level ground truth for one semantic admission outcome."""
+
+    id: str
+    subject: str
+    predicate: str
+    object: str
+    admission: str
+    control_admission: str | None = None
+    support_count: int | None = None
+    promotion_support_count: int | None = None
+    supporting_event_ids: tuple[str, ...] = ()
+    semantic_revision_count: int | None = None
+    authority_invalid_count: int | None = None
+    authority_deferred_count: int | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("source authority expectation id must not be empty.")
+        if not self.subject.strip() or not self.predicate.strip() or not self.object.strip():
+            raise ValidationError(
+                f"source authority expectation {self.id!r} requires subject, predicate, and object."
+            )
+        if self.admission not in _SOURCE_AUTHORITY_ADMISSIONS:
+            raise ValidationError(
+                f"source authority expectation {self.id!r} admission must be "
+                "none, recurrence, or authority."
+            )
+        if (
+            self.control_admission is not None
+            and self.control_admission not in _SOURCE_AUTHORITY_ADMISSIONS
+        ):
+            raise ValidationError(
+                f"source authority expectation {self.id!r} control_admission must be "
+                "none, recurrence, or authority."
+            )
+        for label, value in (
+            ("support_count", self.support_count),
+            ("promotion_support_count", self.promotion_support_count),
+            ("semantic_revision_count", self.semantic_revision_count),
+            ("authority_invalid_count", self.authority_invalid_count),
+            ("authority_deferred_count", self.authority_deferred_count),
+        ):
+            if value is not None and value < 0:
+                raise ValidationError(f"{label} must not be negative.")
+
+
+@dataclass(frozen=True, slots=True)
+class SourceAuthorityObservation:
+    """Durable semantic memory projected onto benchmark event IDs."""
+
+    subject: str
+    predicate: str
+    object: str
+    status: str | None
+    support_count: int
+    promotion_basis: str | None
+    promotion_support_count: int | None
+    supporting_event_ids: tuple[str, ...]
+    semantic_revision_count: int
+    confidence: float | None = None
+    importance: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ExpectedFact:
     """Optional structured fact expectation for a query."""
 
@@ -432,6 +521,11 @@ class ProjectEvent:
     related_events: tuple[str, ...] = ()
     session_id: str | None = None
     relationships: tuple[EntityRelationship, ...] = ()
+    source_record_id: str | None = None
+    source_version: str | None = None
+    source_ref: str | None = None
+    tenant_id: str | None = None
+    status: str | None = None
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -441,6 +535,20 @@ class ProjectEvent:
         if not self.content.strip():
             raise ValidationError("content must not be empty.")
         object.__setattr__(self, "timestamp", _require_tzaware("timestamp", self.timestamp))
+        if self.source_record_id is None:
+            object.__setattr__(self, "source_record_id", self.id)
+        elif not self.source_record_id.strip():
+            raise ValidationError(f"event {self.id!r} source_record_id must not be empty.")
+        if self.source_version is not None and not self.source_version.strip():
+            raise ValidationError(f"event {self.id!r} source_version must not be empty.")
+        if self.source_ref is not None and not self.source_ref.strip():
+            raise ValidationError(f"event {self.id!r} source_ref must not be empty.")
+        if self.tenant_id is None:
+            object.__setattr__(self, "tenant_id", "benchmark")
+        elif not self.tenant_id.strip():
+            raise ValidationError(f"event {self.id!r} tenant_id must not be empty.")
+        if self.status is not None and not self.status.strip():
+            raise ValidationError(f"event {self.id!r} status must not be empty.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -474,6 +582,11 @@ class BenchmarkQuery:
     expected_persistent_inhibition: tuple[PersistentInhibitionExpectation, ...] = ()
     forbidden_persistent_inhibition: tuple[PersistentInhibitionExpectation, ...] = ()
     persistent_inhibition_comparisons: tuple[PersistentInhibitionComparison, ...] = ()
+    expected_source_authority: tuple[SourceAuthorityExpectation, ...] = ()
+    tenant_id: str = "benchmark"
+    subject_id: str | None = None
+    skip_episode_encoding: bool = False
+    repeat_consolidation: bool = False
 
     def __post_init__(self) -> None:
         if not self.id.strip():
@@ -525,6 +638,15 @@ class BenchmarkQuery:
             raise ValidationError(
                 f"query {self.id} has duplicate persistent inhibition expectation IDs."
             )
+        authority_ids = [item.id for item in self.expected_source_authority]
+        if len(set(authority_ids)) != len(authority_ids):
+            raise ValidationError(
+                f"query {self.id} has duplicate source authority expectation IDs."
+            )
+        if not self.tenant_id.strip():
+            raise ValidationError(f"query {self.id} tenant_id must not be empty.")
+        if self.subject_id is not None and not self.subject_id.strip():
+            raise ValidationError(f"query {self.id} subject_id must not be empty.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -623,6 +745,8 @@ class BackendCapabilities:
     record_use: bool = False
     inhibition_traces: bool = False
     persistent_inhibition: bool = False
+    source_authority: bool = False
+    explicit_source_authority: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -638,12 +762,17 @@ class RetrievalRequest:
     entity_ids: tuple[str, ...] = ()
     predicate: str | None = None
     object_value: str | None = None
+    tenant_id: str = "benchmark"
+    subject_id: str | None = None
+    repeat_consolidation: bool = False
 
     def __post_init__(self) -> None:
         if not self.query_id.strip():
             raise ValidationError("query_id must not be empty.")
         if self.limit <= 0:
             raise ValidationError("limit must be greater than zero.")
+        if not self.tenant_id.strip():
+            raise ValidationError("tenant_id must not be empty.")
         object.__setattr__(self, "as_of", _require_tzaware("as_of", self.as_of))
         if self.valid_at is not None:
             object.__setattr__(self, "valid_at", _require_tzaware("valid_at", self.valid_at))
@@ -677,6 +806,7 @@ class RetrievalResponse:
     competition_observations: tuple[CompetitionObservation, ...] = ()
     transient_interference_observations: tuple[TransientInterferenceObservation, ...] = ()
     persistent_inhibition_observations: tuple[PersistentInhibitionObservation, ...] = ()
+    source_authority_observations: tuple[SourceAuthorityObservation, ...] = ()
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

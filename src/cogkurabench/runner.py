@@ -34,6 +34,7 @@ from cogkurabench.metrics.persistent_inhibition import (
     finalize_inhibition_trace_metrics,
     finalize_persistent_inhibition_metrics,
 )
+from cogkurabench.metrics.source_authority import finalize_source_authority_metrics
 from cogkurabench.metrics.transient_interference import finalize_transient_interference_metrics
 from cogkurabench.models import (
     AssessmentRequest,
@@ -97,7 +98,11 @@ class BenchmarkRunner:
                 await backend.ingest(newly_visible)
                 ingested_ids.update(event.id for event in newly_visible)
 
-            await backend.prepare(as_of=clock.current)
+            skip_encoding = any(
+                isinstance(action, QueryAction) and action.query.skip_episode_encoding
+                for action in actions_by_time[timestamp]
+            )
+            await backend.prepare(as_of=clock.current, encode_episodes=not skip_encoding)
             if backend.capabilities.maintain:
                 await backend.maintain(as_of=clock.current)
 
@@ -117,6 +122,9 @@ class BenchmarkRunner:
                         entity_ids=query.entity_ids,
                         predicate=query.predicate,
                         object_value=query.object_value,
+                        tenant_id=query.tenant_id,
+                        subject_id=query.subject_id,
+                        repeat_consolidation=query.repeat_consolidation,
                     )
                     response = await backend.retrieve(request)
                     retrievals_by_query_id[query.id] = response
@@ -189,6 +197,11 @@ class BenchmarkRunner:
                             ),
                             persistent_inhibition_supported=(
                                 backend.capabilities.persistent_inhibition
+                            ),
+                            source_authority_observations=response.source_authority_observations,
+                            source_authority_supported=backend.capabilities.source_authority,
+                            explicit_source_authority=(
+                                backend.capabilities.explicit_source_authority
                             ),
                         )
                     )
@@ -311,6 +324,24 @@ class BenchmarkRunner:
                 metrics=combined_inhibition,
             )
 
+        authority_metrics = finalize_source_authority_metrics(query_results)
+        if authority_metrics:
+            authority_existing = capability_results.get(Capability.SOURCE_AUTHORITY.value)
+            query_count = (
+                authority_existing.query_count
+                if authority_existing is not None
+                else sum(
+                    1
+                    for result in query_results
+                    if result.capability is Capability.SOURCE_AUTHORITY
+                )
+            )
+            capability_results[Capability.SOURCE_AUTHORITY.value] = CapabilityResult(
+                capability=Capability.SOURCE_AUTHORITY,
+                query_count=query_count,
+                metrics=authority_metrics,
+            )
+
         backend_version = backend.version
         environment_metadata: dict[str, object] = {}
         if backend.name.startswith("cogkura") and backend_version is not None:
@@ -321,6 +352,11 @@ class BenchmarkRunner:
                 environment_metadata["inhibition_enabled"] = True
             if backend.name == "cogkura-inhibition":
                 environment_metadata["apply_inhibition"] = True
+            if backend.name in ("cogkura-authority-control", "cogkura-authority"):
+                environment_metadata["minimum_supporting_episodes"] = 2
+                environment_metadata["allow_authoritative_single_episode"] = (
+                    backend.name == "cogkura-authority"
+                )
 
         result = BenchmarkResult(
             benchmark_version=__version__,

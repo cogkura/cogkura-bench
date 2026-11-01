@@ -108,6 +108,10 @@ uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend o
 uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura --quiet
 uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition-recording --quiet
 uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend cogkura-inhibition --quiet
+uv run cogkura-bench validate-dataset source_authority_v1
+uv run cogkura-bench run --dataset source_authority_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority-control --quiet
+uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority --quiet
 ```
 
 ## Interference diagnostics (0.3.4 / 0.3.5)
@@ -139,6 +143,15 @@ uv run cogkura-bench run --dataset persistent_inhibition_customer_v1 --backend c
 - Workload summaries are derived from `UseResult` and `QueryResult`. They do not dump Core stores.
 - Recording-only versus control drift and unattributed application changes must be 0. Repetition, rank changes, threshold counts, and latency are reported only.
 - Compare results in [0.3.8 findings](docs/findings/persistent-inhibition-workloads-0.3.8.md).
+
+## Source authority (0.3.9)
+
+- `cogkura`, `cogkura-interference`, and the inhibition profiles keep `minimum_supporting_episodes=1`.
+- `cogkura-authority-control` and `cogkura-authority` both use threshold 2. Only `cogkura-authority` sets `allow_authoritative_single_episode=True`.
+- Authority is an optional fact field. Do not infer it from event type, tags, confidence, status, or source references.
+- Score durable semantic memories and public promotion provenance. Do not copy Core's eligibility rule.
+- Do not add correction or historical-supersession expectations. Those belong to a later Core release.
+- Compare results in [0.3.9 findings](docs/findings/source-authority-0.3.9.md).
 
 ## Transient interference v2 (0.3.7)
 
