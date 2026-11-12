@@ -83,6 +83,12 @@
 - [x] Durable semantic admission metrics
 - [x] Source authority 0.3.9 findings
 
+## 0.3.10
+
+- [x] `authoritative_corrections_v1` with correction-control and correction profiles
+- [x] Historical semantic state, stale-context, and knowledge-time checks
+- [x] Authoritative corrections 0.3.10 findings
+
 ## Future
 
 - Vector/RAG baseline

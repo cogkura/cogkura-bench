@@ -28,6 +28,9 @@ from cogkurabench.evaluation.result import (
     UseResult,
 )
 from cogkurabench.exceptions import ValidationError
+from cogkurabench.metrics.authoritative_corrections import (
+    finalize_authoritative_correction_metrics,
+)
 from cogkurabench.metrics.competition import finalize_competition_metrics
 from cogkurabench.metrics.persistent_inhibition import (
     compute_inhibition_trace_metrics,
@@ -125,6 +128,7 @@ class BenchmarkRunner:
                         tenant_id=query.tenant_id,
                         subject_id=query.subject_id,
                         repeat_consolidation=query.repeat_consolidation,
+                        extra_consolidations=query.extra_consolidations,
                     )
                     response = await backend.retrieve(request)
                     retrievals_by_query_id[query.id] = response
@@ -203,6 +207,13 @@ class BenchmarkRunner:
                             explicit_source_authority=(
                                 backend.capabilities.explicit_source_authority
                             ),
+                            authoritative_correction_observations=(
+                                response.authoritative_correction_observations
+                            ),
+                            authoritative_correction_supported=(
+                                backend.capabilities.authoritative_correction
+                            ),
+                            corrections_enabled=backend.capabilities.corrections_enabled,
                         )
                     )
 
@@ -324,6 +335,24 @@ class BenchmarkRunner:
                 metrics=combined_inhibition,
             )
 
+        correction_metrics = finalize_authoritative_correction_metrics(query_results)
+        if correction_metrics:
+            correction_existing = capability_results.get(Capability.AUTHORITATIVE_CORRECTION.value)
+            correction_count = (
+                correction_existing.query_count
+                if correction_existing is not None
+                else sum(
+                    1
+                    for result in query_results
+                    if result.capability is Capability.AUTHORITATIVE_CORRECTION
+                )
+            )
+            capability_results[Capability.AUTHORITATIVE_CORRECTION.value] = CapabilityResult(
+                capability=Capability.AUTHORITATIVE_CORRECTION,
+                query_count=correction_count,
+                metrics=correction_metrics,
+            )
+
         authority_metrics = finalize_source_authority_metrics(query_results)
         if authority_metrics:
             authority_existing = capability_results.get(Capability.SOURCE_AUTHORITY.value)
@@ -352,6 +381,11 @@ class BenchmarkRunner:
                 environment_metadata["inhibition_enabled"] = True
             if backend.name == "cogkura-inhibition":
                 environment_metadata["apply_inhibition"] = True
+            if backend.name in ("cogkura-correction-control", "cogkura-correction"):
+                environment_metadata["minimum_supporting_episodes"] = 2
+                environment_metadata["allow_authoritative_single_episode"] = True
+                environment_metadata["corrections_enabled"] = backend.name == "cogkura-correction"
+                environment_metadata["cogkura_revision"] = "1a8bc04"
             if backend.name in ("cogkura-authority-control", "cogkura-authority"):
                 environment_metadata["minimum_supporting_episodes"] = 2
                 environment_metadata["allow_authoritative_single_episode"] = (

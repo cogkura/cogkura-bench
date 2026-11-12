@@ -31,6 +31,7 @@ from cogkurabench.exceptions import ValidationError
 from cogkurabench.models import (
     AssessmentRequest,
     AssessmentResponse,
+    AuthoritativeCorrectionObservation,
     BackendCapabilities,
     BenchmarkFeedback,
     CompetitionDirection,
@@ -128,9 +129,13 @@ def _build_retrieval_cue(
     )
 
 
-def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[str, object]]:
+def _semantic_facts_to_metadata(
+    facts: tuple[SemanticFact, ...],
+    *,
+    corrections: Mapping[int, dict[str, str]] | None = None,
+) -> list[dict[str, object]]:
     payload: list[dict[str, object]] = []
-    for fact in facts:
+    for index, fact in enumerate(facts):
         entry: dict[str, object] = {
             "predicate": fact.predicate,
             "object_value": fact.object,
@@ -147,6 +152,8 @@ def _semantic_facts_to_metadata(facts: tuple[SemanticFact, ...]) -> list[dict[st
             entry["confidence"] = fact.confidence
         if fact.authority is not None:
             entry["authority"] = {"basis": fact.authority.basis}
+        if corrections is not None and index in corrections:
+            entry["correction"] = corrections[index]
         payload.append(entry)
     return payload
 
@@ -180,6 +187,7 @@ class CogKuraBackend:
         minimum_supporting_episodes: int = 1,
         allow_authoritative_single_episode: bool = False,
         inspect_source_authority: bool = False,
+        corrections_enabled: bool | None = None,
         name: str | None = None,
     ) -> None:
         self._competition_enabled = competition_enabled
@@ -189,6 +197,7 @@ class CogKuraBackend:
         self._minimum_supporting_episodes = minimum_supporting_episodes
         self._allow_authoritative_single_episode = allow_authoritative_single_episode
         self._inspect_source_authority = inspect_source_authority
+        self._corrections_enabled = corrections_enabled
         if name is not None:
             self._backend_name = name
         elif apply_interference:
@@ -197,6 +206,10 @@ class CogKuraBackend:
             self._backend_name = "cogkura-inhibition"
         elif self._inhibition_enabled:
             self._backend_name = "cogkura-inhibition-recording"
+        elif corrections_enabled is True:
+            self._backend_name = "cogkura-correction"
+        elif corrections_enabled is False:
+            self._backend_name = "cogkura-correction-control"
         elif allow_authoritative_single_episode:
             self._backend_name = "cogkura-authority"
         elif inspect_source_authority:
@@ -255,6 +268,8 @@ class CogKuraBackend:
             persistent_inhibition=self._apply_inhibition,
             source_authority=self._inspect_source_authority,
             explicit_source_authority=self._allow_authoritative_single_episode,
+            authoritative_correction=self._corrections_enabled is not None,
+            corrections_enabled=bool(self._corrections_enabled),
         )
 
     async def reset(self) -> None:
@@ -264,11 +279,19 @@ class CogKuraBackend:
         from cogkura.algorithms.semantic import (
             ComplementaryLearningSemanticConsolidator,  # noqa: PLC0415
         )
-        from cogkura.models import CompetitionConfig, InhibitionConfig  # noqa: PLC0415
+        from cogkura.models import (  # noqa: PLC0415
+            CompetitionConfig,
+            InhibitionConfig,
+            SemanticCorrectionConfig,
+        )
         from cogkura.storage.in_memory_observation import InMemoryObservationStore  # noqa: PLC0415
 
         self._version = _installed_cogkura_version(cogkura)
         self._bench_version = cogkurabench.__version__
+        if self._corrections_enabled is not None and self._version != "0.18.2":
+            raise ValidationError(
+                f"correction profiles require CogKura 0.18.2, found {self._version}"
+            )
         if self._memory is not None:
             await self._memory.clear(tenant_id=TENANT_ID)
         self._observation_store = InMemoryObservationStore()
@@ -285,6 +308,11 @@ class CogKuraBackend:
             inhibition_config=InhibitionConfig(
                 enabled=self._inhibition_enabled,
                 apply_to_recall=self._apply_inhibition,
+            ),
+            semantic_correction_config=(
+                SemanticCorrectionConfig(enabled=self._corrections_enabled)
+                if self._corrections_enabled is not None
+                else None
             ),
         )
         self._observation_id_to_event_id.clear()
@@ -321,7 +349,12 @@ class CogKuraBackend:
             self._tenants.add(tenant_id)
             metadata: dict[str, object] = {}
             if event.semantic_facts:
-                metadata["semantic_facts"] = _semantic_facts_to_metadata(event.semantic_facts)
+                metadata["semantic_facts"] = _semantic_facts_to_metadata(
+                    event.semantic_facts,
+                    corrections=await self._resolved_corrections(event),
+                )
+            if event.semantic_withdrawals:
+                metadata["semantic_withdrawals"] = await self._resolved_withdrawals(event)
             if event.tags:
                 metadata["tags"] = list(event.tags)
             if event.entities:
@@ -375,7 +408,10 @@ class CogKuraBackend:
         start = time.perf_counter()
         memory = self._require_memory()
         tenant_id = request.tenant_id
+        extra = request.extra_consolidations
         if request.repeat_consolidation:
+            extra = max(extra, 1)
+        for _ in range(extra):
             repeated = await memory.consolidate_semantics(tenant_id=tenant_id, as_of=request.as_of)
             self._remember_consolidation(tenant_id, repeated)
         cue = _build_retrieval_cue(
@@ -467,6 +503,30 @@ class CogKuraBackend:
                     "unchanged": counters.get("unchanged", 0),
                 },
             }
+        correction_observations: tuple[AuthoritativeCorrectionObservation, ...] = ()
+        if self._corrections_enabled is not None:
+            correction_observations, rendered = await self._correction_observations(
+                tenant_id=tenant_id,
+                subject_id=request.subject_id,
+                query=request.query,
+                as_of=request.as_of,
+                valid_at=request.valid_at,
+                retrieved=mapping.items,
+            )
+            counters = self._last_consolidation_by_tenant.get(tenant_id, {})
+            backend_metadata = {
+                **dict(backend_metadata),
+                "authoritative_correction": {
+                    "corrections_deferred": counters.get("corrections_deferred", 0),
+                    "corrections_invalid": counters.get("corrections_invalid", 0),
+                    "corrections_applied": counters.get("authoritative_corrections_applied", 0),
+                    "withdrawals_applied": counters.get("authoritative_withdrawals_applied", 0),
+                    "rendered": rendered,
+                    "recalled_semantic_objects": sorted(
+                        {item.object for item in correction_observations if item.recalled}
+                    ),
+                },
+            }
         return RetrievalResponse(
             items=mapping.items,
             latency_ms=latency_ms,
@@ -474,6 +534,7 @@ class CogKuraBackend:
             transient_interference_observations=interference_observations,
             persistent_inhibition_observations=inhibition_observations,
             source_authority_observations=authority_observations,
+            authoritative_correction_observations=correction_observations,
             backend_metadata=backend_metadata,
         )
 
@@ -834,7 +895,74 @@ class CogKuraBackend:
             "authority_promoted": int(result.authority_promoted),
             "created": int(result.created),
             "unchanged": int(result.unchanged),
+            "authoritative_corrections_applied": int(
+                getattr(result, "authoritative_corrections_applied", 0)
+            ),
+            "authoritative_withdrawals_applied": int(
+                getattr(result, "authoritative_withdrawals_applied", 0)
+            ),
+            "corrections_deferred": int(getattr(result, "corrections_deferred", 0)),
+            "corrections_invalid": int(getattr(result, "corrections_invalid", 0)),
         }
+
+    async def _revision_key_for_claim(
+        self,
+        *,
+        tenant_id: str,
+        subject: str,
+        predicate: str,
+        object_value: str,
+    ) -> str:
+        memory = self._require_memory()
+        memories = await memory.list_semantic_memories(tenant_id=tenant_id, subject_id=subject)
+        for item in memories:
+            if item.predicate == predicate and item.object_value == object_value:
+                return item.revision_key
+        return "unresolved-benchmark-predecessor"
+
+    async def _resolved_corrections(self, event: ProjectEvent) -> dict[int, dict[str, str]]:
+        resolved: dict[int, dict[str, str]] = {}
+        tenant_id = event.tenant_id or TENANT_ID
+        for index, fact in enumerate(event.semantic_facts):
+            correction = fact.correction
+            if correction is None:
+                continue
+            if correction.unknown_revision_key is not None:
+                key = correction.unknown_revision_key
+            else:
+                key = await self._revision_key_for_claim(
+                    tenant_id=tenant_id,
+                    subject=correction.replaces_subject,
+                    predicate=correction.replaces_predicate,
+                    object_value=correction.replaces_object,
+                )
+            resolved[index] = {
+                "replaces_revision_key": key,
+                "effective_at": correction.effective_at.isoformat(),
+            }
+        return resolved
+
+    async def _resolved_withdrawals(self, event: ProjectEvent) -> list[dict[str, object]]:
+        tenant_id = event.tenant_id or TENANT_ID
+        payload: list[dict[str, object]] = []
+        for withdrawal in event.semantic_withdrawals:
+            if withdrawal.unknown_revision_key is not None:
+                key = withdrawal.unknown_revision_key
+            else:
+                key = await self._revision_key_for_claim(
+                    tenant_id=tenant_id,
+                    subject=withdrawal.target_subject,
+                    predicate=withdrawal.target_predicate,
+                    object_value=withdrawal.target_object,
+                )
+            item: dict[str, object] = {
+                "target_revision_key": key,
+                "effective_at": withdrawal.effective_at.isoformat(),
+            }
+            if withdrawal.authority_basis is not None:
+                item["authority"] = {"basis": withdrawal.authority_basis}
+            payload.append(item)
+        return payload
 
     async def _bind_observation_revision(self, event: ProjectEvent) -> None:
         store = self._observation_store
@@ -861,6 +989,76 @@ class CogKuraBackend:
         self._observation_id_to_event_id = {
             observation_id: event_id for observation_id, (_, event_id) in latest.items()
         }
+
+    async def _correction_observations(
+        self,
+        *,
+        tenant_id: str,
+        subject_id: str | None,
+        query: str,
+        as_of: datetime,
+        valid_at: datetime | None,
+        retrieved: Sequence[Any],
+    ) -> tuple[tuple[AuthoritativeCorrectionObservation, ...], str]:
+        memory = self._require_memory()
+        from cogkura.models import semantic_promotion_from_metadata  # noqa: PLC0415
+
+        factual_time = valid_at or as_of
+        memories = await memory.list_semantic_memories(
+            tenant_id=tenant_id,
+            subject_id=subject_id,
+            valid_at=factual_time,
+        )
+        revisions = await memory.list_semantic_revisions(tenant_id=tenant_id)
+        revision_counts: dict[str, int] = {}
+        snapshots: dict[str, Mapping[str, Any]] = {}
+        for revision in revisions:
+            revision_counts[revision.memory_key] = revision_counts.get(revision.memory_key, 0) + 1
+            snapshots[revision.revision_key] = revision.snapshot
+        context = await memory.prepare_context(
+            query,
+            tenant_id=tenant_id,
+            subject_id=subject_id,
+            as_of=as_of,
+            valid_at=valid_at,
+        )
+        rendered = context.render()
+        recalled_objects = {
+            item.text for item in retrieved if getattr(item, "memory_type", None) == "semantic"
+        }
+        observations: list[AuthoritativeCorrectionObservation] = []
+        for item in memories:
+            promotion = semantic_promotion_from_metadata(item.metadata)
+            supporting: list[str] = []
+            for evidence in item.observation_evidence:
+                event_id = self._revision_to_event_id.get(
+                    (evidence.observation_id, evidence.observation_revision)
+                )
+                if event_id is not None and event_id not in supporting:
+                    supporting.append(event_id)
+            snapshot = snapshots.get(item.revision_key, {})
+            relation = None
+            if isinstance(snapshot.get("correction"), Mapping):
+                relation = "supersedes"
+            elif isinstance(snapshot.get("withdrawal"), Mapping):
+                relation = "retracts"
+            observations.append(
+                AuthoritativeCorrectionObservation(
+                    subject=item.subject_entity_id or item.subject_id or "",
+                    predicate=item.predicate,
+                    object=item.object_value,
+                    status=item.status.value,
+                    support_count=item.support_count,
+                    valid_from=item.valid_from,
+                    valid_until=item.valid_until,
+                    promotion_basis=None if promotion is None else promotion.basis.value,
+                    supporting_event_ids=tuple(supporting),
+                    revision_count=revision_counts.get(item.memory_key, 0),
+                    relation=relation,
+                    recalled=any(item.object_value in text for text in recalled_objects),
+                )
+            )
+        return tuple(observations), rendered
 
     async def _source_authority_observations(
         self,

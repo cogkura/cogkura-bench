@@ -23,6 +23,8 @@ def create_backend(name: str, dataset: BenchmarkDataset) -> MemoryBackend:
         "cogkura-inhibition": _create_cogkura_inhibition_backend,
         "cogkura-authority-control": _create_cogkura_authority_control_backend,
         "cogkura-authority": _create_cogkura_authority_backend,
+        "cogkura-correction-control": _create_cogkura_correction_control_backend,
+        "cogkura-correction": _create_cogkura_correction_backend,
     }
     try:
         factory = factories[name]
@@ -82,6 +84,28 @@ def _create_cogkura_authority_backend(_dataset: BenchmarkDataset) -> MemoryBacke
     )
 
 
+def _create_cogkura_correction_control_backend(_dataset: BenchmarkDataset) -> MemoryBackend:
+    from cogkurabench.backends.cogkura import CogKuraBackend  # noqa: PLC0415
+
+    return CogKuraBackend(
+        minimum_supporting_episodes=2,
+        allow_authoritative_single_episode=True,
+        corrections_enabled=False,
+        name="cogkura-correction-control",
+    )
+
+
+def _create_cogkura_correction_backend(_dataset: BenchmarkDataset) -> MemoryBackend:
+    from cogkurabench.backends.cogkura import CogKuraBackend  # noqa: PLC0415
+
+    return CogKuraBackend(
+        minimum_supporting_episodes=2,
+        allow_authoritative_single_episode=True,
+        corrections_enabled=True,
+        name="cogkura-correction",
+    )
+
+
 def available_backends() -> tuple[str, ...]:
     """Return supported backend names."""
     return (
@@ -94,4 +118,6 @@ def available_backends() -> tuple[str, ...]:
         "cogkura-inhibition",
         "cogkura-authority-control",
         "cogkura-authority",
+        "cogkura-correction-control",
+        "cogkura-correction",
     )

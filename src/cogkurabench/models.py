@@ -55,6 +55,7 @@ class Capability(StrEnum):
     TRANSIENT_INTERFERENCE = "transient_interference"
     PERSISTENT_INHIBITION = "persistent_inhibition"
     SOURCE_AUTHORITY = "source_authority"
+    AUTHORITATIVE_CORRECTION = "authoritative_correction"
 
 
 class CompetitionDirection(StrEnum):
@@ -111,6 +112,70 @@ class EntityRelationship:
 
 
 _SOURCE_AUTHORITY_ADMISSIONS = frozenset({"none", "recurrence", "authority"})
+_CORRECTION_PRESENCE = frozenset({"always", "when_enabled", "when_disabled", "never"})
+_CORRECTION_RELATIONS = frozenset({"supersedes", "retracts"})
+_CORRECTION_FAILURES = frozenset(
+    {"state", "knowledge_time", "stale_context", "false_suppression", "unauthorized"}
+)
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticCorrection:
+    """Fixture request to replace one current semantic claim.
+
+    The predecessor is named by claim. The adapter resolves Core's revision key
+    at ingest. An unknown key is passed through unresolved.
+    """
+
+    effective_at: datetime
+    replaces_subject: str = ""
+    replaces_predicate: str = ""
+    replaces_object: str = ""
+    unknown_revision_key: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "effective_at", _require_tzaware("effective_at", self.effective_at)
+        )
+        if self.unknown_revision_key is not None and not self.unknown_revision_key.strip():
+            raise ValidationError("unknown_revision_key must not be empty when provided.")
+        if self.unknown_revision_key is None and not (
+            self.replaces_subject.strip()
+            and self.replaces_predicate.strip()
+            and self.replaces_object.strip()
+        ):
+            raise ValidationError(
+                "semantic correction requires a predecessor claim or an unknown revision key."
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class SemanticWithdrawal:
+    """Fixture request to withdraw one current semantic claim."""
+
+    effective_at: datetime
+    target_subject: str = ""
+    target_predicate: str = ""
+    target_object: str = ""
+    authority_basis: str | None = None
+    unknown_revision_key: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "effective_at", _require_tzaware("effective_at", self.effective_at)
+        )
+        if self.unknown_revision_key is not None and not self.unknown_revision_key.strip():
+            raise ValidationError("unknown_revision_key must not be empty when provided.")
+        if self.authority_basis is not None and not self.authority_basis.strip():
+            raise ValidationError("withdrawal authority basis must not be empty when provided.")
+        if self.unknown_revision_key is None and not (
+            self.target_subject.strip()
+            and self.target_predicate.strip()
+            and self.target_object.strip()
+        ):
+            raise ValidationError(
+                "semantic withdrawal requires a target claim or an unknown revision key."
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,6 +208,7 @@ class SemanticFact:
     valid_until: datetime | None = None
     authority: SourceAuthority | None = None
     confidence: float | None = None
+    correction: SemanticCorrection | None = None
 
     def __post_init__(self) -> None:
         if not self.subject.strip():
@@ -471,6 +537,84 @@ class SourceAuthorityExpectation:
 
 
 @dataclass(frozen=True, slots=True)
+class AuthoritativeCorrectionExpectation:
+    """Checkpoint ground truth for one semantic claim under correction."""
+
+    id: str
+    subject: str
+    predicate: str
+    object: str
+    presence: str
+    status: str | None = None
+    support_count: int | None = None
+    promotion_basis: str | None = None
+    supporting_event_ids: tuple[str, ...] = ()
+    valid_from: datetime | None = None
+    valid_until: datetime | None = None
+    revision_count: int | None = None
+    relation: str | None = None
+    recall_present: bool | None = None
+    failure_class: str = "state"
+    corrections_deferred_count: int | None = None
+    corrections_invalid_count: int | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id.strip():
+            raise ValidationError("authoritative correction expectation id must not be empty.")
+        if not self.subject.strip() or not self.predicate.strip() or not self.object.strip():
+            raise ValidationError(
+                f"authoritative correction expectation {self.id!r} requires "
+                "subject, predicate, and object."
+            )
+        if self.presence not in _CORRECTION_PRESENCE:
+            raise ValidationError(
+                f"authoritative correction expectation {self.id!r} presence must be "
+                "always, when_enabled, when_disabled, or never."
+            )
+        if self.relation is not None and self.relation not in _CORRECTION_RELATIONS:
+            raise ValidationError(
+                f"authoritative correction expectation {self.id!r} relation must be "
+                "supersedes or retracts."
+            )
+        if self.failure_class not in _CORRECTION_FAILURES:
+            raise ValidationError(
+                f"authoritative correction expectation {self.id!r} has an unknown failure class."
+            )
+        if self.valid_from is not None:
+            object.__setattr__(self, "valid_from", _require_tzaware("valid_from", self.valid_from))
+        if self.valid_until is not None:
+            object.__setattr__(
+                self, "valid_until", _require_tzaware("valid_until", self.valid_until)
+            )
+        for label, value in (
+            ("support_count", self.support_count),
+            ("revision_count", self.revision_count),
+            ("corrections_deferred_count", self.corrections_deferred_count),
+            ("corrections_invalid_count", self.corrections_invalid_count),
+        ):
+            if value is not None and value < 0:
+                raise ValidationError(f"{label} must not be negative.")
+
+
+@dataclass(frozen=True, slots=True)
+class AuthoritativeCorrectionObservation:
+    """Semantic claim visible at one correction checkpoint."""
+
+    subject: str
+    predicate: str
+    object: str
+    status: str | None
+    support_count: int
+    valid_from: datetime | None
+    valid_until: datetime | None
+    promotion_basis: str | None
+    supporting_event_ids: tuple[str, ...]
+    revision_count: int
+    relation: str | None = None
+    recalled: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class SourceAuthorityObservation:
     """Durable semantic memory projected onto benchmark event IDs."""
 
@@ -521,6 +665,7 @@ class ProjectEvent:
     related_events: tuple[str, ...] = ()
     session_id: str | None = None
     relationships: tuple[EntityRelationship, ...] = ()
+    semantic_withdrawals: tuple[SemanticWithdrawal, ...] = ()
     source_record_id: str | None = None
     source_version: str | None = None
     source_ref: str | None = None
@@ -583,6 +728,10 @@ class BenchmarkQuery:
     forbidden_persistent_inhibition: tuple[PersistentInhibitionExpectation, ...] = ()
     persistent_inhibition_comparisons: tuple[PersistentInhibitionComparison, ...] = ()
     expected_source_authority: tuple[SourceAuthorityExpectation, ...] = ()
+    expected_authoritative_corrections: tuple[AuthoritativeCorrectionExpectation, ...] = ()
+    render_forbidden: tuple[str, ...] = ()
+    render_required: tuple[str, ...] = ()
+    extra_consolidations: int = 0
     tenant_id: str = "benchmark"
     subject_id: str | None = None
     skip_episode_encoding: bool = False
@@ -647,6 +796,13 @@ class BenchmarkQuery:
             raise ValidationError(f"query {self.id} tenant_id must not be empty.")
         if self.subject_id is not None and not self.subject_id.strip():
             raise ValidationError(f"query {self.id} subject_id must not be empty.")
+        correction_ids = [item.id for item in self.expected_authoritative_corrections]
+        if len(set(correction_ids)) != len(correction_ids):
+            raise ValidationError(
+                f"query {self.id} has duplicate authoritative correction expectation IDs."
+            )
+        if self.extra_consolidations < 0:
+            raise ValidationError(f"query {self.id} extra_consolidations must not be negative.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -747,6 +903,8 @@ class BackendCapabilities:
     persistent_inhibition: bool = False
     source_authority: bool = False
     explicit_source_authority: bool = False
+    authoritative_correction: bool = False
+    corrections_enabled: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -765,6 +923,7 @@ class RetrievalRequest:
     tenant_id: str = "benchmark"
     subject_id: str | None = None
     repeat_consolidation: bool = False
+    extra_consolidations: int = 0
 
     def __post_init__(self) -> None:
         if not self.query_id.strip():
@@ -807,6 +966,7 @@ class RetrievalResponse:
     transient_interference_observations: tuple[TransientInterferenceObservation, ...] = ()
     persistent_inhibition_observations: tuple[PersistentInhibitionObservation, ...] = ()
     source_authority_observations: tuple[SourceAuthorityObservation, ...] = ()
+    authoritative_correction_observations: tuple[AuthoritativeCorrectionObservation, ...] = ()
     backend_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

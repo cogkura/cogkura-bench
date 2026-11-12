@@ -80,6 +80,17 @@ _CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
         "source_authority_idempotency_violations",
         "source_authority_scope_leakage_count",
     ),
+    Capability.AUTHORITATIVE_CORRECTION: (
+        "authoritative_correction_transition_precision",
+        "authoritative_correction_transition_recall",
+        "authoritative_correction_state_accuracy",
+        "authoritative_correction_unauthorized_transition_count",
+        "authoritative_correction_incorrect_current_count",
+        "authoritative_correction_incorrect_historical_count",
+        "authoritative_correction_stale_context_leak_count",
+        "authoritative_correction_false_suppression_count",
+        "authoritative_correction_idempotency_violations",
+    ),
 }
 
 
@@ -150,6 +161,8 @@ def _secondary_metric_name(capability: Capability) -> str | None:
         return "persistent_inhibition_effect_precision"
     if capability is Capability.SOURCE_AUTHORITY:
         return "source_authority_admission_recall"
+    if capability is Capability.AUTHORITATIVE_CORRECTION:
+        return "authoritative_correction_transition_recall"
     return None
 
 
@@ -160,6 +173,7 @@ def _format_metric_value(capability: Capability, metric_name: str, value: float 
             Capability.TRANSIENT_INTERFERENCE,
             Capability.PERSISTENT_INHIBITION,
             Capability.SOURCE_AUTHORITY,
+            Capability.AUTHORITATIVE_CORRECTION,
         ):
             return "N/A"
         return "0.000"

@@ -159,3 +159,24 @@ Invariant counters (`positive_inhibition_penalty_violations`, `activation_increa
 | `source_authority_scope_leakage_count` | A claim appeared outside its declared fact |
 
 The hard gate is zero unauthorized promotions, zero wrong authority assignments, and zero declared-case mismatches. Oracle reports the capability as N/A. Tests: `tests/unit/test_metrics_source_authority.py`.
+
+## Authoritative correction (0.3.10)
+
+`Capability.AUTHORITATIVE_CORRECTION` scores persisted semantic state and retrieval after explicit replacement or withdrawal. Bench does not recompute Core's correction rule. `presence` is `always`, `when_enabled`, `when_disabled`, or `never`, compared with whether the profile enables corrections. A current checkpoint lists memory at `as_of`. A historical checkpoint lists memory at `valid_at`. Empty rate denominators are omitted.
+
+| Metric | Meaning |
+| --- | --- |
+| `authoritative_correction_transition_precision` / `recall` | Applied changes that were declared, and declared changes that were applied |
+| `authoritative_correction_state_accuracy` | Checkpoints whose semantic state matches exactly |
+| `authoritative_correction_temporal_boundary_accuracy` | `valid_from` and `valid_until` match the declared instants |
+| `authoritative_correction_revision_provenance_accuracy` | Supporting events match the declared revisions |
+| `authoritative_correction_conflict_deferral_accuracy` | Ambiguous operations report the expected deferral count |
+| `authoritative_correction_retrieval_accuracy` | Recalled semantic values match the declared presence |
+| `authoritative_correction_unauthorized_transition_count` | A claim appeared with no matching expectation |
+| `authoritative_correction_incorrect_current_count` / `incorrect_historical_count` | Current or historical state disagreed |
+| `authoritative_correction_knowledge_time_leak_count` | A future correction was visible too early |
+| `authoritative_correction_stale_context_leak_count` | Obsolete guidance remained in current context |
+| `authoritative_correction_false_suppression_count` | Valid unrelated content disappeared |
+| `authoritative_correction_idempotency_violations` | Replay created another durable transition |
+
+The hard gate is zero for every count above. Oracle reports the capability as N/A. Tests: `tests/unit/test_metrics_authoritative_corrections.py`.

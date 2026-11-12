@@ -1,0 +1,11 @@
+{
+  "name": "authoritative-corrections-v1",
+  "schema_version": 1,
+  "events": 35,
+  "queries": 26,
+  "feedback": 0,
+  "description": "Controlled authoritative correction and withdrawal fixture.",
+  "required_capabilities": [
+    "authoritative_correction"
+  ]
+}

@@ -286,12 +286,12 @@ wheels = [
 
 [[package]]
 name = "cogkura"
-version = "0.18.1"
-source = { git = "https://github.com/cogkura/cogkura.git?rev=d45627e#d45627e62ea4312b347bc0ed4fd2576e5895cb96" }
+version = "0.18.2"
+source = { git = "https://github.com/cogkura/cogkura.git?rev=1a8bc04#1a8bc04f7832c77962a6c2e99b2e8dca4dc19958" }
 
 [[package]]
 name = "cogkurabench"
-version = "0.3.9"
+version = "0.3.10"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -310,7 +310,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "cogkura", marker = "extra == 'cogkura'", git = "https://github.com/cogkura/cogkura.git?rev=d45627e" }]
+requires-dist = [{ name = "cogkura", marker = "extra == 'cogkura'", git = "https://github.com/cogkura/cogkura.git?rev=1a8bc04" }]
 provides-extras = ["cogkura"]
 
 [package.metadata.requires-dev]

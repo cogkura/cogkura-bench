@@ -112,6 +112,10 @@ uv run cogkura-bench validate-dataset source_authority_v1
 uv run cogkura-bench run --dataset source_authority_v1 --backend oracle --quiet
 uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority-control --quiet
 uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority --quiet
+uv run cogkura-bench validate-dataset authoritative_corrections_v1
+uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend oracle --quiet
+uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction-control --quiet
+uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction --quiet
 ```
 
 ## Interference diagnostics (0.3.4 / 0.3.5)
@@ -152,6 +156,14 @@ uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authori
 - Score durable semantic memories and public promotion provenance. Do not copy Core's eligibility rule.
 - Do not add correction or historical-supersession expectations. Those belong to a later Core release.
 - Compare results in [0.3.9 findings](docs/findings/source-authority-0.3.9.md).
+
+## Authoritative corrections (0.3.10)
+
+- `cogkura-correction-control` and `cogkura-correction` both use threshold 2 and source authority. Only `cogkura-correction` enables `SemanticCorrectionConfig`.
+- Corrections and withdrawals name a predecessor claim. The adapter resolves the public revision key at ingest. Do not store Core revision UUIDs in fixtures.
+- Score semantic state at `as_of` or `valid_at`, and score recall and rendered context separately. Do not copy Core's correction rule.
+- Do not edit `source_authority_v1` or the frozen retrieval, interference, and inhibition datasets for this release.
+- Compare results in [0.3.10 findings](docs/findings/authoritative-corrections-0.3.10.md).
 
 ## Transient interference v2 (0.3.7)
 

@@ -160,3 +160,15 @@ jobs:
 
       - name: Run source authority benchmark (cogkura-authority)
         run: uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authority --quiet
+
+      - name: Validate authoritative_corrections_v1 dataset
+        run: uv run cogkura-bench validate-dataset authoritative_corrections_v1
+
+      - name: Run authoritative corrections benchmark (oracle)
+        run: uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend oracle --quiet
+
+      - name: Run authoritative corrections benchmark (cogkura-correction-control)
+        run: uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction-control --quiet
+
+      - name: Run authoritative corrections benchmark (cogkura-correction)
+        run: uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction --quiet

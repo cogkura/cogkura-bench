@@ -12,6 +12,9 @@ from cogkurabench.evaluation.result import (
     ItemGroupClassificationResult,
     QueryResult,
 )
+from cogkurabench.metrics.authoritative_corrections import (
+    compute_authoritative_correction_metrics,
+)
 from cogkurabench.metrics.competition import (
     compute_competition_metrics,
 )
@@ -38,6 +41,7 @@ from cogkurabench.metrics.updating import compute_update_metrics
 from cogkurabench.metrics.working_memory import compute_working_memory_metrics
 from cogkurabench.models import (
     AssessmentResponse,
+    AuthoritativeCorrectionObservation,
     BenchmarkQuery,
     Capability,
     CompetitionObservation,
@@ -141,6 +145,9 @@ def evaluate_query(
     source_authority_observations: Sequence[SourceAuthorityObservation] = (),
     source_authority_supported: bool = False,
     explicit_source_authority: bool = False,
+    authoritative_correction_observations: Sequence[AuthoritativeCorrectionObservation] = (),
+    authoritative_correction_supported: bool = False,
+    corrections_enabled: bool = False,
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
     ordered_items = order_retrieved_items(retrieved_items)
@@ -266,6 +273,24 @@ def evaluate_query(
     )
     metrics.update(authority_metrics)
 
+    raw_correction = (backend_metadata or {}).get("authoritative_correction", {})
+    correction_meta = raw_correction if isinstance(raw_correction, Mapping) else {}
+    recalled = correction_meta.get("recalled_semantic_objects", ())
+    correction_metrics = compute_authoritative_correction_metrics(
+        query,
+        authoritative_correction_observations,
+        supported=authoritative_correction_supported,
+        corrections_enabled=corrections_enabled,
+        corrections_deferred=_authority_counter(correction_meta, "corrections_deferred"),
+        corrections_invalid=_authority_counter(correction_meta, "corrections_invalid"),
+        corrections_applied=_authority_counter(correction_meta, "corrections_applied"),
+        rendered=str(correction_meta.get("rendered", "")),
+        recalled_objects=tuple(str(item) for item in recalled)
+        if isinstance(recalled, list | tuple)
+        else (),
+    )
+    metrics.update(correction_metrics)
+
     return QueryResult(
         query_id=query.id,
         capability=query.capability,
@@ -326,6 +351,7 @@ def evaluate_query(
         persistent_inhibition_observations=tuple(persistent_inhibition_observations),
         persistent_inhibition_diagnostics=inhibition_diagnostics,
         source_authority_observations=tuple(source_authority_observations),
+        authoritative_correction_observations=tuple(authoritative_correction_observations),
     )
 
 

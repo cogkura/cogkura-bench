@@ -99,6 +99,18 @@ uv run cogkura-bench run --dataset source_authority_v1 --backend cogkura-authori
 
 Findings: [findings/source-authority-0.3.9.md](findings/source-authority-0.3.9.md).
 
+## Authoritative corrections (`authoritative_corrections_v1`)
+
+Controlled fixture for CogKura 0.18.2 replacement and withdrawal. `cogkura-correction-control` and `cogkura-correction` both admit one authoritative fact at recurrence threshold 2. Only `cogkura-correction` executes explicit corrections and withdrawals. Checkpoints use query time as `as_of` and optional `valid_at` as the factual time. Historical values stay available. Current queries must not present a withdrawn strategy as current guidance.
+
+```bash
+uv run cogkura-bench validate-dataset authoritative_corrections_v1
+uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction --quiet
+uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction-control --quiet
+```
+
+Findings: [findings/authoritative-corrections-0.3.10.md](findings/authoritative-corrections-0.3.10.md).
+
 ## Customer Decision Context (`customer_decision_context_v1`)
 
 Independently authored outdoor-retail customer scenario (~17 months, 149 events, 1 query). Exercises bounded working-memory selection under repeated hiking evidence and five expected concept groups with two forbidden stale groups. The primary query `customer-waterproof-jacket` uses `retrieval_limit=50` and `prompt_budget_tokens=750`.

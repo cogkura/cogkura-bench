@@ -59,6 +59,8 @@ Persistent inhibition is stateful. A `UseAction` records explicit consumption of
 
 Source authority is scored from listed semantic memories and public promotion provenance after consolidation. An optional fact authority declaration is passed through only when the fixture supplies it. Existing profiles keep a one-episode recurrence threshold. `cogkura-authority-control` and `cogkura-authority` both use two episodes; only the latter allows a single authoritative episode.
 
+Authoritative correction extends that path. A fact may name the claim it replaces, and an event may withdraw a claim. The adapter resolves those claims to Core revision keys after the predecessor has been consolidated. Checkpoints list semantic memory at `valid_at` or, when that is omitted, at `as_of`, and they also score recall and rendered context. `cogkura-correction-control` leaves correction execution off.
+
 ```text
 QueryAction
     -> RetrievalResponse

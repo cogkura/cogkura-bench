@@ -9,6 +9,7 @@ from typing import Any
 
 from cogkurabench.exceptions import ValidationError
 from cogkurabench.models import (
+    AuthoritativeCorrectionExpectation,
     BenchmarkAction,
     BenchmarkDataset,
     BenchmarkFeedback,
@@ -29,7 +30,9 @@ from cogkurabench.models import (
     PersistentInhibitionExpectation,
     ProjectEvent,
     QueryAction,
+    SemanticCorrection,
     SemanticFact,
+    SemanticWithdrawal,
     SourceAuthority,
     SourceAuthorityExpectation,
     TransientInterferenceExpectation,
@@ -166,6 +169,7 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
         errors.extend(_validate_interference_effects(query, events_by_id))
         errors.extend(_validate_persistent_inhibition(query, events_by_id, queries_by_id))
         errors.extend(_validate_source_authority(query, events_by_id))
+        errors.extend(_validate_authoritative_corrections(query, events_by_id))
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -600,6 +604,9 @@ def _parse_event(data: dict[str, Any]) -> ProjectEvent:
     source_ref = data.get("source_ref")
     tenant_id = data.get("tenant_id")
     status = data.get("status")
+    withdrawals = tuple(
+        _parse_semantic_withdrawal(item) for item in data.get("semantic_withdrawals", [])
+    )
     return ProjectEvent(
         id=str(data["id"]),
         timestamp=_parse_datetime(data["timestamp"]),
@@ -614,6 +621,7 @@ def _parse_event(data: dict[str, Any]) -> ProjectEvent:
         related_events=tuple(str(item) for item in data.get("related_events", [])),
         session_id=str(session_id) if session_id is not None else None,
         relationships=relationships,
+        semantic_withdrawals=withdrawals,
         source_record_id=str(source_record_id) if source_record_id is not None else None,
         source_version=str(source_version) if source_version is not None else None,
         source_ref=str(source_ref) if source_ref is not None else None,
@@ -675,6 +683,12 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         expected_source_authority=_parse_source_authority(
             data.get("expected_source_authority", [])
         ),
+        expected_authoritative_corrections=_parse_authoritative_corrections(
+            data.get("expected_authoritative_corrections", [])
+        ),
+        render_forbidden=tuple(str(item) for item in data.get("render_forbidden", [])),
+        render_required=tuple(str(item) for item in data.get("render_required", [])),
+        extra_consolidations=int(data.get("extra_consolidations", 0)),
         tenant_id=str(data.get("tenant_id", "benchmark")),
         subject_id=str(data["subject_id"]) if data.get("subject_id") is not None else None,
         skip_episode_encoding=bool(data.get("skip_episode_encoding", False)),
@@ -699,6 +713,80 @@ def _validate_source_authority(
                     f"references unknown event {event_id}"
                 )
     return errors
+
+
+def _validate_authoritative_corrections(
+    query: BenchmarkQuery,
+    events_by_id: dict[str, ProjectEvent],
+) -> list[str]:
+    errors: list[str] = []
+    if (
+        query.capability is Capability.AUTHORITATIVE_CORRECTION
+        and not query.expected_authoritative_corrections
+    ):
+        errors.append(
+            f"query {query.id} has authoritative_correction capability but no correction "
+            "expectations"
+        )
+    for expectation in query.expected_authoritative_corrections:
+        for event_id in expectation.supporting_event_ids:
+            if event_id not in events_by_id:
+                errors.append(
+                    f"query {query.id} correction expectation {expectation.id} "
+                    f"references unknown event {event_id}"
+                )
+    return errors
+
+
+def _parse_authoritative_corrections(
+    items: list[dict[str, Any]],
+) -> tuple[AuthoritativeCorrectionExpectation, ...]:
+    expectations: list[AuthoritativeCorrectionExpectation] = []
+    for item in items:
+        valid_from = item.get("valid_from")
+        valid_until = item.get("valid_until")
+        expectations.append(
+            AuthoritativeCorrectionExpectation(
+                id=str(item["id"]),
+                subject=str(item["subject"]),
+                predicate=str(item["predicate"]),
+                object=str(item["object"]),
+                presence=str(item["presence"]),
+                status=str(item["status"]) if item.get("status") is not None else None,
+                support_count=(
+                    int(item["support_count"]) if item.get("support_count") is not None else None
+                ),
+                promotion_basis=(
+                    str(item["promotion_basis"])
+                    if item.get("promotion_basis") is not None
+                    else None
+                ),
+                supporting_event_ids=tuple(
+                    str(value) for value in item.get("supporting_event_ids", [])
+                ),
+                valid_from=_parse_datetime(valid_from) if valid_from is not None else None,
+                valid_until=_parse_datetime(valid_until) if valid_until is not None else None,
+                revision_count=(
+                    int(item["revision_count"]) if item.get("revision_count") is not None else None
+                ),
+                relation=str(item["relation"]) if item.get("relation") is not None else None,
+                recall_present=(
+                    bool(item["recall_present"]) if item.get("recall_present") is not None else None
+                ),
+                failure_class=str(item.get("failure_class", "state")),
+                corrections_deferred_count=(
+                    int(item["corrections_deferred_count"])
+                    if item.get("corrections_deferred_count") is not None
+                    else None
+                ),
+                corrections_invalid_count=(
+                    int(item["corrections_invalid_count"])
+                    if item.get("corrections_invalid_count") is not None
+                    else None
+                ),
+            )
+        )
+    return tuple(expectations)
 
 
 def _parse_source_authority(
@@ -883,6 +971,7 @@ def _parse_semantic_fact(data: dict[str, Any]) -> SemanticFact:
     valid_until = data.get("valid_until")
     authority = _parse_source_authority_declaration(data.get("authority"))
     confidence = data.get("confidence")
+    correction = _parse_semantic_correction(data.get("correction"))
     return SemanticFact(
         subject=str(data["subject"]),
         predicate=str(data["predicate"]),
@@ -894,6 +983,35 @@ def _parse_semantic_fact(data: dict[str, Any]) -> SemanticFact:
         valid_until=_parse_datetime(valid_until) if valid_until is not None else None,
         authority=authority,
         confidence=float(confidence) if confidence is not None else None,
+        correction=correction,
+    )
+
+
+def _parse_semantic_correction(value: Any) -> SemanticCorrection | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValidationError("semantic fact correction must be an object.")
+    unknown = value.get("unknown_revision_key")
+    return SemanticCorrection(
+        effective_at=_parse_datetime(value["effective_at"]),
+        replaces_subject=str(value.get("replaces_subject", "")),
+        replaces_predicate=str(value.get("replaces_predicate", "")),
+        replaces_object=str(value.get("replaces_object", "")),
+        unknown_revision_key=str(unknown) if unknown is not None else None,
+    )
+
+
+def _parse_semantic_withdrawal(value: dict[str, Any]) -> SemanticWithdrawal:
+    unknown = value.get("unknown_revision_key")
+    basis = value.get("authority_basis")
+    return SemanticWithdrawal(
+        effective_at=_parse_datetime(value["effective_at"]),
+        target_subject=str(value.get("target_subject", "")),
+        target_predicate=str(value.get("target_predicate", "")),
+        target_object=str(value.get("target_object", "")),
+        authority_basis=str(basis) if basis is not None else None,
+        unknown_revision_key=str(unknown) if unknown is not None else None,
     )
 
 

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.10] - 2026-11-12
+
+### Added
+
+- `authoritative_corrections_v1`, a controlled fixture for replacement, withdrawal, and historical semantic state.
+- `cogkura-correction-control` and `cogkura-correction`. Both admit source authority. Only the latter applies explicit corrections.
+- Authoritative-correction metrics for semantic state and retrieval, including stale-context and knowledge-time checks.
+- [Authoritative corrections 0.3.10 findings](docs/findings/authoritative-corrections-0.3.10.md).
+
+### Changed
+
+- CogKura extra requires `cogkura>=0.18.2,<0.19.0` at commit `1a8bc04`.
+
+### Preserved
+
+- Existing CogKura profiles, including the 0.3.9 authority profiles, keep their previous recurrence and correction settings.
+- `source_authority_v1` and the frozen retrieval, interference, and inhibition datasets are unchanged.
+
 ## [0.3.9] - 2026-11-01
 
 ### Added
