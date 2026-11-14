@@ -170,8 +170,8 @@ uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkur
 - `cogkura-source-control` and `cogkura-source` both enable authority/corrections at threshold 2. Only the latter enables typed pass reports.
 - Score neutral observations from public APIs; gold checks never enter the adapter request. Preserve existing metamemory and retrieval scoring.
 - Independence stays unknown; missing locators differ from missing revisions; episodic relation coverage is not applicable.
-- Run the strict release validator in [source metamemory](docs/source-metamemory.md), including PostgreSQL. Ordinary pytest does not waive its capped-evidence identity failure.
-- [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the failed gate. Do not weaken gold or fetch beyond requested caps to conceal it.
+- Run the strict release validator in [source metamemory](docs/source-metamemory.md), including PostgreSQL. Require exact capped source identities as well as coverage/state parity.
+- [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the original failed gate and the passing rerun after the approved Core fix. Do not weaken gold or fetch beyond requested caps to conceal failures.
 - Source assessment is not a trust score, factual certainty or an automatic abstention policy.
 
 ## Transient interference v2 (0.3.7)

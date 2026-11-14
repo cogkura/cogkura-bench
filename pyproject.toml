@@ -77,7 +77,7 @@ include = [
 ]
 
 [tool.uv.sources]
-cogkura = { git = "https://github.com/cogkura/cogkura.git", rev = "9ab2241ad600ed766b9c6487440e7495fe68254c" }
+cogkura = { git = "https://github.com/cogkura/cogkura.git", rev = "4d3ba737cf372bf5e59ab183570b3370e896e7d3" }
 
 [tool.ruff]
 line-length = 100

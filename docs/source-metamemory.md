@@ -1,6 +1,7 @@
 # Source-aware metamemory validation (0.3.11 candidate)
 
-Core 0.18.3 is pinned to `9ab2241ad600ed766b9c6487440e7495fe68254c`.
+Core 0.18.3 is pinned to `4d3ba737cf372bf5e59ab183570b3370e896e7d3`,
+including the approved slot evidence ordering fix.
 The source fixture extends the existing action stream and scoring pipeline. It
 uses public Core APIs; it does not implement another memory or authority engine.
 
@@ -71,11 +72,13 @@ not for making a failing comparison pass.
 
 Diagnostics parity checks all 22 earlier runs plus both new source profiles.
 PostgreSQL compares neutral reports, retaining exact capped event identities.
-Pytest separately verifies supported coverage/state contracts, including bounded
-population validity. Its capped-population test does **not** assert stable source
-selection between backends. The release validator checks that stricter promise.
+Pytest separately verifies supported coverage/state contracts and now asserts
+exact capped source selection between backends. Core regression tests also
+compare ordered namespace/record/revision prefixes under opposite UUID-derived
+stored sequences. The release validator retains its original stricter comparison.
 
-**Current result: the strict capped-evidence identity comparison fails.**
-Full release validation is blocked pending Core review of this behavior. A green
-pytest run or 1.000 declared-check score does not waive that failed gate.
+**Current result: the strict release validator passes after the Core fix.**
+All 26 PostgreSQL source reports agree, 393 frozen query signatures are unchanged,
+419 diagnostics-paired query outcomes match, and all 191 declared source checks
+pass. The original failed report is retained alongside the successful rerun.
 See [findings](findings/source-aware-metamemory-0.3.11.md).

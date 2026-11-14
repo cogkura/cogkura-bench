@@ -63,7 +63,10 @@ use a disposable database. Missing database configuration leaves parity unexecut
 
 Core 0.18.3 testing is documented in [source-aware metamemory](docs/source-metamemory.md)
 and its [findings](docs/findings/source-aware-metamemory-0.3.11.md). The strict
-capped-evidence parity check currently fails; **the release is not fully validated**.
+release validator now passes, including capped PostgreSQL attribution and unchanged
+frozen outputs, after the approved Core ordering fix. All required Python 3.11–3.13
+gates also pass with PostgreSQL and zero test skips. Publication remains a separate
+release step.
 
 ## First run
 

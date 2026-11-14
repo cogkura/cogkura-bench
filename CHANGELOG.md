@@ -17,13 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Core dependency pinned to validated 0.18.3 commit `9ab2241ad600ed766b9c6487440e7495fe68254c`; optional `postgres` extra.
+- Core dependency pinned to validated 0.18.3 commit `4d3ba737cf372bf5e59ab183570b3370e896e7d3`, including canonical slot source prefixes; optional `postgres` extra.
+- PostgreSQL integration tests now require exact capped source identities, removing the earlier eligible-population exception.
 - Direct development on `main` with incremental commits, per the user's workflow decision.
 
-### Validation limitation
+### Validation
 
-- All declared source cases pass on both backends, but strict capped-evidence source identity parity fails. See [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md). This is a release concern, not a successful full validation.
-- Released fixture gold and Core, Demo, and Agent are unchanged.
+- The strict release validator passes all 26 PostgreSQL source checkpoints, 191 declared source checks, 393 frozen query comparisons and 419 diagnostics-paired outcomes after the approved Core fix. Original failure evidence is retained in [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md).
+- Released fixture gold, Demo and Agent are unchanged. Core's fix is separately committed; no release is published by validation.
 
 ## [0.3.10] - 2026-11-12
 

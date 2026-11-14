@@ -357,25 +357,9 @@ async def test_postgres_source_fixture_and_correction_replay_match_memory() -> N
         )
         for left, right in zip(expected.query_results, actual.query_results, strict=True):
             assert left.query_id == right.query_id
-            # Strict capped-prefix identity is measured separately by the release
-            # validator. Random storage IDs can choose different eligible references;
-            # this test checks its coverage contract without waiving that release gap.
+            # Core's slot-only canonical order must preserve exact capped source
+            # identities even with independently allocated physical storage IDs.
             left_source, right_source = left.source_assessment, right.source_assessment
-            if left_source.quality.truncated:
-                assert right_source.quality.truncated
-                assert left_source.quality == right_source.quality
-                assert left_source.state == right_source.state
-                assert left_source.inventory_complete == right_source.inventory_complete
-                assert len(left_source.event_ids) == len(right_source.event_ids) == 1
-                allowed = {
-                    "sm-conflict-startup-0",
-                    "sm-conflict-startup-1",
-                    "sm-conflict-pipeline-0",
-                    "sm-conflict-pipeline-1",
-                }
-                assert set(left_source.event_ids) <= allowed
-                assert set(right_source.event_ids) <= allowed
-                continue
             assert replace(left_source, revisions=(), decisions=()) == replace(
                 right_source, revisions=(), decisions=()
             )

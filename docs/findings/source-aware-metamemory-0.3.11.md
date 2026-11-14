@@ -1,17 +1,19 @@
 # Source-aware metamemory — CogKuraBench 0.3.11 candidate
 
-**Verdict: CORE REVIEW REQUIRED. The release is not fully validated.**
+**Verdict: REQUIRED CORE/BENCH VALIDATION PASSED. Candidate remains unreleased.**
 
-**Date:** 14 November 2026.  
-**Core:** 0.18.3, `9ab2241ad600ed766b9c6487440e7495fe68254c`.  
-**Bench implementation:** `63f7d73`, followed by inspection output/reset checks in `39bde91`.  
+**Date:** 14 November 2026.
+**Core:** 0.18.3, `4d3ba737cf372bf5e59ab183570b3370e896e7d3`.
+**Bench implementation:** `63f7d73`, followed by inspection output/reset checks in `39bde91`.
 **PostgreSQL:** local disposable PostgreSQL 14.18 (Homebrew).
 
 All declared source-assessment cases pass on both backends. Frozen results and
-paired diagnostics agree with the controlled baseline. The stricter backend
-comparison fails one capped-evidence attribution case. That failed release gate
-is retained; passing contract tests do not waive it. No Core, Demo or Agent files
-were modified, no earlier fixture gold was changed, and no release was published.
+paired diagnostics agree with the controlled baseline. Following the approved
+Core ordering fix, strict backend comparison now matches all 26 checkpoints,
+including capped source attribution. The original failed gate is retained below
+and in its original artifact. Bench updates pin the validated Core fix and
+strengthen its PostgreSQL test; no fixture gold, Demo or Agent was changed and
+no release was published.
 
 ## New source assessment
 
@@ -29,7 +31,7 @@ gold never enters the adapter request and backend metadata cannot supply answers
 | False-certainty contract violations | **0** |
 | Declared future-evidence leaks | **0** |
 | Unsupported Oracle source capability | **N/A** |
-| Strict PostgreSQL report parity | **FAIL: 1 of 26 checkpoints differs** |
+| Strict PostgreSQL report parity after the fix | **PASS: 26 / 26 checkpoints agree** |
 
 Coverage includes unknown/known/contested/withdrawn/historical-only/indeterminate
 state, empty recall with stored knowledge, conflict evidence outside the recall
@@ -61,11 +63,16 @@ allocation only; it does not patch Core algorithms, alter thresholds or normalis
 away ranked retrieval differences. This controls the observed source of variability.
 It does **not** establish deterministic outputs across arbitrary UUID allocations.
 
-All **393 query signatures across 22 dataset/profile runs**, **46 explicit uses**,
+All **393 query signatures across 22 dataset/profile runs**, **46 recorded use results**,
 and non-latency metrics match exactly. Signatures include evidence/order, text,
 scores, activation components, neutral competition/interference/inhibition
 observations, semantic state/provenance, old counters and correction context prose.
 Fingerprints are retained in `tests/golden/cogkura_0182_frozen.json`.
+
+The earlier summary's “46 uses” count described trace-qualified `UseResult`
+records. The runner actually executes **73 explicit use actions** across these
+profiles, including controls without inhibition-trace results. The post-fix
+summary distinguishes these units; inputs and frozen fingerprints are unchanged.
 
 Diagnostics-off/on comparisons also match for all 22 earlier runs and the new
 source fixture: **419 paired query outcomes**, with zero cognitive/output or
@@ -80,7 +87,7 @@ effect precision/recall stay **1.000**. Competition F1 stays **0.4347826087** on
 1.000, Helios 0.800, customer 0.600 in the prior findings) are not retuned or
 redefined here; the stronger per-case comparison retains the underlying outputs.
 
-## PostgreSQL execution and the remaining gate
+## PostgreSQL execution and the resolved gate
 
 PostgreSQL was **EXECUTED**, with migrations applied and fixture tenants isolated.
 Adoption, replacement, withdrawal, replay, effective boundaries, knowledge-time
@@ -89,8 +96,8 @@ unexecuted database gap is not carried forward as an implied success or silently
 left skipped.
 
 Strict comparison preserves event identities, even under evidence truncation.
-At `sm-evidence-cap`, `max_evidence=1` on two contested assertions with four
-source references returns:
+The original run against Core `9ab2241` failed at `sm-evidence-cap`:
+`max_evidence=1` on two contested assertions with four source references returned:
 
 | Backend | Cited event in the strict controlled run |
 | --- | --- |
@@ -103,22 +110,30 @@ unavailable decision history. The returned source is valid in both runs. The
 other 25 neutral reports agree; this case differs in `event_ids` and its revision
 source attribution. The declared coverage gold intentionally does not assert
 which eligible reference a cap chooses. The strict validator checks that separate
-promise and exits **1**, with `release_gate_passed=false`.
+promise and originally exited **1**, with `release_gate_passed=false`.
 
-Inspection of unchanged Core code explains the difference: semantic evidence is
+Inspection of the original Core code explained the difference: semantic evidence is
 ordered by sequence number, observation UUID and revision in
 `provenance._memory_evidence`; source assessment then slices that population by
-the evidence cap. Equal sequence numbers can therefore select different source
-records when backend storage IDs differ. Even a shared UUID allocator produces
-different IDs because the backends allocate additional internal records.
+the evidence cap. Stored semantic sequences themselves were assigned in UUID
+order, so changing only an equal-sequence tie-break would not fix the defect.
+Even a shared UUID allocator produces different IDs because the backends allocate
+additional internal records.
 
-**Architectural decision required:** confirm whether bounded source selection must
-be stable across equivalent backends/storage IDs. The approved strict parity
-criterion has not been waived here. If required, Core needs an independently
-reviewed ordering fix using stable source identities. If a weaker prefix contract
-is intended, explicitly approve and document that exception before declaring
-release validation complete. Bench must not hide it by fetching beyond the
-requested cap or modifying expected evidence to suit a backend.
+**Approved resolution:** the user approved Core's slot-only canonical ordering
+by source namespace, record ID, and numeric observation revision, before one
+global occurrence cap. Revision population order, stored evidence sequences,
+context provenance, cognitive behavior and counters remain unchanged. Unknown
+source identities form an explicitly unavailable per-revision suffix; no inferred
+trust, independence or portable opaque-ID ordering is claimed.
+
+The same strict validator was rerun against Core `4d3ba73`, without modifying its
+comparison or frozen fingerprints. It now exits **0**, with
+`release_gate_passed=true`, PostgreSQL status **PASS**, and no source, frozen or
+diagnostics mismatches. All 26 neutral source reports match, including exact
+`sm-evidence-cap` event identities. Bench does not fetch beyond the requested cap.
+Core separately passed 898 tests with zero skips on each Python 3.11–3.13 runtime,
+including real PostgreSQL regression cases with opposite UUID-derived sequences.
 
 ## Required gates
 
@@ -132,14 +147,16 @@ step in CI. The new CI service ensures database tests execute on 3.11–3.13.
 | Python 3.12.8 | PASS | **289 passed** | **0** | PASS |
 | Python 3.13.0 | PASS | **289 passed** | **0** | PASS |
 
-The strict release validator is separate from pytest's coverage contract test.
-That test verifies valid bounded populations and exact agreement for the other
-cases; it explicitly does not waive the capped-identity mismatch. Green ordinary
-CI gates therefore do not mean that the strict release gate passed.
+The complete matrix was rerun against the updated pin with fresh PostgreSQL
+databases: **289 passed, zero skips** on each runtime, and all required CLI steps
+passed. PostgreSQL pytest now requires exact source identities for
+capped reports too; the former eligible-population exception has been removed.
+The separate strict release validator still checks frozen and paired outputs.
 
 Reproduce with the commands in [source metamemory](../source-metamemory.md).
-The checked-in [validation summary](data/source-metamemory-0.3.11-validation.json)
-retains actual mismatch evidence and gate status. Full local reports remain under
+The checked-in [post-fix summary](data/source-metamemory-0.3.11-ordering-validation.json)
+records the successful strict gate. The [original failed summary](data/source-metamemory-0.3.11-validation.json)
+retains the original mismatch evidence. Full local reports remain under
 ignored `results/`; no database credentials are stored in the summary.
 
 ## Limits and next step
@@ -152,8 +169,10 @@ ignored `results/`; no database credentials are stored in the summary.
 - Optional custom stores without inspection stay unavailable/indeterminate.
 - Tests cover PostgreSQL 14.18 locally. Other server versions, concurrent writers,
   atomic cross-store reads and production-scale latency were not validated.
-- The evidence-bound identity issue and ordinary random-ID output variability
-  require explicit interpretation; neither is silently recast as a passing gate.
+- Canonical slot attribution closes the evidence-bound identity issue. Ordinary
+  UUID-dependent retrieval/prose variability remains a separate existing behavior;
+  frozen comparisons control identity allocation rather than claiming arbitrary-ID
+  determinism.
 
-The Bench update and execution are complete. Review the capped-evidence contract
-in Core before treating 0.18.3 as fully validated or publishing a release.
+The required Core and independent Bench gates are closed for this candidate.
+Tags and publication remain within the separate release process.
