@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current release is 0.3.10. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current development version is 0.3.11, validating Core 0.18.3. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -23,6 +23,7 @@ Each query is tagged with a capability. Results are reported per capability. The
 | Transient interference | Whether valid proactive/retroactive competition produces bounded current-retrieval suppression without affecting unrelated memories (`cogkura-interference` profile) |
 | Persistent inhibition | Whether explicit selective use creates a scoped inhibitory trace that later reduces the unselected competitor's accessibility, then recovers (`cogkura-inhibition` profile) |
 | Source authority | Whether one explicitly authorised fact becomes semantic memory while ordinary single observations still require recurrence (`cogkura-authority` profile) |
+| Source assessment | Whether evidence coverage, semantic state, source identity and pass-local decisions match declared observable facts (`cogkura-source` profile) |
 | Authoritative correction | Whether an authorised correction or withdrawal updates current semantic knowledge while historical state stays available (`cogkura-correction` profile) |
 
 Expected evidence is always a benchmark event ID, never a backend-internal key.
@@ -48,7 +49,21 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.18.2,<0.19.0`.
+The CogKura extra pins `cogkura>=0.18.3,<0.19.0`.
+
+For PostgreSQL validation, install all extras and provide a disposable database:
+
+```bash
+uv sync --all-extras --dev --locked
+export COGKURA_POSTGRES_MEMORY_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench
+```
+
+Tests apply Core migrations. Database benchmarks reset their fixture tenants;
+use a disposable database. Missing database configuration leaves parity unexecuted.
+
+Core 0.18.3 testing is documented in [source-aware metamemory](docs/source-metamemory.md)
+and its [findings](docs/findings/source-aware-metamemory-0.3.11.md). The strict
+capped-evidence parity check currently fails; **the release is not fully validated**.
 
 ## First run
 

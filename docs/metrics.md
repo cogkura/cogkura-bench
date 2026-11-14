@@ -180,3 +180,24 @@ The hard gate is zero unauthorized promotions, zero wrong authority assignments,
 | `authoritative_correction_idempotency_violations` | Replay created another durable transition |
 
 The hard gate is zero for every count above. Oracle reports the capability as N/A. Tests: `tests/unit/test_metrics_authoritative_corrections.py`.
+
+## Source assessment (0.3.11 candidate)
+
+Neutral `SourceAssessmentObservation` fields are checked against independently
+specified fixture assertions. Exact tuple checks compare sets; `_contains` is a
+subset assertion and `_excludes` requires disjointness. Missing fields fail a
+supported check; explicit `null` is distinct from an omitted check. Unsupported
+capabilities are N/A. Diagnostic checks apply only to profiles advertising pass
+reports. No metric recomputes Core qualification or treats authority as certainty.
+
+- `source_assessment_accuracy`: matched declared checks / all declared checks.
+- `source_{state,conflict,reason,attribution,completeness,temporal,uncertainty,currentness}_accuracy`: the same ratio within each declared category. Empty categories are omitted.
+- `source_conflict_precision` / `recall`: matched semantic conflicts / observed or declared conflicts, with empty denominators omitted.
+- `source_assessment_mismatch_count`: unmatched checks, summed across checkpoints.
+- `source_false_certainty_count`: violated declarations about unknown independence/history, indeterminate state or incomplete evidence/inventory. This is a contract check, not a truth score.
+- `source_future_leak_count`: declared excluded event IDs appearing in source evidence.
+
+Run aggregation uses total matched checks / total checks, not an average of
+per-query percentages. Underlying check/match counts remain in JSON for audit.
+Retrieval accuracy is separate. Exact capped-prefix parity is a separate release
+validator check, so a 1.000 declared-check score cannot hide that mismatch.

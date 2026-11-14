@@ -89,6 +89,13 @@
 - [x] Historical semantic state, stale-context, and knowledge-time checks
 - [x] Authoritative corrections 0.3.10 findings
 
+## 0.3.11 candidate
+
+- [x] Source-aware metamemory fixture, neutral observations and metrics
+- [x] Core 0.18.3 dependency and diagnostics-on/off profiles
+- [x] Frozen per-case comparison and PostgreSQL execution
+- [ ] Resolve/review strict capped-evidence attribution parity before declaring full release validation
+
 ## Future
 
 - Vector/RAG baseline

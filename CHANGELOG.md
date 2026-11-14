@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- 0.3.11 candidate: `source_aware_metamemory_v1` (23 events, 26 checkpoints), neutral source-assessment capability, explicit observable gold, and separate diagnostics-off/on profiles.
+- Source coverage/state/conflict/attribution/temporal/uncertainty metrics and hand-calculated scoring tests. Unsupported capabilities report N/A.
+- Supplemental missing-revision, legacy-history, optional-capability, currentness, report-bound, replay and read-only tests.
+- Frozen 0.18.2 fingerprints for 393 queries in 22 runs; a reproducible release validator also checks diagnostics parity and strict PostgreSQL attribution parity.
+- PostgreSQL service and integration execution in the Python 3.11–3.13 CI matrix.
+
+### Changed
+
+- Core dependency pinned to validated 0.18.3 commit `9ab2241ad600ed766b9c6487440e7495fe68254c`; optional `postgres` extra.
+- Direct development on `main` with incremental commits, per the user's workflow decision.
+
+### Validation limitation
+
+- All declared source cases pass on both backends, but strict capped-evidence source identity parity fails. See [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md). This is a release concern, not a successful full validation.
+- Released fixture gold and Core, Demo, and Agent are unchanged.
+
 ## [0.3.10] - 2026-11-12
 
 ### Added

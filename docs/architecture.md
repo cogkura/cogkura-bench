@@ -70,3 +70,16 @@ QueryAction
     -> persistent backend memory state
     -> later QueryAction
 ```
+
+## Source assessment (0.3.11 candidate)
+
+`SourceAssessmentBackend` is a separate optional protocol. The runner passes an
+exact slot, scope, time and limits; it never passes expected state/reasons to the
+adapter. The adapter resolves public Core reports to exact revision-bound event
+IDs. Metrics consume `SourceAssessmentObservation`, not backend metadata.
+Existing metamemory, retrieval and backend interfaces retain their semantics.
+
+Source reports are pass-local. Decisions lacking a slot key can be attributed
+through their public target/result revision keys. Historical inspections cannot
+expose a report from a later pass. Source identity never establishes independence.
+See [source metamemory](source-metamemory.md) for the scoring and release contract.

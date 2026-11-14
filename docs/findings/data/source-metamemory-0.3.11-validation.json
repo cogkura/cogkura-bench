@@ -1,0 +1,214 @@
+{
+  "bench_implementation_commit": "39bde91",
+  "core_commit": "9ab2241ad600ed766b9c6487440e7495fe68254c",
+  "core_version": "0.18.3",
+  "diagnostic_mismatches": [],
+  "explicit_uses": 46,
+  "frozen_mismatches": [],
+  "frozen_queries": 393,
+  "frozen_runs": 22,
+  "hash_seed": 0,
+  "paired_queries": 419,
+  "postgres": {
+    "declared_metrics": {
+      "estimated_context_tokens": 0.0,
+      "estimated_cost_usd": 0.0,
+      "external_api_calls": 0.0,
+      "forbidden_intrusion_rate": 0.0,
+      "memories_retrieved": 1.5769230769230769,
+      "memories_selected": 0.0,
+      "mrr": 1.0,
+      "ndcg@1": 0.0,
+      "ndcg@10": 0.0,
+      "ndcg@3": 0.0,
+      "ndcg@5": 0.0,
+      "precision@1": 0.0,
+      "precision@10": 0.0,
+      "precision@3": 0.0,
+      "precision@5": 0.0,
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0,
+      "retrieval_latency_ms": 26.402833656622814,
+      "source_assessment_accuracy": 1.0,
+      "source_assessment_check_count": 191.0,
+      "source_assessment_match_count": 191.0,
+      "source_assessment_mismatch_count": 0.0,
+      "source_attribution_accuracy": 1.0,
+      "source_attribution_check_count": 46.0,
+      "source_attribution_match_count": 46.0,
+      "source_completeness_accuracy": 1.0,
+      "source_completeness_check_count": 27.0,
+      "source_completeness_match_count": 27.0,
+      "source_conflict_accuracy": 1.0,
+      "source_conflict_check_count": 8.0,
+      "source_conflict_expected_count": 1.0,
+      "source_conflict_match_count": 8.0,
+      "source_conflict_matched_count": 1.0,
+      "source_conflict_observed_count": 1.0,
+      "source_conflict_precision": 1.0,
+      "source_conflict_recall": 1.0,
+      "source_false_certainty_count": 0.0,
+      "source_future_leak_count": 0.0,
+      "source_reason_accuracy": 1.0,
+      "source_reason_check_count": 17.0,
+      "source_reason_match_count": 17.0,
+      "source_state_accuracy": 1.0,
+      "source_state_check_count": 26.0,
+      "source_state_match_count": 26.0,
+      "source_temporal_accuracy": 1.0,
+      "source_temporal_check_count": 12.0,
+      "source_temporal_match_count": 12.0,
+      "source_uncertainty_accuracy": 1.0,
+      "source_uncertainty_check_count": 55.0,
+      "source_uncertainty_match_count": 55.0
+    },
+    "mismatches": [
+      {
+        "fields": [
+          "revisions",
+          "event_ids"
+        ],
+        "memory": {
+          "event_ids": [
+            "sm-conflict-startup-0"
+          ],
+          "revisions": [
+            {
+              "event_ids": [
+                "sm-conflict-startup-0"
+              ],
+              "history_complete": true,
+              "latest": [
+                null
+              ],
+              "status": "contested",
+              "valid_from": "2026-11-01T10:00:00+00:00",
+              "valid_until": "2026-11-10T10:00:00+00:00",
+              "view": "visible_current"
+            },
+            {
+              "event_ids": [],
+              "history_complete": true,
+              "latest": [],
+              "status": "contested",
+              "valid_from": "2026-11-01T10:00:00+00:00",
+              "valid_until": "2026-11-10T10:00:00+00:00",
+              "view": "visible_current"
+            }
+          ]
+        },
+        "postgres": {
+          "event_ids": [
+            "sm-conflict-startup-1"
+          ],
+          "revisions": [
+            {
+              "event_ids": [
+                "sm-conflict-startup-1"
+              ],
+              "history_complete": true,
+              "latest": [
+                null
+              ],
+              "status": "contested",
+              "valid_from": "2026-11-01T10:00:00+00:00",
+              "valid_until": "2026-11-10T10:00:00+00:00",
+              "view": "visible_current"
+            },
+            {
+              "event_ids": [],
+              "history_complete": true,
+              "latest": [],
+              "status": "contested",
+              "valid_from": "2026-11-01T10:00:00+00:00",
+              "valid_until": "2026-11-10T10:00:00+00:00",
+              "view": "visible_current"
+            }
+          ]
+        },
+        "query_id": "sm-evidence-cap"
+      }
+    ],
+    "status": "FAIL"
+  },
+  "postgres_version": "14.18",
+  "python_matrix": {
+    "3.11.15": {
+      "dataset_profile_cli": "PASS",
+      "lint_format_typing": "PASS",
+      "tests_passed": 289,
+      "tests_skipped": 0
+    },
+    "3.12.8": {
+      "dataset_profile_cli": "PASS",
+      "lint_format_typing": "PASS",
+      "tests_passed": 289,
+      "tests_skipped": 0
+    },
+    "3.13.0": {
+      "dataset_profile_cli": "PASS",
+      "lint_format_typing": "PASS",
+      "tests_passed": 289,
+      "tests_skipped": 0
+    }
+  },
+  "release_gate_passed": false,
+  "seed": 183,
+  "source_checkpoints": 26,
+  "source_metrics": {
+    "estimated_context_tokens": 0.0,
+    "estimated_cost_usd": 0.0,
+    "external_api_calls": 0.0,
+    "forbidden_intrusion_rate": 0.0,
+    "memories_retrieved": 1.5769230769230769,
+    "memories_selected": 0.0,
+    "mrr": 1.0,
+    "ndcg@1": 0.0,
+    "ndcg@10": 0.0,
+    "ndcg@3": 0.0,
+    "ndcg@5": 0.0,
+    "precision@1": 0.0,
+    "precision@10": 0.0,
+    "precision@3": 0.0,
+    "precision@5": 0.0,
+    "recall@1": 1.0,
+    "recall@10": 1.0,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "retrieval_latency_ms": 4.033888349882686,
+    "source_assessment_accuracy": 1.0,
+    "source_assessment_check_count": 191.0,
+    "source_assessment_match_count": 191.0,
+    "source_assessment_mismatch_count": 0.0,
+    "source_attribution_accuracy": 1.0,
+    "source_attribution_check_count": 46.0,
+    "source_attribution_match_count": 46.0,
+    "source_completeness_accuracy": 1.0,
+    "source_completeness_check_count": 27.0,
+    "source_completeness_match_count": 27.0,
+    "source_conflict_accuracy": 1.0,
+    "source_conflict_check_count": 8.0,
+    "source_conflict_expected_count": 1.0,
+    "source_conflict_match_count": 8.0,
+    "source_conflict_matched_count": 1.0,
+    "source_conflict_observed_count": 1.0,
+    "source_conflict_precision": 1.0,
+    "source_conflict_recall": 1.0,
+    "source_false_certainty_count": 0.0,
+    "source_future_leak_count": 0.0,
+    "source_reason_accuracy": 1.0,
+    "source_reason_check_count": 17.0,
+    "source_reason_match_count": 17.0,
+    "source_state_accuracy": 1.0,
+    "source_state_check_count": 26.0,
+    "source_state_match_count": 26.0,
+    "source_temporal_accuracy": 1.0,
+    "source_temporal_check_count": 12.0,
+    "source_temporal_match_count": 12.0,
+    "source_uncertainty_accuracy": 1.0,
+    "source_uncertainty_check_count": 55.0,
+    "source_uncertainty_match_count": 55.0
+  }
+}

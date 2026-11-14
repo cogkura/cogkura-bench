@@ -125,3 +125,22 @@ uv run cogkura-bench inspect customer-waterproof-jacket --backend cogkura --data
 ```
 
 Fixture integrity (0.3.2): [findings/customer-decision-context-0.3.2.md](findings/customer-decision-context-0.3.2.md). Structured relationships (0.3.3): [findings/customer-decision-context-0.3.3.md](findings/customer-decision-context-0.3.3.md). Lifecycle diagnostics (0.3.1): [findings/customer-decision-context-0.3.1.md](findings/customer-decision-context-0.3.1.md). Initial baseline (0.3.0): [findings/customer-decision-context-0.3.0.md](findings/customer-decision-context-0.3.0.md).
+
+## Source-aware metamemory (`source_aware_metamemory_v1`)
+
+23 independently authored source events and 26 checkpoints cover six semantic
+states, locators, exact revisions, semantic versus episodic relation coverage,
+conflicts outside broad recall, overlapping/many/negative facts, tenant and subject
+isolation, correction/withdrawal boundaries, source edits, and pass-local deferrals.
+The query's optional inspection `as_of` cannot exceed its simulated timestamp.
+Checks are explicit: omitted fields are unscored; `null` means an expected unknown
+or not-applicable result. Supplemental integration tests inject missing revisions,
+legacy snapshots and a custom store lacking the optional capability.
+
+```bash
+uv run cogkura-bench validate-dataset source_aware_metamemory_v1
+uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend cogkura-source-control --quiet
+uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend cogkura-source --quiet
+```
+
+See [the contract](source-metamemory.md) and [findings](findings/source-aware-metamemory-0.3.11.md).

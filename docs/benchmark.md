@@ -23,3 +23,17 @@ Optional LLM evaluation using identical retrieved context across backends.
 - Ground truth is checked into the repository and versioned.
 - Expected evidence refers to benchmark event IDs, not backend-internal IDs.
 - No single benchmark score: capability scores are reported separately.
+
+## Source assessment (0.3.11 candidate)
+
+`source_aware_metamemory_v1` separately scores exact inventory and source evidence.
+It does not score truth, trust rankings or an application's abstention policy.
+Missing locators and missing exact revisions differ; episodic relation coverage
+can be not applicable; independence stays unknown. Frozen retrieval scoring and
+all earlier fixture ground truth are unchanged.
+
+The independent release validator compares 393 frozen queries and explicit uses
+against 0.18.2 with controlled standard-library UUID allocation and hash seed,
+then pairs diagnostics off/on. Ordinary random-ID observations are retained as
+limitations, not silently canonicalised away. PostgreSQL is actually exercised;
+strict capped-prefix attribution currently differs and blocks full validation.

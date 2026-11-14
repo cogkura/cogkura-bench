@@ -165,6 +165,15 @@ uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkur
 - Do not edit `source_authority_v1` or the frozen retrieval, interference, and inhibition datasets for this release.
 - Compare results in [0.3.10 findings](docs/findings/authoritative-corrections-0.3.10.md).
 
+## Source-aware metamemory (0.3.11 candidate)
+
+- `cogkura-source-control` and `cogkura-source` both enable authority/corrections at threshold 2. Only the latter enables typed pass reports.
+- Score neutral observations from public APIs; gold checks never enter the adapter request. Preserve existing metamemory and retrieval scoring.
+- Independence stays unknown; missing locators differ from missing revisions; episodic relation coverage is not applicable.
+- Run the strict release validator in [source metamemory](docs/source-metamemory.md), including PostgreSQL. Ordinary pytest does not waive its capped-evidence identity failure.
+- [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the failed gate. Do not weaken gold or fetch beyond requested caps to conceal it.
+- Source assessment is not a trust score, factual certainty or an automatic abstention policy.
+
 ## Transient interference v2 (0.3.7)
 
 - `transient_interference_v1` is frozen. Do not edit it to match the current eligibility contract.
