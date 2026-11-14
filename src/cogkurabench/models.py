@@ -10,6 +10,7 @@ from types import MappingProxyType
 from typing import Any
 
 from cogkurabench.exceptions import ValidationError
+from cogkurabench.source_models import SourceAssessmentExpectation, SourceInspectionSpec
 
 
 class EventType(StrEnum):
@@ -56,6 +57,7 @@ class Capability(StrEnum):
     PERSISTENT_INHIBITION = "persistent_inhibition"
     SOURCE_AUTHORITY = "source_authority"
     AUTHORITATIVE_CORRECTION = "authoritative_correction"
+    SOURCE_ASSESSMENT = "source_assessment"
 
 
 class CompetitionDirection(StrEnum):
@@ -729,6 +731,8 @@ class BenchmarkQuery:
     persistent_inhibition_comparisons: tuple[PersistentInhibitionComparison, ...] = ()
     expected_source_authority: tuple[SourceAuthorityExpectation, ...] = ()
     expected_authoritative_corrections: tuple[AuthoritativeCorrectionExpectation, ...] = ()
+    source_inspection: SourceInspectionSpec | None = None
+    expected_source_assessment: SourceAssessmentExpectation | None = None
     render_forbidden: tuple[str, ...] = ()
     render_required: tuple[str, ...] = ()
     extra_consolidations: int = 0
@@ -905,6 +909,8 @@ class BackendCapabilities:
     explicit_source_authority: bool = False
     authoritative_correction: bool = False
     corrections_enabled: bool = False
+    source_assessment: bool = False
+    semantic_decisions: bool = False
 
 
 @dataclass(frozen=True, slots=True)

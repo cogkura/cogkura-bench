@@ -48,6 +48,7 @@ from cogkurabench.models import (
     UseRequest,
     UseResponse,
 )
+from cogkurabench.source_models import SourceAssessmentObservation, SourceAssessmentRequest
 
 if TYPE_CHECKING:
     from cogkura.memory import Memory
@@ -188,8 +189,16 @@ class CogKuraBackend:
         allow_authoritative_single_episode: bool = False,
         inspect_source_authority: bool = False,
         corrections_enabled: bool | None = None,
+        source_assessment: bool = False,
+        semantic_diagnostics: bool = False,
+        postgres_url: str | None = None,
         name: str | None = None,
     ) -> None:
+        self._postgres_url = postgres_url
+        self._postgres_engine: Any = None
+        self._source_assessment = source_assessment
+        self._semantic_diagnostics = semantic_diagnostics
+        self._last_decisions_by_tenant: dict[str, Any] = {}
         self._competition_enabled = competition_enabled
         self._apply_interference = apply_interference
         self._inhibition_enabled = inhibition_enabled or apply_inhibition
@@ -270,6 +279,8 @@ class CogKuraBackend:
             explicit_source_authority=self._allow_authoritative_single_episode,
             authoritative_correction=self._corrections_enabled is not None,
             corrections_enabled=bool(self._corrections_enabled),
+            source_assessment=self._source_assessment,
+            semantic_decisions=self._semantic_diagnostics,
         )
 
     async def reset(self) -> None:
@@ -288,14 +299,31 @@ class CogKuraBackend:
 
         self._version = _installed_cogkura_version(cogkura)
         self._bench_version = cogkurabench.__version__
-        if self._corrections_enabled is not None and self._version != "0.18.2":
+        if self._corrections_enabled is not None and self._version not in {"0.18.2", "0.18.3"}:
             raise ValidationError(
-                f"correction profiles require CogKura 0.18.2, found {self._version}"
+                f"correction profiles require CogKura 0.18.2 or 0.18.3, found {self._version}"
             )
         if self._memory is not None:
             await self._memory.clear(tenant_id=TENANT_ID)
         self._observation_store = InMemoryObservationStore()
+        stores: dict[str, Any] = {}
+        if self._postgres_url is not None:
+            from cogkura.storage.postgres import (
+                PostgresEpisodeStore,
+                PostgresObservationStore,
+                PostgresSemanticMemoryStore,
+            )
+            from sqlalchemy.ext.asyncio import create_async_engine
+
+            await self.close()
+            self._postgres_engine = create_async_engine(self._postgres_url)
+            self._observation_store = PostgresObservationStore(self._postgres_engine)
+            stores = {
+                "episode_store": PostgresEpisodeStore(self._postgres_engine),
+                "semantic_store": PostgresSemanticMemoryStore(self._postgres_engine),
+            }
         self._memory = cogkura.Memory(
+            **stores,
             observation_store=self._observation_store,
             semantic_consolidator=ComplementaryLearningSemanticConsolidator(
                 minimum_supporting_episodes=self._minimum_supporting_episodes,
@@ -309,6 +337,11 @@ class CogKuraBackend:
                 enabled=self._inhibition_enabled,
                 apply_to_recall=self._apply_inhibition,
             ),
+            **(
+                {"semantic_diagnostics_config": cogkura.SemanticDiagnosticsConfig(enabled=True)}
+                if self._semantic_diagnostics
+                else {}
+            ),
             semantic_correction_config=(
                 SemanticCorrectionConfig(enabled=self._corrections_enabled)
                 if self._corrections_enabled is not None
@@ -319,6 +352,7 @@ class CogKuraBackend:
         self._revision_to_event_id.clear()
         self._tenants.clear()
         self._last_consolidation_by_tenant.clear()
+        self._last_decisions_by_tenant.clear()
         self._recall_cache.clear()
         self._events_ingested = 0
         self._relationships_ingested = 0
@@ -536,6 +570,24 @@ class CogKuraBackend:
             source_authority_observations=authority_observations,
             authoritative_correction_observations=correction_observations,
             backend_metadata=backend_metadata,
+        )
+
+    async def close(self) -> None:
+        """Dispose optional PostgreSQL connections after a benchmark run."""
+        if self._postgres_engine is not None:
+            await self._postgres_engine.dispose()
+            self._postgres_engine = None
+
+    async def inspect_sources(
+        self, request: SourceAssessmentRequest
+    ) -> SourceAssessmentObservation:
+        from cogkurabench.backends.cogkura_sources import inspect_sources
+
+        return await inspect_sources(
+            self._require_memory(),
+            request,
+            self._revision_to_event_id,
+            self._last_decisions_by_tenant.get(request.tenant_id),
         )
 
     async def select_context(self, request: ContextRequest) -> ContextResponse | None:
@@ -889,6 +941,7 @@ class CogKuraBackend:
         return self._memory
 
     def _remember_consolidation(self, tenant_id: str, result: Any) -> None:
+        self._last_decisions_by_tenant[tenant_id] = getattr(result, "decisions", None)
         self._last_consolidation_by_tenant[tenant_id] = {
             "authority_invalid": int(result.authority_invalid),
             "authority_deferred_conflict": int(result.authority_deferred_conflict),

@@ -27,6 +27,7 @@ from cogkurabench.models import (
     SourceAuthorityObservation,
     TransientInterferenceObservation,
 )
+from cogkurabench.source_models import SourceAssessmentObservation
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +118,7 @@ class QueryResult:
     ] = ()
     persistent_inhibition_observations: tuple[PersistentInhibitionObservation, ...] = ()
     persistent_inhibition_diagnostics: tuple[PersistentInhibitionDiagnosticResult, ...] = ()
+    source_assessment: SourceAssessmentObservation | None = None
     source_authority_observations: tuple[SourceAuthorityObservation, ...] = ()
     authoritative_correction_observations: tuple[AuthoritativeCorrectionObservation, ...] = ()
 

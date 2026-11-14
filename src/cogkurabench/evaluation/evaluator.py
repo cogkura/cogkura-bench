@@ -32,6 +32,7 @@ from cogkurabench.metrics.persistent_inhibition import (
 )
 from cogkurabench.metrics.ranking import flatten_source_event_ids, order_retrieved_items
 from cogkurabench.metrics.retrieval import compute_retrieval_metrics
+from cogkurabench.metrics.source_assessment import compute_source_assessment_metrics
 from cogkurabench.metrics.source_authority import compute_source_authority_metrics
 from cogkurabench.metrics.temporal import compute_temporal_metrics
 from cogkurabench.metrics.transient_interference import (
@@ -52,6 +53,7 @@ from cogkurabench.models import (
     SourceAuthorityObservation,
     TransientInterferenceObservation,
 )
+from cogkurabench.source_models import SourceAssessmentObservation
 
 
 def _authority_counter(metadata: Mapping[str, object], key: str) -> int:
@@ -148,6 +150,9 @@ def evaluate_query(
     authoritative_correction_observations: Sequence[AuthoritativeCorrectionObservation] = (),
     authoritative_correction_supported: bool = False,
     corrections_enabled: bool = False,
+    source_assessment: SourceAssessmentObservation | None = None,
+    source_assessment_supported: bool = False,
+    semantic_decisions_supported: bool = False,
 ) -> QueryResult:
     """Score one query against retrieved items and optional backend signals."""
     ordered_items = order_retrieved_items(retrieved_items)
@@ -290,6 +295,14 @@ def evaluate_query(
         else (),
     )
     metrics.update(correction_metrics)
+    metrics.update(
+        compute_source_assessment_metrics(
+            query.expected_source_assessment,
+            source_assessment,
+            supported=source_assessment_supported,
+            decisions_supported=semantic_decisions_supported,
+        )
+    )
 
     return QueryResult(
         query_id=query.id,
@@ -350,6 +363,7 @@ def evaluate_query(
         transient_interference_candidate_diagnostics=interference_candidate_diagnostics,
         persistent_inhibition_observations=tuple(persistent_inhibition_observations),
         persistent_inhibition_diagnostics=inhibition_diagnostics,
+        source_assessment=source_assessment,
         source_authority_observations=tuple(source_authority_observations),
         authoritative_correction_observations=tuple(authoritative_correction_observations),
     )

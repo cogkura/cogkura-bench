@@ -14,6 +14,24 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
 
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cogkura_bench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      COGKURA_POSTGRES_MEMORY_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,7 +45,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Install dependencies
-        run: uv sync --extra cogkura --dev --locked
+        run: uv sync --all-extras --dev --locked
 
       - name: Ruff lint
         run: uv run ruff check .
@@ -172,3 +190,15 @@ jobs:
 
       - name: Run authoritative corrections benchmark (cogkura-correction)
         run: uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkura-correction --quiet
+
+      - name: Validate source-aware metamemory dataset
+        run: uv run cogkura-bench validate-dataset source_aware_metamemory_v1
+
+      - name: Run source-aware metamemory benchmark (oracle N/A)
+        run: uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend oracle --quiet
+
+      - name: Run source-aware metamemory benchmark (diagnostics off)
+        run: uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend cogkura-source-control --quiet
+
+      - name: Run source-aware metamemory benchmark (diagnostics on)
+        run: uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend cogkura-source --quiet

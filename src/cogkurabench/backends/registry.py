@@ -25,6 +25,8 @@ def create_backend(name: str, dataset: BenchmarkDataset) -> MemoryBackend:
         "cogkura-authority": _create_cogkura_authority_backend,
         "cogkura-correction-control": _create_cogkura_correction_control_backend,
         "cogkura-correction": _create_cogkura_correction_backend,
+        "cogkura-source-control": lambda _: _create_source_backend(False),
+        "cogkura-source": lambda _: _create_source_backend(True),
     }
     try:
         factory = factories[name]
@@ -120,4 +122,19 @@ def available_backends() -> tuple[str, ...]:
         "cogkura-authority",
         "cogkura-correction-control",
         "cogkura-correction",
+        "cogkura-source-control",
+        "cogkura-source",
+    )
+
+
+def _create_source_backend(diagnostics: bool) -> MemoryBackend:
+    from cogkurabench.backends.cogkura import CogKuraBackend
+
+    return CogKuraBackend(
+        minimum_supporting_episodes=2,
+        allow_authoritative_single_episode=True,
+        corrections_enabled=True,
+        source_assessment=True,
+        semantic_diagnostics=diagnostics,
+        name="cogkura-source" if diagnostics else "cogkura-source-control",
     )

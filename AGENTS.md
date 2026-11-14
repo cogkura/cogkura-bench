@@ -66,7 +66,7 @@ These are hard constraints:
 ## Commands (match CI)
 
 ```bash
-uv sync --extra cogkura --dev --locked
+uv sync --all-extras --dev --locked
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
@@ -236,4 +236,6 @@ The completion response should state:
 - whether benchmark scores changed;
 - any remaining limitations.
 
-Do not commit or push unless explicitly instructed.
+Develop directly on `main` with incremental commits. Create branches or PRs only
+when explicitly requested. Release tags and publication use the separate release
+process.

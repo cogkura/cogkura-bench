@@ -70,6 +70,22 @@ _CAPABILITY_METRIC_KEYS: dict[Capability, tuple[str, ...]] = {
         "repetition_strengthening_accuracy",
         "inhibition_recovery_order_accuracy",
     ),
+    Capability.SOURCE_ASSESSMENT: (
+        "source_assessment_accuracy",
+        "source_state_accuracy",
+        "source_conflict_accuracy",
+        "source_reason_accuracy",
+        "source_attribution_accuracy",
+        "source_completeness_accuracy",
+        "source_temporal_accuracy",
+        "source_uncertainty_accuracy",
+        "source_currentness_accuracy",
+        "source_conflict_precision",
+        "source_conflict_recall",
+        "source_false_certainty_count",
+        "source_future_leak_count",
+        "source_assessment_mismatch_count",
+    ),
     Capability.SOURCE_AUTHORITY: (
         "source_authority_admission_precision",
         "source_authority_admission_recall",
@@ -174,6 +190,7 @@ def _format_metric_value(capability: Capability, metric_name: str, value: float 
             Capability.PERSISTENT_INHIBITION,
             Capability.SOURCE_AUTHORITY,
             Capability.AUTHORITATIVE_CORRECTION,
+            Capability.SOURCE_ASSESSMENT,
         ):
             return "N/A"
         return "0.000"

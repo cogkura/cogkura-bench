@@ -9,9 +9,10 @@ import time
 from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from cogkurabench import __version__
-from cogkurabench.backends.base import MemoryBackend
+from cogkurabench.backends.base import MemoryBackend, SourceAssessmentBackend
 from cogkurabench.clock import BenchmarkClock
 from cogkurabench.evaluation.evaluator import (
     aggregate_capability_results,
@@ -37,6 +38,7 @@ from cogkurabench.metrics.persistent_inhibition import (
     finalize_inhibition_trace_metrics,
     finalize_persistent_inhibition_metrics,
 )
+from cogkurabench.metrics.source_assessment import finalize_source_assessment_metrics
 from cogkurabench.metrics.source_authority import finalize_source_authority_metrics
 from cogkurabench.metrics.transient_interference import finalize_transient_interference_metrics
 from cogkurabench.models import (
@@ -53,6 +55,7 @@ from cogkurabench.models import (
     UseAction,
     UseRequest,
 )
+from cogkurabench.source_models import SourceAssessmentRequest
 
 
 class BenchmarkRunner:
@@ -169,6 +172,23 @@ class BenchmarkRunner:
                         )
                         assessment_response = await backend.assess(assessment_request)
 
+                    source_assessment = None
+                    if (
+                        backend.capabilities.source_assessment
+                        and query.source_inspection is not None
+                    ):
+                        source_assessment = await cast(
+                            SourceAssessmentBackend, backend
+                        ).inspect_sources(
+                            SourceAssessmentRequest(
+                                query=query.query,
+                                as_of=clock.current,
+                                valid_at=query.valid_at,
+                                tenant_id=query.tenant_id,
+                                subject_id=query.subject_id,
+                                spec=query.source_inspection,
+                            )
+                        )
                     query_results.append(
                         evaluate_query(
                             query,
@@ -214,6 +234,9 @@ class BenchmarkRunner:
                                 backend.capabilities.authoritative_correction
                             ),
                             corrections_enabled=backend.capabilities.corrections_enabled,
+                            source_assessment=source_assessment,
+                            source_assessment_supported=backend.capabilities.source_assessment,
+                            semantic_decisions_supported=backend.capabilities.semantic_decisions,
                         )
                     )
 
@@ -333,6 +356,17 @@ class BenchmarkRunner:
                 capability=Capability.PERSISTENT_INHIBITION,
                 query_count=inhibition_count,
                 metrics=combined_inhibition,
+            )
+
+        source_metrics = finalize_source_assessment_metrics(
+            [dict(q.metrics) for q in query_results]
+        )
+        if source_metrics and Capability.SOURCE_ASSESSMENT.value in capability_results:
+            existing_source = capability_results[Capability.SOURCE_ASSESSMENT.value]
+            capability_results[Capability.SOURCE_ASSESSMENT.value] = CapabilityResult(
+                capability=existing_source.capability,
+                query_count=existing_source.query_count,
+                metrics={**dict(existing_source.metrics), **source_metrics},
             )
 
         correction_metrics = finalize_authoritative_correction_metrics(query_results)

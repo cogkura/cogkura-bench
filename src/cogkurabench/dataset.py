@@ -38,6 +38,7 @@ from cogkurabench.models import (
     TransientInterferenceExpectation,
     UseAction,
 )
+from cogkurabench.source_models import SourceAssessmentExpectation, SourceInspectionSpec
 
 
 def default_datasets_root() -> Path:
@@ -170,6 +171,30 @@ def validate_dataset(name: str, root: Path | None = None) -> list[str]:
         errors.extend(_validate_persistent_inhibition(query, events_by_id, queries_by_id))
         errors.extend(_validate_source_authority(query, events_by_id))
         errors.extend(_validate_authoritative_corrections(query, events_by_id))
+        if query.capability is Capability.SOURCE_ASSESSMENT and (
+            query.source_inspection is None or query.expected_source_assessment is None
+        ):
+            errors.append(f"query {query.id} requires source inspection and expectations")
+        if query.source_inspection is not None and (
+            query.source_inspection.as_of is not None
+            and query.source_inspection.as_of > query.timestamp
+        ):
+            errors.append(f"query {query.id} source inspection cannot see future knowledge")
+        if query.expected_source_assessment is not None:
+            for checks in (
+                query.expected_source_assessment.checks,
+                query.expected_source_assessment.diagnostic_checks,
+            ):
+                for key, ids in checks.items():
+                    if "event_ids" not in key or not isinstance(ids, tuple):
+                        continue
+                    for event_id in ids:
+                        if event_id not in events_by_id:
+                            errors.append(f"query {query.id} unknown source event {event_id}")
+                        elif not key.endswith("excludes") and (
+                            events_by_id[event_id].timestamp > query.timestamp
+                        ):
+                            errors.append(f"query {query.id} future source event {event_id}")
 
     for item in dataset.feedback:
         if item.query_id not in queries_by_id:
@@ -686,6 +711,10 @@ def _parse_query(data: dict[str, Any]) -> BenchmarkQuery:
         expected_authoritative_corrections=_parse_authoritative_corrections(
             data.get("expected_authoritative_corrections", [])
         ),
+        source_inspection=_parse_source_inspection(data.get("source_inspection")),
+        expected_source_assessment=_parse_source_expectation(
+            data.get("expected_source_assessment")
+        ),
         render_forbidden=tuple(str(item) for item in data.get("render_forbidden", [])),
         render_required=tuple(str(item) for item in data.get("render_required", [])),
         extra_consolidations=int(data.get("extra_consolidations", 0)),
@@ -1068,3 +1097,25 @@ def ensure_valid_dataset(name: str, root: Path | None = None) -> BenchmarkDatase
     if errors:
         raise ValidationError("; ".join(errors))
     return load_dataset(name, root=root)
+
+
+def _parse_source_inspection(value: Any) -> SourceInspectionSpec | None:
+    if value is None:
+        return None
+    values = dict(value)
+    if values.get("as_of") is not None:
+        values["as_of"] = _parse_datetime(values["as_of"])
+    return SourceInspectionSpec(**values)
+
+
+def _parse_source_expectation(value: Any) -> SourceAssessmentExpectation | None:
+    if value is None:
+        return None
+    return SourceAssessmentExpectation(
+        **{
+            name: {
+                key: tuple(item) if isinstance(item, list) else item for key, item in checks.items()
+            }
+            for name, checks in value.items()
+        }
+    )

@@ -19,6 +19,7 @@ from cogkurabench.models import (
     UseRequest,
     UseResponse,
 )
+from cogkurabench.source_models import SourceAssessmentObservation, SourceAssessmentRequest
 
 
 class MemoryBackend(Protocol):
@@ -74,3 +75,11 @@ class MemoryBackend(Protocol):
     async def maintain(self, *, as_of: datetime) -> None:
         """Run scheduled maintenance such as forgetting, if supported."""
         ...
+
+
+class SourceAssessmentBackend(Protocol):
+    """Optional capability, separate from the existing backend protocol."""
+
+    async def inspect_sources(
+        self, request: SourceAssessmentRequest
+    ) -> SourceAssessmentObservation: ...
