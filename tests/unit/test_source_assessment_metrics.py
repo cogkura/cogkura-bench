@@ -182,3 +182,32 @@ def test_backend_metadata_cannot_supply_source_gold_answers() -> None:
         backend_metadata={"source_assessment": {"state": "wrong"}},
     )
     assert result.metrics["source_assessment_accuracy"] == 1
+
+
+def test_inspection_displays_unknown_independence_and_unavailable_history() -> None:
+    from datetime import UTC, datetime
+
+    from cogkurabench.evaluation.evaluator import evaluate_query
+    from cogkurabench.inspect_format import format_source_assessment_section
+    from cogkurabench.models import BenchmarkQuery, Capability
+
+    query = BenchmarkQuery(
+        id="display",
+        query="policy",
+        timestamp=datetime(2026, 11, 1, tzinfo=UTC),
+        capability=Capability.SOURCE_ASSESSMENT,
+        source_inspection=SourceInspectionSpec("service", "policy"),
+        expected_source_assessment=SourceAssessmentExpectation({"state": "known"}),
+    )
+    unavailable = evaluate_query(query, (), latency_ms=0)
+    assert "N/A (unsupported backend)" in format_source_assessment_section(query, unavailable)
+    missing = evaluate_query(query, (), latency_ms=0, source_assessment_supported=True)
+    assert "missing required report" in format_source_assessment_section(query, missing)
+    provided = evaluate_query(
+        query, (), latency_ms=0, source_assessment_supported=True, source_assessment=observation()
+    )
+    text = format_source_assessment_section(query, provided)
+    assert "Source independence: unknown" in text
+    assert "Decision history: unavailable" in text
+    assert "Semantic relation coverage: None" in text
+    assert "Source event IDs: a" in text

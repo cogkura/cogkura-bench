@@ -255,6 +255,8 @@ async def main() -> int:
     uuid.uuid4 = fixture_uuid
     import cogkura
 
+    if args.write_baseline and cogkura.__version__ != "0.18.2":
+        parser.error("the frozen baseline must be captured with unchanged Core 0.18.2")
     output: dict[str, Any] = {
         "core_version": cogkura.__version__,
         "seed": 183,
@@ -305,7 +307,7 @@ async def main() -> int:
             {k: v for k, v in output.items() if k not in ("runs", "source_metrics")}, indent=2
         )
     )
-    return 0 if output["release_gate_passed"] else 1
+    return 0 if args.write_baseline or output["release_gate_passed"] else 1
 
 
 if __name__ == "__main__":

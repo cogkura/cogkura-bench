@@ -381,6 +381,9 @@ async def test_postgres_source_fixture_and_correction_replay_match_memory() -> N
             )
             assert set(left_source.revisions) == set(right_source.revisions)
             assert set(left_source.decisions) == set(right_source.decisions)
+        await backend.reset()
+        for tenant in {e.tenant_id for e in data.events}:
+            assert await backend._require_memory().list_semantic_memories(tenant_id=tenant) == []
     finally:
         await backend.close()
         await engine.dispose()

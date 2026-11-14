@@ -304,7 +304,8 @@ class CogKuraBackend:
                 f"correction profiles require CogKura 0.18.2 or 0.18.3, found {self._version}"
             )
         if self._memory is not None:
-            await self._memory.clear(tenant_id=TENANT_ID)
+            for tenant in sorted(self._tenants | {TENANT_ID}):
+                await self._memory.clear(tenant_id=tenant)
         self._observation_store = InMemoryObservationStore()
         stores: dict[str, Any] = {}
         if self._postgres_url is not None:

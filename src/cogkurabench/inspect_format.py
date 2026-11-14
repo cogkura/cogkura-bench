@@ -500,6 +500,42 @@ def format_structured_relationships_section(
     return "\n".join(lines)
 
 
+def format_source_assessment_section(query: BenchmarkQuery, result: QueryResult) -> str:
+    """Expose neutral source diagnostics separately from backend metadata."""
+    if query.source_inspection is None:
+        return ""
+    source = result.source_assessment
+    if source is None:
+        if "source_assessment_accuracy" in result.metrics:
+            return "Source assessment: missing required report (see failed metrics)"
+        return "Source assessment: N/A (unsupported backend)"
+    spec = query.source_inspection
+    quality = source.quality
+    lines = [
+        "Source assessment",
+        f"Slot: {spec.subject}.{spec.predicate}",
+        f"Tenant: {query.tenant_id}; storage subject: {query.subject_id}",
+        f"State: {source.state}; conflict: {source.conflict}",
+        f"Source independence: {source.independence}",
+        f"Decision history: {source.decision_history}",
+        f"Inventory complete: {source.inventory_complete}",
+        f"Evidence: {quality.returned}/{quality.referenced}; truncated: {quality.truncated}",
+        f"Exact revisions complete: {quality.revision_complete}",
+        f"Locators complete: {quality.locator_complete}",
+        f"Semantic relation coverage: {quality.relation_complete}",
+        f"Source event IDs: {', '.join(source.event_ids) or '(none)'}",
+        f"Reasons: {', '.join(source.reasons) or '(none)'}",
+        f"Pass diagnostics available: {source.decisions_available}",
+        f"Pass diagnostics truncated: {source.decisions_truncated}",
+    ]
+    for decision in source.decisions:
+        lines.append(
+            f"  {decision.operation}: {decision.outcome}; "
+            f"reasons={','.join(decision.reasons)}; events={','.join(decision.event_ids)}"
+        )
+    return "\n".join(lines)
+
+
 def format_query_inspection(
     query: BenchmarkQuery,
     query_result: QueryResult,
@@ -565,6 +601,9 @@ def format_query_inspection(
     inhibition_section = format_persistent_inhibition_section(query, query_result)
     if inhibition_section:
         sections.extend(["", inhibition_section])
+    source_section = format_source_assessment_section(query, query_result)
+    if source_section:
+        sections.extend(["", source_section])
     cogkura_competition_section = format_cogkura_competition_inspection_section(
         query_result.backend_metadata
     )
