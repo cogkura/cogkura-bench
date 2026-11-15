@@ -11,10 +11,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 import hashlib
+import importlib.metadata
 import json
 import os
 import random
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -119,6 +122,111 @@ def fingerprints(signature: dict[str, Any]) -> dict[str, Any]:
         "queries": {key: digest(value) for key, value in signature["queries"].items()},
         "uses": digest(signature["uses"]),
         "metrics": signature["metrics"],
+    }
+
+
+def validate_approval(
+    manifest: dict[str, Any], baseline_bytes: bytes, identity: dict[str, Any]
+) -> None:
+    """Fail closed before running an explicitly approved, exact candidate comparison."""
+    if (
+        set(manifest)
+        != {
+            "schema_version",
+            "candidate",
+            "baseline_sha256",
+            "approved_on",
+            "reason",
+            "corrections",
+        }
+        or manifest["schema_version"] != 1
+    ):
+        raise ValueError("unsupported reviewed-correction manifest")
+    candidate = manifest["candidate"]
+    if not isinstance(candidate, dict) or set(candidate) != {"version", "commit"}:
+        raise ValueError("candidate must name an exact version and Git commit")
+    if not re.fullmatch(r"[0-9a-f]{40}", str(candidate["commit"])):
+        raise ValueError("candidate commit must be a full Git commit")
+    if (
+        identity.get("version") != candidate["version"]
+        or identity.get("distribution_version") != candidate["version"]
+        or identity.get("commit") != candidate["commit"]
+        or identity.get("vcs") != "git"
+        or identity.get("url") != "https://github.com/cogkura/cogkura.git"
+        or identity.get("installed_module") is not True
+    ):
+        raise ValueError("installed Core version/Git distribution does not match approval")
+    if hashlib.sha256(baseline_bytes).hexdigest() != manifest["baseline_sha256"]:
+        raise ValueError("original frozen baseline digest does not match approval")
+    if not manifest["reason"] or not re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}", str(manifest["approved_on"])
+    ):
+        raise ValueError("approval requires a reason and date")
+    corrections = manifest["corrections"]
+    if not isinstance(corrections, list) or len(corrections) != 1:
+        raise ValueError("this review approves exactly one correction")
+    correction = corrections[0]
+    if not isinstance(correction, dict) or set(correction) != {"run", "query", "before", "after"}:
+        raise ValueError("correction must name a run, query and before/after hashes")
+    if not all(isinstance(correction[k], str) and correction[k] for k in correction):
+        raise ValueError("correction values must be nonempty strings")
+    if not all(re.fullmatch(r"[0-9a-f]{64}", correction[k]) for k in ("before", "after")):
+        raise ValueError("correction fingerprints must be SHA256 digests")
+    if correction["before"] == correction["after"]:
+        raise ValueError("correction must require a changed fingerprint")
+    baseline = json.loads(baseline_bytes)
+    old = baseline["runs"].get(correction["run"], {}).get("queries", {}).get(correction["query"])
+    if old != correction["before"]:
+        raise ValueError("approved before fingerprint is absent from original baseline")
+
+
+def compare_frozen(
+    runs: dict[str, Any], baseline: dict[str, Any], manifest: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Keep the raw comparison; account separately for the reviewed exact change.
+
+    The caller validates the manifest against the installed distribution and gold
+    bytes first. Only a matched query hash is accounted for; run metrics, uses,
+    populations and all other fields still participate in the exact comparison.
+    """
+    old_runs = baseline["runs"]
+    keys = sorted(runs.keys() | old_runs.keys())
+    raw = [k for k in keys if k not in runs or k not in old_runs or runs[k] != old_runs[k]]
+    accounted = copy.deepcopy(runs)
+    approved = []
+    errors = []
+    for correction in manifest["corrections"] if manifest else []:
+        key, query = correction["run"], correction["query"]
+        before = old_runs.get(key, {}).get("queries", {}).get(query)
+        after = runs.get(key, {}).get("queries", {}).get(query)
+        if before != correction["before"] or after != correction["after"]:
+            errors.append(f"expected reviewed correction missing or changed: {key}/{query}")
+            continue
+        approved.append(dict(correction))
+        accounted[key]["queries"][query] = before
+    unapproved = [
+        k for k in keys if k not in accounted or k not in old_runs or accounted[k] != old_runs[k]
+    ]
+    return {
+        "frozen_mismatches": raw,
+        "raw_frozen_comparison_passed": not raw,
+        "approved_frozen_corrections": approved,
+        "unapproved_frozen_mismatches": unapproved,
+        "approval_errors": errors,
+    }
+
+
+def core_identity(core: Any) -> dict[str, Any]:
+    distribution = importlib.metadata.distribution("cogkura")
+    direct = json.loads(distribution.read_text("direct_url.json") or "{}")
+    return {
+        "version": core.__version__,
+        "distribution_version": distribution.version,
+        "commit": direct.get("vcs_info", {}).get("commit_id"),
+        "vcs": direct.get("vcs_info", {}).get("vcs"),
+        "url": direct.get("url"),
+        "installed_module": Path(core.__file__).resolve().parent
+        == Path(distribution.locate_file("cogkura")).resolve(),
     }
 
 
@@ -244,7 +352,10 @@ async def main() -> int:
     parser.add_argument("--write-baseline", action="store_true")
     parser.add_argument("--diagnostics-parity", action="store_true")
     parser.add_argument("--postgres", action="store_true")
+    parser.add_argument("--approved-corrections", type=Path)
     args = parser.parse_args()
+    if args.write_baseline and args.approved_corrections:
+        parser.error("reviewed corrections cannot be used to write a baseline")
     if os.environ.get("PYTHONHASHSEED") != "0" or "cogkura" in sys.modules:
         parser.error("use a fresh process with PYTHONHASHSEED=0; Core must not be imported yet")
     rng = random.Random(183)
@@ -257,8 +368,17 @@ async def main() -> int:
 
     if args.write_baseline and cogkura.__version__ != "0.18.2":
         parser.error("the frozen baseline must be captured with unchanged Core 0.18.2")
+    identity = core_identity(cogkura)
+    manifest = None
+    if args.approved_corrections:
+        try:
+            manifest = json.loads(args.approved_corrections.read_text())
+            validate_approval(manifest, args.baseline.read_bytes(), identity)
+        except (ValueError, TypeError, KeyError, OSError) as exc:
+            parser.error(str(exc))
     output: dict[str, Any] = {
         "core_version": cogkura.__version__,
+        "core_distribution": identity,
         "seed": 183,
         "hash_seed": 0,
         "runs": {},
@@ -289,13 +409,14 @@ async def main() -> int:
     if args.write_baseline:
         args.baseline.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")
     baseline = json.loads(args.baseline.read_text())
-    output["frozen_mismatches"] = [
-        k for k in output["runs"] if output["runs"][k] != baseline["runs"].get(k)
-    ]
+    output.update(compare_frozen(output["runs"], baseline, manifest))
+    if args.approved_corrections:
+        output["reviewed_correction_manifest"] = manifest
     if args.postgres:
         output["postgres"] = await postgres_parity()
     output["release_gate_passed"] = (
-        not output["frozen_mismatches"]
+        not output["unapproved_frozen_mismatches"]
+        and not output["approval_errors"]
         and not output["diagnostic_mismatches"]
         and output.get("postgres", {}).get("status") == "PASS"
         and output.get("source_metrics", {}).get("source_assessment_accuracy") == 1
