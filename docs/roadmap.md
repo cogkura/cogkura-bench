@@ -101,7 +101,7 @@
 - [x] Exact Core 0.18.4 pin and explicit adapter version compatibility
 - [x] Supplemental deferred-readmission event/prose correctness check
 - [x] Full exact-pinned Python/PostgreSQL and CLI matrix, plus raw strict comparison and findings
-- [ ] Strict release acceptance, with the one intentional frozen correction separately approved
+- [x] Strict release acceptance, with the one intentional frozen correction separately approved and checked by exact version/commit/hash; original gold/raw failure retained
 
 ## Future
 

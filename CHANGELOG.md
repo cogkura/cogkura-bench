@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pin Core 0.18.4 `93cb7f6a6daae30333008600f3556e6af4f99b3d`; extend the explicit correction-profile version allowlist to that validated candidate.
 - Strengthen the existing correction integration gate to check that deferred readmission event/prose does not appear as current evidence.
-- Preserve original gold and the raw strict comparison. One expected `ac-q-c20` fingerprint change requires a separate explicit release decision; freeze acceptance is pending.
+- Preserve original gold and the raw strict comparison. Explicitly approved acceptance of only `ac-q-c20` requires an opt-in manifest with exact Core version/commit, gold digest and before/after hashes; additional drift or a reverted fix fails.
+- Full Python 3.11–3.13 gates pass with PostgreSQL: 317 tests per runtime, zero skips, plus all CI CLI steps. Independent strict acceptance passes with 392 unchanged signatures and one approved correction, all 419 paired outcomes, 191 source checks and 26 PostgreSQL reports.
 
 ## [0.3.11] - Validated candidate, unreleased
 

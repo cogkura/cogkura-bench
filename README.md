@@ -62,9 +62,11 @@ Tests apply Core migrations. Database benchmarks reset their fixture tenants;
 use a disposable database. Missing database configuration leaves parity unexecuted.
 
 The current 0.3.12 candidate validates Core 0.18.4. Its approved stale-readmission
-correction intentionally changes one previously frozen query. Freeze acceptance
-remains pending the [explicit deviation review](docs/review-0.18.4-withdrawn-readmission-deviation.md)
-and final [validation findings](docs/findings/source-provenance-freeze-0.3.12.md).
+correction intentionally changes one previously frozen query. The user approved
+that exact version/commit/hash exception; the full gate passes with 392 unchanged
+signatures plus that correction. Original gold and raw failed comparison remain
+intact. See the [explicit review](docs/review-0.18.4-withdrawn-readmission-deviation.md)
+and [validation findings](docs/findings/source-provenance-freeze-0.3.12.md).
 The [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the
 earlier passing Core 0.18.3 baseline. Publication remains a separate release step.
 

@@ -83,8 +83,25 @@ ordering fix, with all 393 frozen signatures unchanged. See its retained
 [findings](findings/source-aware-metamemory-0.3.11.md).
 
 **0.3.12 / Core 0.18.4 candidate:** the separately approved stale-readmission
-correction intentionally removes current prose at `ac-q-c20`. The unmodified raw
-comparison must report this fingerprint change. All other source/frozen/diagnostics
-comparisons are required to pass; an exact scoped exception requires separate
-approval. See the [review](review-0.18.4-withdrawn-readmission-deviation.md) and
+correction intentionally removes current prose at `ac-q-c20`. The raw comparison
+still reports this fingerprint change. The user separately approved the exact
+version/commit/before-and-after hashes in
+`tests/reviewed_corrections/cogkura_0184.json`. To run the approved candidate gate:
+
+```bash
+PYTHONHASHSEED=0 uv run python scripts/run_source_metamemory_validation.py \
+  --diagnostics-parity --postgres \
+  --approved-corrections tests/reviewed_corrections/cogkura_0184.json \
+  --output results/source-provenance-freeze-0.18.4-approved-validation.json
+```
+
+This requires the locked Git distribution and its own loaded module, the original
+gold digest and both fingerprints to match exactly. All other populations,
+metrics, uses and fingerprints remain exact comparisons. A missing or reverted
+fix also fails. The report retains `frozen_mismatches` and
+`raw_frozen_comparison_passed=false`, then lists the approved correction,
+unapproved differences and approval errors separately. Without the explicit
+argument the original mismatch fails. Baseline writing cannot be combined with
+approval; future versions/commits do not inherit this exception. See the
+[review](review-0.18.4-withdrawn-readmission-deviation.md) and
 [candidate findings](findings/source-provenance-freeze-0.3.12.md).

@@ -178,8 +178,8 @@ uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkur
 
 - Pin the exact Core 0.18.4 candidate; preserve all released fixture and frozen baseline files.
 - The approved Core stale-readmission correction intentionally removes `ac-c20-again` from `ac-q-c20` on the correction-enabled profile. Supplemental integration checks must verify both event identity and ordinary rendered prose.
-- The original strict frozen comparison remains authoritative until a separately reviewed version/commit/hash-scoped deviation decision is explicitly approved. Do not claim all 393 signatures are unchanged.
-- Retain raw failures and distinguish intended corrections from unapproved changes in findings. No acceptance exception is implied by the general freeze or retrieval-correction authorisation.
+- The user explicitly approved only the exact version/commit/before-and-after-hash exception in `tests/reviewed_corrections/cogkura_0184.json`. Supply it explicitly to the strict validator; do not extend it automatically to other candidates. Require 392 unchanged signatures plus the one approved correction.
+- Retain raw failures and distinguish the approved correction from unapproved changes in findings. Original gold remains unchanged; every additional difference and an absent/reverted fix must fail the gate.
 
 ## Transient interference v2 (0.3.7)
 

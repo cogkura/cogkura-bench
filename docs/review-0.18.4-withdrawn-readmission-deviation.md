@@ -1,7 +1,8 @@
 # Review: intentional 0.18.4 frozen-output correction
 
-**Status:** Awaiting explicit approval of this deviation and its version-scoped
-acceptance mechanism. The retrieval correction itself was approved separately.
+**Status:** Explicitly approved by the user on 15 November 2026: “Approve this one
+reviewed deviation and exact acceptance.” The retrieval correction was approved
+separately. The acceptance mechanism is implemented in Bench `ef967de`.
 **Core:** `93cb7f6` (`0.18.4`); comparison baseline Core `f62096a` (`0.18.3`).
 **Bench:** `fca1f90` (`0.3.11`) code with the unchanged strict validator/gold.
 **Date:** 15 November 2026.
@@ -61,14 +62,14 @@ detect that sentence. Add a supplemental public-API regression requiring that
 the deferred readmission event is absent from current recall/context; preserve
 the released fixture rather than retroactively weakening or rewriting it.
 
-## Proposed explicit acceptance
+## Approved explicit acceptance
 
 Keep `tests/golden/cogkura_0182_frozen.json` byte-for-byte unchanged and retain
 the raw failing comparison. Add a separate reviewed-correction manifest containing
 only the exact dataset/profile/query and before/after hashes above, the approved
 reason, baseline-file digest, candidate version **0.18.4** and exact Core commit.
 
-The validator would consume it only with an explicit `--approved-corrections`
+The validator consumes it only with an explicit `--approved-corrections`
 argument. Require the locked Git distribution's commit/version, original gold
 digest, old hash and new hash to match exactly. Reject any other query, metric,
 use, population or version difference; reject an absent/reverted expected fix.
@@ -85,6 +86,15 @@ Release acceptance may pass only with this explicit approval, no unapproved
 differences, successful source/diagnostics/PostgreSQL checks and the full required
 Core/Bench matrix. It must never describe all 393 fingerprints as unchanged.
 
+The manifest is `tests/reviewed_corrections/cogkura_0184.json`. Twenty-eight
+deterministic tests verify exact acceptance and rejection of wrong or unavailable
+Git metadata, version drift, modified gold, absent/reverted fixes, extra or missing
+populations, changed metrics/uses and malformed reviews. The loaded module must
+also belong to the installed distribution; a source-tree override cannot borrow
+its Git metadata to satisfy approval.
+
 This changes acceptance for one explicitly reviewed defect correction; it does
-not redefine the original comparison or alter released gold. Without approval,
-the freeze remains blocked and no exception will be implemented.
+not redefine the original comparison or alter released gold. Without the explicit
+manifest argument the original mismatch still fails. See the final
+[validation findings](findings/source-provenance-freeze-0.3.12.md) for the executed
+release gate and complete runtime matrix.
