@@ -357,8 +357,8 @@ wheels = [
 
 [[package]]
 name = "cogkura"
-version = "0.18.3"
-source = { git = "https://github.com/cogkura/cogkura.git?rev=4d3ba737cf372bf5e59ab183570b3370e896e7d3#4d3ba737cf372bf5e59ab183570b3370e896e7d3" }
+version = "0.18.4"
+source = { git = "https://github.com/cogkura/cogkura.git?rev=93cb7f6a6daae30333008600f3556e6af4f99b3d#93cb7f6a6daae30333008600f3556e6af4f99b3d" }
 
 [package.optional-dependencies]
 postgres = [
@@ -368,7 +368,7 @@ postgres = [
 
 [[package]]
 name = "cogkurabench"
-version = "0.3.11"
+version = "0.3.12"
 source = { editable = "." }
 
 [package.optional-dependencies]
@@ -391,8 +391,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cogkura", marker = "extra == 'cogkura'", git = "https://github.com/cogkura/cogkura.git?rev=4d3ba737cf372bf5e59ab183570b3370e896e7d3" },
-    { name = "cogkura", extras = ["postgres"], marker = "extra == 'postgres'", git = "https://github.com/cogkura/cogkura.git?rev=4d3ba737cf372bf5e59ab183570b3370e896e7d3" },
+    { name = "cogkura", marker = "extra == 'cogkura'", git = "https://github.com/cogkura/cogkura.git?rev=93cb7f6a6daae30333008600f3556e6af4f99b3d" },
+    { name = "cogkura", extras = ["postgres"], marker = "extra == 'postgres'", git = "https://github.com/cogkura/cogkura.git?rev=93cb7f6a6daae30333008600f3556e6af4f99b3d" },
 ]
 provides-extras = ["cogkura", "postgres"]
 

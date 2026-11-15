@@ -299,9 +299,14 @@ class CogKuraBackend:
 
         self._version = _installed_cogkura_version(cogkura)
         self._bench_version = cogkurabench.__version__
-        if self._corrections_enabled is not None and self._version not in {"0.18.2", "0.18.3"}:
+        if self._corrections_enabled is not None and self._version not in {
+            "0.18.2",
+            "0.18.3",
+            "0.18.4",
+        }:
             raise ValidationError(
-                f"correction profiles require CogKura 0.18.2 or 0.18.3, found {self._version}"
+                "correction profiles require CogKura 0.18.2, 0.18.3 or 0.18.4, "
+                f"found {self._version}"
             )
         if self._memory is not None:
             for tenant in sorted(self._tenants | {TENANT_ID}):

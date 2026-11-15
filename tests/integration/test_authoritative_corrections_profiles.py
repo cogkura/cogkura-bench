@@ -60,6 +60,12 @@ async def test_correction_profile_gate(backend_name: str) -> None:
         assert metrics["authoritative_correction_temporal_boundary_accuracy"] == 1.0
         assert metrics["authoritative_correction_conflict_deferral_accuracy"] == 1.0
         assert metrics["authoritative_correction_revision_provenance_accuracy"] == 1.0
+        readmission = next(q for q in result.query_results if q.query_id == "ac-q-c20")
+        assert "ac-c20-again" not in readmission.retrieved_event_ids
+        assert "ac-c20-withdraw" in readmission.retrieved_event_ids
+        rendered = readmission.backend_metadata["authoritative_correction"]["rendered"]
+        assert "migrations start with the application again" not in rendered
+        assert "migration strategy is withdrawn" in rendered
 
 
 @pytest.mark.skipif(not COGKURA_AVAILABLE, reason="cogkura extra not installed")
