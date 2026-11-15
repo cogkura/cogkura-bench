@@ -174,6 +174,13 @@ uv run cogkura-bench run --dataset authoritative_corrections_v1 --backend cogkur
 - [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the original failed gate and the passing rerun after the approved Core fix. Do not weaken gold or fetch beyond requested caps to conceal failures.
 - Source assessment is not a trust score, factual certainty or an automatic abstention policy.
 
+## Source provenance freeze validation (0.3.12 candidate)
+
+- Pin the exact Core 0.18.4 candidate; preserve all released fixture and frozen baseline files.
+- The approved Core stale-readmission correction intentionally removes `ac-c20-again` from `ac-q-c20` on the correction-enabled profile. Supplemental integration checks must verify both event identity and ordinary rendered prose.
+- The original strict frozen comparison remains authoritative until a separately reviewed version/commit/hash-scoped deviation decision is explicitly approved. Do not claim all 393 signatures are unchanged.
+- Retain raw failures and distinguish intended corrections from unapproved changes in findings. No acceptance exception is implied by the general freeze or retrieval-correction authorisation.
+
 ## Transient interference v2 (0.3.7)
 
 - `transient_interference_v1` is frozen. Do not edit it to match the current eligibility contract.

@@ -96,6 +96,13 @@
 - [x] Frozen per-case comparison and PostgreSQL execution
 - [x] Approve Core canonical source ordering and pass strict capped-evidence attribution parity without weakening gold
 
+## 0.3.12 candidate
+
+- [x] Exact Core 0.18.4 pin and explicit adapter version compatibility
+- [x] Supplemental deferred-readmission event/prose correctness check
+- [x] Full exact-pinned Python/PostgreSQL and CLI matrix, plus raw strict comparison and findings
+- [ ] Strict release acceptance, with the one intentional frozen correction separately approved
+
 ## Future
 
 - Vector/RAG baseline

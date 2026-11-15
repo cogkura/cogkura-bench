@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 0.3.12 source provenance freeze validation candidate
+
+- Pin Core 0.18.4 `93cb7f6a6daae30333008600f3556e6af4f99b3d`; extend the explicit correction-profile version allowlist to that validated candidate.
+- Strengthen the existing correction integration gate to check that deferred readmission event/prose does not appear as current evidence.
+- Preserve original gold and the raw strict comparison. One expected `ac-q-c20` fingerprint change requires a separate explicit release decision; freeze acceptance is pending.
+
+## [0.3.11] - Validated candidate, unreleased
+
 ### Added
 
 - 0.3.11 candidate: `source_aware_metamemory_v1` (23 events, 26 checkpoints), neutral source-assessment capability, explicit observable gold, and separate diagnostics-off/on profiles.

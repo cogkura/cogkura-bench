@@ -1,7 +1,8 @@
 # Source-aware metamemory validation (0.3.11 candidate)
 
-Core 0.18.3 is pinned to `4d3ba737cf372bf5e59ab183570b3370e896e7d3`,
-including the approved slot evidence ordering fix.
+Bench 0.3.12 now pins Core 0.18.4 `93cb7f6a6daae30333008600f3556e6af4f99b3d`.
+The preceding 0.3.11 validation pinned Core 0.18.3 `4d3ba73`, including the approved
+slot evidence ordering fix. The source-assessment contracts below are retained.
 The source fixture extends the existing action stream and scoring pipeline. It
 uses public Core APIs; it does not implement another memory or authority engine.
 
@@ -77,8 +78,13 @@ exact capped source selection between backends. Core regression tests also
 compare ordered namespace/record/revision prefixes under opposite UUID-derived
 stored sequences. The release validator retains its original stricter comparison.
 
-**Current result: the strict release validator passes after the Core fix.**
-All 26 PostgreSQL source reports agree, 393 frozen query signatures are unchanged,
-419 diagnostics-paired query outcomes match, and all 191 declared source checks
-pass. The original failed report is retained alongside the successful rerun.
-See [findings](findings/source-aware-metamemory-0.3.11.md).
+**0.3.11 / Core 0.18.3 result:** the strict validator passed after the canonical
+ordering fix, with all 393 frozen signatures unchanged. See its retained
+[findings](findings/source-aware-metamemory-0.3.11.md).
+
+**0.3.12 / Core 0.18.4 candidate:** the separately approved stale-readmission
+correction intentionally removes current prose at `ac-q-c20`. The unmodified raw
+comparison must report this fingerprint change. All other source/frozen/diagnostics
+comparisons are required to pass; an exact scoped exception requires separate
+approval. See the [review](review-0.18.4-withdrawn-readmission-deviation.md) and
+[candidate findings](findings/source-provenance-freeze-0.3.12.md).

@@ -49,7 +49,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.18.3,<0.19.0`.
+The CogKura extra pins `cogkura>=0.18.4,<0.19.0`.
 
 For PostgreSQL validation, install all extras and provide a disposable database:
 
@@ -61,12 +61,12 @@ export COGKURA_POSTGRES_MEMORY_URL=postgresql+asyncpg://postgres:postgres@localh
 Tests apply Core migrations. Database benchmarks reset their fixture tenants;
 use a disposable database. Missing database configuration leaves parity unexecuted.
 
-Core 0.18.3 testing is documented in [source-aware metamemory](docs/source-metamemory.md)
-and its [findings](docs/findings/source-aware-metamemory-0.3.11.md). The strict
-release validator now passes, including capped PostgreSQL attribution and unchanged
-frozen outputs, after the approved Core ordering fix. All required Python 3.11–3.13
-gates also pass with PostgreSQL and zero test skips. Publication remains a separate
-release step.
+The current 0.3.12 candidate validates Core 0.18.4. Its approved stale-readmission
+correction intentionally changes one previously frozen query. Freeze acceptance
+remains pending the [explicit deviation review](docs/review-0.18.4-withdrawn-readmission-deviation.md)
+and final [validation findings](docs/findings/source-provenance-freeze-0.3.12.md).
+The [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the
+earlier passing Core 0.18.3 baseline. Publication remains a separate release step.
 
 ## First run
 
