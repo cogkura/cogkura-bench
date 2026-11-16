@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Embedded Core validation
+
+- Pin the public Core 0.19.5 release commit and allow its correction profiles. Preserve the prior candidate reports and approvals; they do not approve results from the release commit.
+
 ### 0.3.12 source provenance freeze validation candidate
 
 - Pin Core 0.18.4 `93cb7f6a6daae30333008600f3556e6af4f99b3d`; extend the explicit correction-profile version allowlist to that validated candidate.

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "version": "0.19.5",
+    "commit": "13ad7336de1e8be4eba95fbd673ccb448c612d03"
+  },
+  "baseline_sha256": "927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0b902755827a1c",
+  "approved_on": "2026-11-16",
+  "reason": "Explicit user approval for the published Core 0.19.5 commit 13ad733 to retain the exact previously reviewed withdrawn-readmission correction; original gold and raw mismatch remain unchanged.",
+  "corrections": [
+    {
+      "run": "authoritative_corrections_v1/cogkura-correction",
+      "query": "ac-q-c20",
+      "before": "79f22e969d0389194e19d8ba49769e741c56b9589628961b2846115416b95e80",
+      "after": "9521ac1807af134198dbca0dc24e5a5268c77af40ec4a6efd8183192fe3e31fe"
+    }
+  ]
+}

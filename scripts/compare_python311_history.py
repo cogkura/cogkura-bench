@@ -15,6 +15,7 @@ from typing import Any
 
 HISTORICAL_COMMIT = "93cb7f6a6daae30333008600f3556e6af4f99b3d"
 CANDIDATE_COMMIT = "f289035351e3c101fd932f4d6d9e9cd56583ace0"
+RELEASE_COMMIT = "13ad7336de1e8be4eba95fbd673ccb448c612d03"
 HISTORICAL_SHA256 = "2c840aedcf9bd1b1515565dc324a0a7082630b4df621d8708437fb5b452e317f"
 APPROVED_CORRECTION = {
     "run": "authoritative_corrections_v1/cogkura-correction",
@@ -24,16 +25,23 @@ APPROVED_CORRECTION = {
 }
 
 
-def compare(historical: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
-    for report, commit in ((historical, HISTORICAL_COMMIT), (candidate, CANDIDATE_COMMIT)):
+def compare(
+    historical: dict[str, Any], candidate: dict[str, Any], *, public_release: bool = False
+) -> dict[str, Any]:
+    candidate_commit = RELEASE_COMMIT if public_release else CANDIDATE_COMMIT
+    candidate_version = "0.19.5" if public_release else "0.18.4"
+    for report, commit, version in (
+        (historical, HISTORICAL_COMMIT, "0.18.4"),
+        (candidate, candidate_commit, candidate_version),
+    ):
         identity = report["core_distribution"]
         if (
             identity.get("commit") != commit
             or identity.get("installed_module") is not True
             or identity.get("vcs") != "git"
             or identity.get("url") != "https://github.com/cogkura/cogkura.git"
-            or identity.get("version") != "0.18.4"
-            or identity.get("distribution_version") != "0.18.4"
+            or identity.get("version") != version
+            or identity.get("distribution_version") != version
         ):
             raise ValueError("historical or candidate Core identity does not match")
         if (
@@ -57,7 +65,7 @@ def compare(historical: dict[str, Any], candidate: dict[str, Any]) -> dict[str, 
     return {
         "python": "3.11",
         "historical_commit": HISTORICAL_COMMIT,
-        "candidate_commit": CANDIDATE_COMMIT,
+        "candidate_commit": candidate_commit,
         "historical_raw_frozen_passed": historical["raw_frozen_comparison_passed"],
         "candidate_raw_frozen_passed": candidate["raw_frozen_comparison_passed"],
         "historical_unapproved_frozen_mismatches": historical["unapproved_frozen_mismatches"],
@@ -75,6 +83,11 @@ def main() -> int:
     parser.add_argument("--historical", type=Path, required=True)
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--public-release",
+        action="store_true",
+        help="compare the separately approved Core 0.19.5 release",
+    )
     args = parser.parse_args()
     if sys.version_info[:2] != (3, 11):
         parser.error("this historical comparison is specific to Python 3.11")
@@ -82,7 +95,11 @@ def main() -> int:
         historical_bytes = args.historical.read_bytes()
         if hashlib.sha256(historical_bytes).hexdigest() != HISTORICAL_SHA256:
             raise ValueError("historical report digest changed")
-        result = compare(json.loads(historical_bytes), json.loads(args.candidate.read_text()))
+        result = compare(
+            json.loads(historical_bytes),
+            json.loads(args.candidate.read_text()),
+            public_release=args.public_release,
+        )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.error(str(exc))
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")

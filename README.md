@@ -49,9 +49,9 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra requires `cogkura>=0.18.4,<0.19.0`. The development lock
-selects the embedded Core candidate at Git commit `f289035`; its package metadata
-still reports `0.18.4` until Core's separate release process. Embedded validation
+The CogKura extra requires `cogkura>=0.19.5,<0.20.0`. The development lock
+selects the released Core 0.19.5 commit `13ad733`. Candidate-specific approvals
+for `f289035` do not apply to this release commit. Embedded validation
 requires a Python build linked to a SQLite version accepted by Core; see the
 [validation guide](docs/embedded-validation-0.19.5.md).
 
@@ -75,8 +75,10 @@ The [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain th
 earlier passing Core 0.18.3 baseline. Publication remains a separate release step.
 
 The [embedded validation guide](docs/embedded-validation-0.19.5.md) and
-[findings](docs/findings/embedded-core-0.19.5.md) describe the current candidate,
+[findings](docs/findings/embedded-core-0.19.5.md) describe the previously validated candidate,
 the three-backend comparisons, and the preserved Python 3.11 frozen-gold differences.
+The [public release findings](docs/findings/embedded-core-0.19.5-public-release.md)
+separately document Core 0.19.5 release-specific results and approvals.
 
 ## First run
 

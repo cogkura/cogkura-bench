@@ -51,3 +51,18 @@ def test_same_runtime_comparison_requires_the_exact_approved_correction() -> Non
     candidate["approved_frozen_corrections"] = []
     with pytest.raises(ValueError, match="approved correction"):
         module.compare(historical, candidate)
+
+
+def test_public_release_comparison_requires_explicit_release_identity() -> None:
+    historical, candidate = reports()
+    candidate["core_distribution"].update(
+        commit=module.RELEASE_COMMIT, version="0.19.5", distribution_version="0.19.5"
+    )
+    assert module.compare(historical, candidate, public_release=True)[
+        "same_runtime_comparison_passed"
+    ]
+    with pytest.raises(ValueError, match="identity"):
+        module.compare(historical, candidate)
+    candidate["core_distribution"]["version"] = "0.19.6"
+    with pytest.raises(ValueError, match="identity"):
+        module.compare(historical, candidate, public_release=True)
