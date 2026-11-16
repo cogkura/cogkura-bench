@@ -1,6 +1,6 @@
-# Proposed exact Linux frozen-result review for Core 0.19.5
+# Exact Linux frozen-result review for Core 0.19.5
 
-Status: **proposed; not approved**. This concerns only published Core `0.19.5` commit `13ad7336de1e8be4eba95fbd673ccb448c612d03` and original gold SHA256 `927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0`. It does not apply to a 0.19.6 candidate.
+Status: **approved by the user on 16 November 2026**, for the exact public release candidate and listed Linux CPython patch versions only. This concerns only published Core `0.19.5` commit `13ad7336de1e8be4eba95fbd673ccb448c612d03` and original gold SHA256 `927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0`. It does not apply to a 0.19.6 candidate.
 
 The [proposed exact values](proposed-0195-linux-exact-differences.json) enumerate every difference from the unchanged gold other than the already separately approved `ac-q-c20` correction. Linux CPython 3.11.18 has 14 differing query fingerprints and 61 differing numeric metric fields. Each listed CPython 3.12.16, 3.13.18, 3.14.10 and 3.15.2 run has five differing query fingerprints. Across all five versions, two independent hosted runs produced identical complete run signatures. A separate same-environment Linux 3.12 run showed that the earlier Core `93cb7f6` and the public release have identical full query details, uses and metrics.
 
@@ -8,4 +8,4 @@ Captured full signatures establish that the 14 Linux Python 3.11 query differenc
 
 `scripts/review_frozen_exact_differences.py` is a proposed fail-closed reviewer. It requires exact Git-installed candidate identity, baseline digest, Linux platform, exact CPython patch version, matching separately approved correction, passing diagnostics and PostgreSQL/source checks, and every exact before/after field value in the list. It does not change original gold or the raw report, ignore objects, or apply a tolerance. A different candidate, patch version, missing or extra field, changed expected value, missing difference, or any additional change fails. The accompanying tests verify acceptance of only exact listed differences and rejection of identity, version and extra drift.
 
-This proposal remains unusable while `approved_on` is null. An explicit user decision is required before moving it to reviewed corrections or applying it in CI. Whether approved or declined, 0.19.6 requires a separate candidate-specific review.
+The original proposed file remains unchanged with `approved_on` null. The separately [approved manifest](../tests/reviewed_corrections/cogkura_0195_13ad733_linux_exact.json) is used only for the exact public release candidate and enumerated environments. A 0.19.6 candidate requires a separate candidate-specific review.

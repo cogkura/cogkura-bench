@@ -1,0 +1,11 @@
+{
+  "candidate": {
+    "commit": "13ad7336de1e8be4eba95fbd673ccb448c612d03",
+    "version": "0.19.5"
+  },
+  "exact_approved_field_count": 5,
+  "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43",
+  "python": "3.14.10",
+  "raw_frozen_comparison_passed": false,
+  "reviewed_comparison_passed": true
+}

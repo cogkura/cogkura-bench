@@ -26,3 +26,5 @@ uv run python scripts/compare_frozen_query_details.py \
   --actual-details docs/findings/data/embedded-core-0.19.5-macos311-details.json.gz \
   --output results/python311-query-details.json
 ```
+
+On 16 November 2026 the user approved the exact enumerated Linux CPython 3.11.18 outputs for public Core `13ad733`; see the [release findings](embedded-core-0.19.5-public-release.md). The original raw comparison remains failing. That approval is limited to the exact values and environment and does not approve a future 0.19.6 candidate or a general floating-point tolerance.

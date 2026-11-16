@@ -202,18 +202,6 @@ jobs:
         run: uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend cogkura-source --quiet
 
       - name: Validate frozen public Core release
-        if: matrix.python-version != '3.11'
-        env:
-          PYTHONHASHSEED: "0"
-        run: >-
-          uv run python scripts/run_source_metamemory_validation.py
-          --diagnostics-parity --postgres
-          --approved-corrections tests/reviewed_corrections/cogkura_0195_13ad733.json
-          --details-output results/embedded-frozen-details.json
-          --output results/embedded-frozen-validation.json
-
-      - name: Compare Python 3.11 with historical Core
-        if: matrix.python-version == '3.11'
         env:
           PYTHONHASHSEED: "0"
         run: |
@@ -222,13 +210,13 @@ jobs:
             --diagnostics-parity --postgres \
             --approved-corrections tests/reviewed_corrections/cogkura_0195_13ad733.json \
             --details-output results/embedded-frozen-details.json \
-            --output results/embedded-frozen-python311-raw.json || status=$?
+            --output results/embedded-frozen-validation.json || status=$?
           if [ "$status" -gt 1 ]; then exit "$status"; fi
-          if [ "$status" -eq 1 ]; then echo '::warning::Python 3.11 frozen differences remain unapproved; see raw artifact'; fi
-          uv run python scripts/compare_python311_history.py \
-            --historical docs/findings/data/embedded-core-0.18.4-frozen-311-historical.json \
-            --candidate results/embedded-frozen-python311-raw.json \
-            --public-release --output results/embedded-frozen-python311-paired.json
+          uv run python scripts/review_frozen_exact_differences.py \
+            --gold tests/golden/cogkura_0182_frozen.json \
+            --report results/embedded-frozen-validation.json \
+            --approval tests/reviewed_corrections/cogkura_0195_13ad733_linux_exact.json \
+            --output results/embedded-frozen-exact-reviewed.json
 
       - name: Create isolated backend comparison database
         if: ${{ !cancelled() }}
@@ -259,6 +247,7 @@ jobs:
           path: |
             results/embedded-frozen-details.json
             results/embedded-frozen-validation.json
+            results/embedded-frozen-exact-reviewed.json
             results/embedded-frozen-python311-raw.json
             results/embedded-frozen-python311-paired.json
             results/embedded-threeway-raw.json

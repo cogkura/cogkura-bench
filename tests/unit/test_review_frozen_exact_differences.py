@@ -62,3 +62,31 @@ def test_unapproved_drift_and_environment_fail_closed() -> None:
     report["python"] = "3.12.17 test"
     with pytest.raises(ValueError, match="outside the approved"):
         module.review(gold, report, approval)
+
+
+@pytest.mark.parametrize(
+    ("minor", "patch"),
+    [
+        ("311", "3.11.18"),
+        ("312", "3.12.16"),
+        ("313", "3.13.18"),
+        ("314", "3.14.10"),
+        ("315", "3.15.2"),
+    ],
+)
+def test_approved_manifest_matches_recorded_linux_reports(minor: str, patch: str) -> None:
+    gold = (ROOT / "tests/golden/cogkura_0182_frozen.json").read_bytes()
+    report = json.loads(
+        (ROOT / f"docs/findings/data/embedded-core-0.19.5-linux-{minor}-frozen.json").read_text()
+    )
+    # These retained reports predate runtime metadata recording; the CI rerun
+    # independently supplies actual runtime metadata to the reviewer.
+    report["python"] = patch + " archived report"
+    report["platform"] = "Linux-archived"
+    manifest = json.loads(
+        (ROOT / "tests/reviewed_corrections/cogkura_0195_13ad733_linux_exact.json").read_text()
+    )
+    result = module.review(gold, report, manifest)
+    assert result["raw_frozen_comparison_passed"] is False
+    assert result["reviewed_comparison_passed"] is True
+    assert result["exact_approved_field_count"] == (75 if minor == "311" else 5)

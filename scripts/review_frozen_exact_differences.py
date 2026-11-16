@@ -88,7 +88,7 @@ def review(gold_bytes: bytes, report: dict[str, Any], approval: dict[str, Any]) 
                 {"run": run, "field": path, "before": before[path], "after": after[path]}
             )
     expected = approval["environments"][version]
-    if observed != expected:
+    if json.dumps(observed, sort_keys=True) != json.dumps(expected, sort_keys=True):
         raise ValueError("one or more exact approved field differences changed")
     return {
         "candidate": candidate,
