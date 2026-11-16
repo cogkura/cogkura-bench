@@ -1,0 +1,120 @@
+{
+  "core_commit": "13ad7336de1e8be4eba95fbd673ccb448c612d03",
+  "linux": "hosted CPython 3.13 Linux",
+  "macos": "CPython 3.12.16 macOS x86_64",
+  "note": "Diagnostic comparison across different runtimes and OS; no difference is approved.",
+  "queries": [
+    {
+      "fields": [
+        {
+          "delta": 4.440892098500626e-16,
+          "field": ".persistent_inhibition_observations[0].activation_after",
+          "linux_313": -3.4212321813655637,
+          "macos_312": -3.4212321813655633
+        },
+        {
+          "delta": 1.3877787807814457e-17,
+          "field": ".persistent_inhibition_observations[0].contributions[0].remaining_strength",
+          "linux_313": 0.08094893468411975,
+          "macos_312": 0.08094893468411973
+        },
+        {
+          "delta": 1.1102230246251565e-16,
+          "field": ".persistent_inhibition_observations[0].inhibition_pressure",
+          "linux_313": 0.21843989331455405,
+          "macos_312": 0.21843989331455393
+        },
+        {
+          "delta": 2.7755575615628914e-17,
+          "field": ".persistent_inhibition_observations[0].penalty",
+          "linux_313": -0.05460997332863851,
+          "macos_312": -0.054609973328638484
+        },
+        {
+          "delta": 4.440892098500626e-16,
+          "field": ".retrieved_items[1].activation.activation",
+          "linux_313": -3.4212321813655637,
+          "macos_312": -3.4212321813655633
+        },
+        {
+          "delta": 4.440892098500626e-16,
+          "field": ".retrieved_items[1].activation.activation_total",
+          "linux_313": -3.4212321813655637,
+          "macos_312": -3.4212321813655633
+        },
+        {
+          "delta": 4.440892098500626e-16,
+          "field": ".retrieved_items[1].activation.rank_activation",
+          "linux_313": -2.971449830052791,
+          "macos_312": -2.9714498300527907
+        },
+        {
+          "delta": 1.1102230246251565e-16,
+          "field": ".retrieved_items[1].score",
+          "linux_313": 0.396221937585634,
+          "macos_312": 0.3962219375856341
+        }
+      ],
+      "linux_fingerprint": "00f7982c4044810226c4bc63a21bce83e80219b3ed5cb018db0ee2e1b5cb0ff7",
+      "macos_fingerprint": "80b0a02bdef0ef7c4506d120d39edf2b2fc133ae0a3743d12b5f7ef0d66d1cdc",
+      "query": "cu-colour-later",
+      "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+    },
+    {
+      "fields": [
+        {
+          "delta": 1.3877787807814457e-17,
+          "field": ".persistent_inhibition_observations[0].contributions[0].remaining_strength",
+          "linux_313": 0.07647846795337343,
+          "macos_312": 0.07647846795337342
+        }
+      ],
+      "linux_fingerprint": "24e3b36d79c1b9e6d185e76a52096c54f13f883b21fd96820f0d8f79e0f77ef8",
+      "macos_fingerprint": "04f2510a163a140dba5d1d0a6509f5ed03f26f11f254b31487108f48dc335c0a",
+      "query": "sw-deploy-later",
+      "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+    },
+    {
+      "fields": [
+        {
+          "delta": 1.3877787807814457e-17,
+          "field": ".persistent_inhibition_observations[0].contributions[0].remaining_strength",
+          "linux_313": 0.07910952344010172,
+          "macos_312": 0.0791095234401017
+        }
+      ],
+      "linux_fingerprint": "3962995598e553785ab9f4fc4ca17091257f2b84d659eb83600713f0b3d6ae51",
+      "macos_fingerprint": "d09fd382727875080e7add6d024311e8b30842e9907c4d5656dbca918217e12c",
+      "query": "pi-later",
+      "run": "persistent_inhibition_v1/cogkura-inhibition"
+    },
+    {
+      "fields": [
+        {
+          "delta": 2.7755575615628914e-17,
+          "field": ".retrieved_items[5].score",
+          "linux_313": 0.13269741139798072,
+          "macos_312": 0.13269741139798075
+        }
+      ],
+      "linux_fingerprint": "c855ed7aafafc0c937bd66b15b47bb8a94eceef3aa2ad1673e7ac9b3deae51e0",
+      "macos_fingerprint": "97142cc7b2549977e0419af5cb3db599ae0b45715ee2f49547e43463e1af2678",
+      "query": "ti2-pair",
+      "run": "transient_interference_v2/cogkura"
+    },
+    {
+      "fields": [
+        {
+          "delta": 2.7755575615628914e-17,
+          "field": ".retrieved_items[5].score",
+          "linux_313": 0.13269741139798072,
+          "macos_312": 0.13269741139798075
+        }
+      ],
+      "linux_fingerprint": "c2e23000df1c08dcbde4cb9a1809fcc97329c9bc7f9152386cd9e10a05448826",
+      "macos_fingerprint": "75015514cecc872211cc1f6116b3b21e62b41cec14702e6f123fe163d05e2d95",
+      "query": "ti2-pair",
+      "run": "transient_interference_v2/cogkura-interference"
+    }
+  ]
+}
