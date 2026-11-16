@@ -36,6 +36,7 @@ def test_proposal_needs_approval_and_exact_identity() -> None:
     with pytest.raises(ValueError, match="dated approval"):
         module.review(gold, report, approval)
     approval["approved_on"] = "2026-11-16"
+    approval["reason"] = "Test-only explicit approval"
     assert module.review(gold, report, approval)["reviewed_comparison_passed"]
     for field, value in (("commit", "wrong"), ("version", "0.19.6"), ("installed_module", False)):
         changed = copy.deepcopy(report)
@@ -47,6 +48,7 @@ def test_proposal_needs_approval_and_exact_identity() -> None:
 def test_unapproved_drift_and_environment_fail_closed() -> None:
     gold, report, approval = fixture()
     approval["approved_on"] = "2026-11-16"
+    approval["reason"] = "Test-only explicit approval"
     changed = copy.deepcopy(report)
     changed["runs"]["mini/cogkura"]["queries"]["extra"] = "wrong"
     with pytest.raises(ValueError, match="field population"):

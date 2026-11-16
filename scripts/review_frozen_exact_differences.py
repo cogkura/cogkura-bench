@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,12 @@ def flatten(value: Any, prefix: str = "") -> dict[str, Any]:
 
 
 def review(gold_bytes: bytes, report: dict[str, Any], approval: dict[str, Any]) -> dict[str, Any]:
-    if approval.get("schema_version") != 1 or not approval.get("approved_on"):
+    if (
+        approval.get("schema_version") != 1
+        or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(approval.get("approved_on", "")))
+        or not approval.get("reason")
+        or str(approval["reason"]).startswith("PROPOSED")
+    ):
         raise ValueError("an explicit dated approval is required")
     identity = report["core_distribution"]
     candidate = approval["candidate"]
