@@ -264,3 +264,45 @@ jobs:
             results/embedded-threeway-raw.json
             results/embedded-threeway-reviewed.json
           if-no-files-found: warn
+
+  linux-historical-diagnostics:
+    name: Linux same-environment historical diagnostic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install Bench with public Core 0.19.5
+        run: uv sync --all-extras --dev --locked --python 3.12 --managed-python
+      - name: Capture public Core signatures
+        env:
+          PYTHONHASHSEED: "0"
+        run: |
+          status=0
+          .venv/bin/python scripts/run_source_metamemory_validation.py \
+            --details-output results/linux-release-details.json \
+            --output results/linux-release-frozen.json || status=$?
+          if [ "$status" -gt 1 ] || [ ! -s results/linux-release-details.json ]; then exit 1; fi
+      - name: Install historical Core in the same environment
+        run: >-
+          uv pip install --python .venv/bin/python --no-deps
+          'git+https://github.com/cogkura/cogkura.git@93cb7f6a6daae30333008600f3556e6af4f99b3d'
+      - name: Capture historical Core signatures
+        env:
+          PYTHONHASHSEED: "0"
+        run: |
+          status=0
+          .venv/bin/python scripts/run_source_metamemory_validation.py \
+            --details-output results/linux-historical-details.json \
+            --output results/linux-historical-frozen.json || status=$?
+          if [ "$status" -gt 1 ] || [ ! -s results/linux-historical-details.json ]; then exit 1; fi
+      - name: Preserve unreviewed diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-historical-comparison
+          path: |
+            results/linux-release-details.json
+            results/linux-release-frozen.json
+            results/linux-historical-details.json
+            results/linux-historical-frozen.json
+          if-no-files-found: warn
