@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "core_commit": "13ad7336de1e8be4eba95fbd673ccb448c612d03",
   "approved_on": "2026-11-16",
   "reason": "Explicit user approval for the exact supporting-event ordering differences on SQLite, reopened SQLite and PostgreSQL for published Core 0.19.5 commit 13ad733; raw comparison remains intact.",
@@ -33,5 +33,6 @@
       "sqlite_reopen": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f",
       "postgres": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f"
     }
-  ]
+  ],
+  "core_version": "0.19.5"
 }

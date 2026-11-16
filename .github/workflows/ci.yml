@@ -209,6 +209,7 @@ jobs:
           uv run python scripts/run_source_metamemory_validation.py
           --diagnostics-parity --postgres
           --approved-corrections tests/reviewed_corrections/cogkura_0195_13ad733.json
+          --details-output results/embedded-frozen-details.json
           --output results/embedded-frozen-validation.json
 
       - name: Compare Python 3.11 with historical Core
@@ -220,6 +221,7 @@ jobs:
           uv run python scripts/run_source_metamemory_validation.py \
             --diagnostics-parity --postgres \
             --approved-corrections tests/reviewed_corrections/cogkura_0195_13ad733.json \
+            --details-output results/embedded-frozen-details.json \
             --output results/embedded-frozen-python311-raw.json || status=$?
           if [ "$status" -gt 1 ]; then exit "$status"; fi
           if [ "$status" -eq 1 ]; then echo '::warning::Python 3.11 frozen differences remain unapproved; see raw artifact'; fi
@@ -229,11 +231,13 @@ jobs:
             --public-release --output results/embedded-frozen-python311-paired.json
 
       - name: Create isolated backend comparison database
+        if: ${{ !cancelled() }}
         env:
           PGPASSWORD: postgres
         run: createdb -h localhost -U postgres cogkura_bench_threeway
 
       - name: Compare embedded storage backends
+        if: ${{ !cancelled() }}
         env:
           PYTHONHASHSEED: "0"
         run: |
@@ -253,6 +257,7 @@ jobs:
         with:
           name: benchmark-validation-python-${{ matrix.python-version }}
           path: |
+            results/embedded-frozen-details.json
             results/embedded-frozen-validation.json
             results/embedded-frozen-python311-raw.json
             results/embedded-frozen-python311-paired.json

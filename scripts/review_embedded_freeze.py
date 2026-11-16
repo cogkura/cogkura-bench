@@ -22,10 +22,22 @@ EXPECTED_MODES = ("sqlite", "sqlite_reopen")
 def review(report: dict[str, Any], approval: dict[str, Any]) -> dict[str, Any]:
     if report.get("core_source_dirty"):
         raise ValueError("a dirty source run cannot use a candidate approval")
-    if approval.get("schema_version") != 1 or report.get("core_commit") != approval.get(
-        "core_commit"
-    ):
+    schema = approval.get("schema_version")
+    if schema not in (1, 2) or report.get("core_commit") != approval.get("core_commit"):
         raise ValueError("approval does not identify this exact candidate")
+    if schema == 2:
+        identity = report.get("core_distribution", {})
+        if (
+            not approval.get("core_version")
+            or report.get("core_version") != approval["core_version"]
+            or identity.get("version") != approval["core_version"]
+            or identity.get("distribution_version") != approval["core_version"]
+            or identity.get("commit") != approval["core_commit"]
+            or identity.get("vcs") != "git"
+            or identity.get("url") != "https://github.com/cogkura/cogkura.git"
+            or identity.get("installed_module") is not True
+        ):
+            raise ValueError("installed Core version/Git identity does not match approval")
     modes = tuple(approval.get("modes", EXPECTED_MODES))
     if modes not in (EXPECTED_MODES, (*EXPECTED_MODES, "postgres")):
         raise ValueError("approval names an unsupported set of backend modes")

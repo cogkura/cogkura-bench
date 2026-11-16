@@ -16,8 +16,10 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import platform
 import random
 import re
+import sqlite3
 import sys
 import uuid
 from pathlib import Path
@@ -349,6 +351,9 @@ async def main() -> int:
         "--baseline", type=Path, default=Path("tests/golden/cogkura_0182_frozen.json")
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--details-output", type=Path, help="write full query signatures separately"
+    )
     parser.add_argument("--write-baseline", action="store_true")
     parser.add_argument("--diagnostics-parity", action="store_true")
     parser.add_argument("--postgres", action="store_true")
@@ -379,17 +384,24 @@ async def main() -> int:
     output: dict[str, Any] = {
         "core_version": cogkura.__version__,
         "core_distribution": identity,
+        "python": sys.version,
+        "platform": platform.platform(),
+        "sqlite_version": sqlite3.sqlite_version,
         "seed": 183,
         "hash_seed": 0,
         "runs": {},
         "diagnostic_mismatches": [],
     }
+    details: dict[str, Any] = {}
     for dataset, profile in RUNS:
         state = rng.getstate()
         reference = await run(dataset, profile)
         after = rng.getstate()
         key = dataset + "/" + profile
-        output["runs"][key] = fingerprints(run_signature(reference))
+        signature = run_signature(reference)
+        output["runs"][key] = fingerprints(signature)
+        if args.details_output:
+            details[key] = signature
         if args.diagnostics_parity:
             rng.setstate(state)
             observed = await run(dataset, profile, diagnostics=True)
@@ -398,6 +410,9 @@ async def main() -> int:
             if rng.getstate() != after:
                 output["diagnostic_mismatches"].append(key + "/storage-allocation")
         print(key, len(reference["query_results"]), flush=True)
+    if args.details_output:
+        args.details_output.parent.mkdir(parents=True, exist_ok=True)
+        args.details_output.write_text(json.dumps(details, indent=2, sort_keys=True) + "\n")
     if args.diagnostics_parity:
         rng.seed(183)
         control = await run("source_aware_metamemory_v1", "cogkura-source-control")

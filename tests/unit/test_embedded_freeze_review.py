@@ -92,3 +92,23 @@ def test_review_checks_postgres_only_when_explicitly_in_approval() -> None:
     assert "mini/postgres_repeat" in module.review(report, approval)["unapproved_mismatches"]
     report["cases"]["mini"]["postgres"]["uses"] = "changed"
     assert "mini/postgres" in module.review(report, approval)["unapproved_mismatches"]
+
+
+def test_version_scoped_approval_requires_exact_installed_git_identity() -> None:
+    report, approval = inputs()
+    approval.update(schema_version=2, core_version="0.19.5")
+    report.update(
+        core_version="0.19.5",
+        core_distribution={
+            "version": "0.19.5",
+            "distribution_version": "0.19.5",
+            "commit": "candidate",
+            "vcs": "git",
+            "url": "https://github.com/cogkura/cogkura.git",
+            "installed_module": True,
+        },
+    )
+    assert module.review(report, approval)["reviewed_comparison_passed"]
+    report["core_distribution"]["installed_module"] = False
+    with pytest.raises(ValueError, match="identity"):
+        module.review(report, approval)
