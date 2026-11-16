@@ -1,6 +1,8 @@
 # Source-aware metamemory validation (0.3.11 candidate)
 
-Bench 0.3.12 now pins Core 0.18.4 `93cb7f6a6daae30333008600f3556e6af4f99b3d`.
+Bench 0.3.12 validated Core 0.18.4 `93cb7f6a6daae30333008600f3556e6af4f99b3d`.
+The current development lock and candidate-specific approvals are described in the
+[embedded validation guide](embedded-validation-0.19.5.md).
 The preceding 0.3.11 validation pinned Core 0.18.3 `4d3ba73`, including the approved
 slot evidence ordering fix. The source-assessment contracts below are retained.
 The source fixture extends the existing action stream and scoring pipeline. It
@@ -95,7 +97,8 @@ PYTHONHASHSEED=0 uv run python scripts/run_source_metamemory_validation.py \
   --output results/source-provenance-freeze-0.18.4-approved-validation.json
 ```
 
-This requires the locked Git distribution and its own loaded module, the original
+This historical command requires the exact `93cb7f6` Git distribution and its own
+loaded module; the current development lock selects a different candidate. It also requires the original
 gold digest and both fingerprints to match exactly. All other populations,
 metrics, uses and fingerprints remain exact comparisons. A missing or reverted
 fix also fails. The report retains `frozen_mismatches` and

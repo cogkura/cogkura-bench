@@ -49,7 +49,11 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra pins `cogkura>=0.18.4,<0.19.0`.
+The CogKura extra requires `cogkura>=0.18.4,<0.19.0`. The development lock
+selects the embedded Core candidate at Git commit `f289035`; its package metadata
+still reports `0.18.4` until Core's separate release process. Embedded validation
+requires a Python build linked to a SQLite version accepted by Core; see the
+[validation guide](docs/embedded-validation-0.19.5.md).
 
 For PostgreSQL validation, install all extras and provide a disposable database:
 
@@ -61,7 +65,7 @@ export COGKURA_POSTGRES_MEMORY_URL=postgresql+asyncpg://postgres:postgres@localh
 Tests apply Core migrations. Database benchmarks reset their fixture tenants;
 use a disposable database. Missing database configuration leaves parity unexecuted.
 
-The current 0.3.12 candidate validates Core 0.18.4. Its approved stale-readmission
+The earlier 0.3.12 candidate validated Core 0.18.4. Its approved stale-readmission
 correction intentionally changes one previously frozen query. The user approved
 that exact version/commit/hash exception; the full gate passes with 392 unchanged
 signatures plus that correction. Original gold and raw failed comparison remain
@@ -69,6 +73,10 @@ intact. See the [explicit review](docs/review-0.18.4-withdrawn-readmission-devia
 and [validation findings](docs/findings/source-provenance-freeze-0.3.12.md).
 The [0.3.11 findings](docs/findings/source-aware-metamemory-0.3.11.md) retain the
 earlier passing Core 0.18.3 baseline. Publication remains a separate release step.
+
+The [embedded validation guide](docs/embedded-validation-0.19.5.md) and
+[findings](docs/findings/embedded-core-0.19.5.md) describe the current candidate,
+the three-backend comparisons, and the preserved Python 3.11 frozen-gold differences.
 
 ## First run
 

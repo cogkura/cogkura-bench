@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "core_commit": "fa9c993d82fd2dda74a9b18f2b80c3b857a26fc7",
+  "approved_on": "2026-11-15",
+  "reason": "User explicitly accepted these three documented supporting-event ordering differences for this exact Core candidate; all raw comparisons remain intact.",
+  "differences": [
+    {
+      "dataset": "authoritative_corrections_v1",
+      "query": "ac-q-c03",
+      "memory": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+      "sqlite": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+      "sqlite_reopen": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a"
+    },
+    {
+      "dataset": "source_aware_metamemory_v1",
+      "query": "sm-contested",
+      "memory": "7f976eddd0553b427da953fb82adc574d575c2643789ea40b93ecc299acc56b1",
+      "sqlite": "4328959df6d245166ef79f6829d9326a2dafaa84a9d125218b011b89ed33e92d",
+      "sqlite_reopen": "4328959df6d245166ef79f6829d9326a2dafaa84a9d125218b011b89ed33e92d"
+    },
+    {
+      "dataset": "source_aware_metamemory_v1",
+      "query": "sm-evidence-cap",
+      "memory": "72ff95dfde7f15c1b12ebb8ce20c828f837d54bd69157df09324202c0fa6eb17",
+      "sqlite": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f",
+      "sqlite_reopen": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f"
+    }
+  ]
+}

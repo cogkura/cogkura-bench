@@ -103,6 +103,14 @@
 - [x] Full exact-pinned Python/PostgreSQL and CLI matrix, plus raw strict comparison and findings
 - [x] Strict release acceptance, with the one intentional frozen correction separately approved and checked by exact version/commit/hash; original gold/raw failure retained
 
+## Embedded Core candidate validation
+
+- [x] Pin the exact Core `f289035` Git candidate and retain the existing datasets and frozen gold.
+- [x] Compare in-memory, SQLite, reopened SQLite and PostgreSQL on representative stateful workloads, with exact candidate-specific approvals.
+- [x] Verify repeated PostgreSQL use and record the original raw failures alongside reviewed outcomes.
+- [x] Preserve Python 3.11's original frozen-gold mismatches and compare the candidate with the historical Core run under the same runtime.
+- [Findings](findings/embedded-core-0.19.5.md) and [validation guide](embedded-validation-0.19.5.md). This is development validation; release versioning and publication remain separate.
+
 ## Future
 
 - Vector/RAG baseline
