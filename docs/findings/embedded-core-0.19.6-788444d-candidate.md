@@ -10,6 +10,12 @@ The [raw report](data/embedded-core-0.19.6-788444d-macos312-frozen.json.gz) and 
 
 The [raw detailed report](data/embedded-core-0.19.6-788444d-macos312-threeway.json.gz) compares in-memory, SQLite, reopened SQLite and PostgreSQL. Mini and persistent-inhibition comparisons match; the PostgreSQL repeat cleanup check also matches. The other two workloads have precisely three different query fingerprints on all three persistent modes: `ac-q-c03`, `sm-contested`, and `sm-evidence-cap`. Their before/after fingerprints exactly match the three supporting-event order differences documented and approved for public 0.19.5 in `tests/reviewed_corrections/order_0195_13ad733.json`. Metrics and use signatures match for all cases and modes. The earlier evidence identified the same support population with different ordering; it does not establish that arbitrary ordering differences can be ignored. The 0.19.5 approval does not apply to this candidate.
 
+## Linux Python matrix
+
+The [raw Linux candidate workflow](https://github.com/cogkura/cogkura-bench/actions/runs/44148371084) completed with failed strict comparisons, as expected for unapproved differences; all five PostgreSQL source checks and the diagnostic checks passed. For Python 3.11.18, 3.12.16, 3.13.18, 3.14.10 and 3.15.2, every candidate frozen run's metrics, use signatures and query fingerprints exactly matches the corresponding public 0.19.5 Linux run. Each backend comparison has the same three supporting-event fingerprint differences listed above; all compared metrics and use signatures match. The reports, full query details and cross-backend raw data for each runtime are retained in `data/embedded-core-0.19.6-788444d-linux-3*-*.json.gz`.
+
+The proposed exact Linux exception lists each frozen difference, environment, unchanged gold digest and candidate identity in [the unapproved proposal](../proposed-0196-788444d-linux-exact-differences.json). The prior public-release acceptance is not reused. This proposal contains no numerical tolerance; it separately requires a candidate-specific approval for the withdrawn-readmission correction. No candidate exception has yet been approved.
+
 ## Open work
 
-Candidate-specific approvals, Linux Python 3.11–3.15 strict results, remaining hosted Core jobs, the complete candidate artifact review and performance/scaling dispositions remain pending. No 0.19.6 release has been accepted or published.
+Candidate-specific approvals, candidate-specific reviewed comparisons, the complete candidate artifact review and performance/scaling dispositions remain pending. No 0.19.6 release has been accepted or published.
