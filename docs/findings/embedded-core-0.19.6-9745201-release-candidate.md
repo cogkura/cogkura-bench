@@ -8,4 +8,13 @@ The original gold SHA-256 remains `927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a
 
 The release wheel SHA-256 is `862d1a08b3d939bc1eea81d883c03315a30509c6779e12abec6f5fb85d8252d4`; the sdist SHA-256 is `bc710d5bb4743fff344d011ab0a725128d4e8420eb3411916e0105d716b7c594`. A separate Python 3.12 Bench installation of that wheel produced frozen outputs identical to the prior wheel, with PostgreSQL source diagnostics passing. Its [raw report](data/embedded-core-0.19.6-9745201-macos312-wheel-frozen.json.gz) and [details](data/embedded-core-0.19.6-9745201-macos312-wheel-details.json.gz) identify the installed wheel and retain the unapproved raw failure. Its runtime files match the Git candidate wheel; distribution metadata differs.
 
-No differences in this record are approved for `9745201` unless a separate dated approval is explicitly recorded. Original gold and raw reports remain intact.
+On 17 November 2026 the user explicitly approved these exact three classes of differences for `9745201` only. The correction, support-order and Linux field approvals are recorded in `tests/reviewed_corrections/cogkura_0196_9745201.json`, `order_0196_9745201.json` and `cogkura_0196_9745201_linux_exact.json`, respectively. The separate frozen and three-backend reviews pass for all five Python versions and are retained as `data/embedded-core-0.19.6-9745201-linux-3*-*-reviewed.json`. Original gold and raw reports remain intact.
+
+To reproduce one reviewed comparison from a clean checkout (replace `312` for the other versions):
+
+```bash
+gzip -dc docs/findings/data/embedded-core-0.19.6-9745201-linux-312-frozen-raw.json.gz > /tmp/core-0196-final-frozen.json
+python scripts/review_candidate_frozen_report.py --gold tests/golden/cogkura_0182_frozen.json --raw /tmp/core-0196-final-frozen.json --correction tests/reviewed_corrections/cogkura_0196_9745201.json --exact tests/reviewed_corrections/cogkura_0196_9745201_linux_exact.json --output /tmp/core-0196-final-frozen-reviewed.json
+gzip -dc docs/findings/data/embedded-core-0.19.6-9745201-linux-312-threeway-raw.json.gz > /tmp/core-0196-final-threeway.json
+python scripts/review_embedded_freeze.py --report /tmp/core-0196-final-threeway.json --approval tests/reviewed_corrections/order_0196_9745201.json --output /tmp/core-0196-final-threeway-reviewed.json
+```

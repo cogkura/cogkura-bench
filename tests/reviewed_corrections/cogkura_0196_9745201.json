@@ -1,0 +1,18 @@
+{
+  "approved_on": "2026-11-17",
+  "baseline_sha256": "927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0b902755827a1c",
+  "candidate": {
+    "commit": "9745201bfcc5410d678a07737a4c935dd294e5b4",
+    "version": "0.19.6"
+  },
+  "corrections": [
+    {
+      "after": "9521ac1807af134198dbca0dc24e5a5268c77af40ec4a6efd8183192fe3e31fe",
+      "before": "79f22e969d0389194e19d8ba49769e741c56b9589628961b2846115416b95e80",
+      "query": "ac-q-c20",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    }
+  ],
+  "reason": "Explicit user approval for this exact 0.19.6 release candidate to retain the reviewed withdrawn-readmission correction; original gold and raw mismatch remain preserved.",
+  "schema_version": 1
+}
