@@ -111,6 +111,12 @@
 - [x] Preserve Python 3.11's original frozen-gold mismatches and compare the candidate with the historical Core run under the same runtime.
 - [Findings](findings/embedded-core-0.19.5.md) and [validation guide](embedded-validation-0.19.5.md). This is development validation; release versioning and publication remain separate.
 
+## Published Core 0.19.6 validation
+
+- [x] Pin Core 0.19.6 release commit `9745201` and support its correction profiles.
+- [x] Preserve raw frozen and backend comparisons; record separately approved exact differences for this release commit.
+- [Validation guide](embedded-validation-0.19.6.md) and [release-commit findings](findings/embedded-core-0.19.6-9745201-release-candidate.md). Bench publication remains a separate release step.
+
 ## Future
 
 - Vector/RAG baseline

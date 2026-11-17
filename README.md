@@ -49,11 +49,11 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra requires `cogkura>=0.19.5,<0.20.0`. The development lock
-selects the released Core 0.19.5 commit `13ad733`. Candidate-specific approvals
-for `f289035` do not apply to this release commit. Embedded validation
-requires a Python build linked to a SQLite version accepted by Core; see the
-[validation guide](docs/embedded-validation-0.19.5.md).
+The CogKura extra requires `cogkura>=0.19.6,<0.20.0`. The development lock
+selects the published Core 0.19.6 commit `9745201`. Embedded validation requires
+a Python build linked to a SQLite version accepted by Core; see the
+[0.19.6 validation guide](docs/embedded-validation-0.19.6.md). Frozen comparison
+exceptions apply only to the exact version, commit, gold and values approved.
 
 For PostgreSQL validation, install all extras and provide a disposable database:
 
@@ -77,8 +77,9 @@ earlier passing Core 0.18.3 baseline. Publication remains a separate release ste
 The [embedded validation guide](docs/embedded-validation-0.19.5.md) and
 [findings](docs/findings/embedded-core-0.19.5.md) describe the previously validated candidate,
 the three-backend comparisons, and the preserved Python 3.11 frozen-gold differences.
-The [public release findings](docs/findings/embedded-core-0.19.5-public-release.md)
-separately document Core 0.19.5 release-specific results and approvals.
+The [public 0.19.5 findings](docs/findings/embedded-core-0.19.5-public-release.md)
+preserve its release-specific results. The [0.19.6 public release findings](docs/findings/embedded-core-0.19.6-public-release.md)
+record the benchmark results and separately approved differences for its exact commit.
 
 ## First run
 

@@ -208,14 +208,14 @@ jobs:
           status=0
           uv run python scripts/run_source_metamemory_validation.py \
             --diagnostics-parity --postgres \
-            --approved-corrections tests/reviewed_corrections/cogkura_0195_13ad733.json \
+            --approved-corrections tests/reviewed_corrections/cogkura_0196_9745201.json \
             --details-output results/embedded-frozen-details.json \
             --output results/embedded-frozen-validation.json || status=$?
           if [ "$status" -gt 1 ]; then exit "$status"; fi
           uv run python scripts/review_frozen_exact_differences.py \
             --gold tests/golden/cogkura_0182_frozen.json \
             --report results/embedded-frozen-validation.json \
-            --approval tests/reviewed_corrections/cogkura_0195_13ad733_linux_exact.json \
+            --approval tests/reviewed_corrections/cogkura_0196_9745201_linux_exact.json \
             --output results/embedded-frozen-exact-reviewed.json
 
       - name: Create isolated backend comparison database
@@ -236,7 +236,7 @@ jobs:
           if [ "$status" -gt 1 ]; then exit "$status"; fi
           uv run python scripts/review_embedded_freeze.py \
             --report results/embedded-threeway-raw.json \
-            --approval tests/reviewed_corrections/order_0195_13ad733.json \
+            --approval tests/reviewed_corrections/order_0196_9745201.json \
             --output results/embedded-threeway-reviewed.json
 
       - name: Preserve benchmark validation reports
@@ -260,7 +260,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - name: Install Bench with public Core 0.19.5
+      - name: Install Bench with public Core 0.19.6
         run: uv sync --all-extras --dev --locked --python 3.12 --managed-python
       - name: Capture public Core signatures
         env:

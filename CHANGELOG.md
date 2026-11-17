@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Embedded Core validation
 
+- Pin the published Core 0.19.6 release commit `9745201`, update the optional dependency floor and run CI against its separately approved exact frozen and backend comparisons. Preserve original gold and raw reports.
 - Pin the public Core 0.19.5 release commit and allow its correction profiles. Preserve the prior candidate reports and approvals; they do not approve results from the release commit.
 
 ### 0.3.12 source provenance freeze validation candidate
