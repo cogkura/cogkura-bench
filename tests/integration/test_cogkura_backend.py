@@ -194,3 +194,12 @@ async def test_cogkura_retrieve_does_not_record_access() -> None:
     first_ids = [item.source_event_ids[0] for item in first.items if item.source_event_ids]
     second_ids = [item.source_event_ids[0] for item in second.items if item.source_event_ids]
     assert first_ids == second_ids
+
+
+@pytest.mark.asyncio
+async def test_correction_profile_accepts_0196_candidate(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "cogkurabench.backends.cogkura._installed_cogkura_version", lambda _: "0.19.6"
+    )
+    backend = CogKuraBackend(corrections_enabled=True)
+    await backend.reset()
