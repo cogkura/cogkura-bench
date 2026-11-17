@@ -1,0 +1,76 @@
+name: Independent Core candidate validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      core_commit:
+        description: Full Core commit SHA to validate
+        required: true
+        type: string
+
+jobs:
+  raw-comparison:
+    name: Raw candidate comparison / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cogkura_bench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PYTHONHASHSEED: "0"
+      CORE_COMMIT: ${{ inputs.core_commit }}
+      COGKURA_POSTGRES_MEMORY_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install Bench and exact Core candidate
+        run: |
+          [[ "$CORE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || exit 2
+          uv sync --all-extras --dev --locked --python ${{ matrix.python-version }} --managed-python
+          uv pip install --python .venv/bin/python --no-deps --reinstall \
+            "cogkura @ git+https://github.com/cogkura/cogkura.git@$CORE_COMMIT"
+      - name: Run Bench suite against candidate
+        run: .venv/bin/python -m pytest
+      - name: Strict frozen comparison (no approvals)
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p results
+          .venv/bin/python scripts/run_source_metamemory_validation.py \
+            --diagnostics-parity --postgres \
+            --details-output results/candidate-frozen-details.json \
+            --output results/candidate-frozen-raw.json
+      - name: Create isolated backend database
+        if: ${{ !cancelled() }}
+        env:
+          PGPASSWORD: postgres
+        run: createdb -h localhost -U postgres cogkura_candidate_threeway
+      - name: Strict backend comparison (no approvals)
+        if: ${{ !cancelled() }}
+        run: |
+          .venv/bin/python scripts/run_embedded_freeze_validation.py \
+            --postgres-url postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_candidate_threeway \
+            --verify-postgres-repeat --details --output results/candidate-threeway-raw.json
+      - name: Preserve raw candidate results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-candidate-${{ matrix.python-version }}
+          path: |
+            results/candidate-frozen-details.json
+            results/candidate-frozen-raw.json
+            results/candidate-threeway-raw.json
+          if-no-files-found: warn
