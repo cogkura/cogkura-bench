@@ -1,0 +1,20 @@
+{
+  "candidate_commit": "b30433c9577fe2493072e442b0f4ea307f342fcf",
+  "diagnostic_mismatches": [],
+  "differences_from_original_gold": [
+    {
+      "candidate": "9521ac1807af134198dbca0dc24e5a5268c77af40ec4a6efd8183192fe3e31fe",
+      "gold": "79f22e969d0389194e19d8ba49769e741c56b9589628961b2846115416b95e80",
+      "query": "ac-q-c20",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    }
+  ],
+  "original_gold_sha256": "927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0b902755827a1c",
+  "postgres_status": "PASS",
+  "query_count": 393,
+  "released_0196_runs_identical": true,
+  "source_assessments": {
+    "matched": 191.0,
+    "total": 191.0
+  }
+}
