@@ -49,7 +49,7 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra requires `cogkura>=0.19.6,<0.20.0`. The development lock
+The CogKura extra requires `cogkura>=0.19.6,<0.20.1`. The development lock
 selects the published Core 0.19.6 commit `9745201`. Embedded validation requires
 a Python build linked to a SQLite version accepted by Core; see the
 [0.19.6 validation guide](docs/embedded-validation-0.19.6.md). Frozen comparison

@@ -197,9 +197,25 @@ async def test_cogkura_retrieve_does_not_record_access() -> None:
 
 
 @pytest.mark.asyncio
-async def test_correction_profile_accepts_0196_candidate(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("version", ("0.19.6", "0.20.0"))
+async def test_correction_profile_accepts_supported_candidate(
+    monkeypatch: pytest.MonkeyPatch, version: str
+) -> None:
     monkeypatch.setattr(
-        "cogkurabench.backends.cogkura._installed_cogkura_version", lambda _: "0.19.6"
+        "cogkurabench.backends.cogkura._installed_cogkura_version", lambda _: version
     )
     backend = CogKuraBackend(corrections_enabled=True)
     await backend.reset()
+
+
+@pytest.mark.asyncio
+async def test_correction_profile_does_not_implicitly_accept_0201(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cogkurabench.exceptions import ValidationError
+
+    monkeypatch.setattr(
+        "cogkurabench.backends.cogkura._installed_cogkura_version", lambda _: "0.20.1"
+    )
+    with pytest.raises(ValidationError, match="correction profiles require"):
+        await CogKuraBackend(corrections_enabled=True).reset()
