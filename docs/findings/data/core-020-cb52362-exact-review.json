@@ -1,0 +1,490 @@
+{
+  "all_use_and_aggregate_metrics_match_release": true,
+  "approved": false,
+  "backend_all_source_assessments_metrics_and_uses_match": true,
+  "backend_differences": [
+    {
+      "backend_sha256": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+      "dataset": "authoritative_corrections_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "ac-c03-a",
+          "right": "ac-c03-b"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "ac-c03-b",
+          "right": "ac-c03-a"
+        }
+      ],
+      "memory_sha256": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+      "mode": "sqlite",
+      "query": "ac-q-c03"
+    },
+    {
+      "backend_sha256": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+      "dataset": "authoritative_corrections_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "ac-c03-a",
+          "right": "ac-c03-b"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "ac-c03-b",
+          "right": "ac-c03-a"
+        }
+      ],
+      "memory_sha256": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+      "mode": "sqlite_reopen",
+      "query": "ac-q-c03"
+    },
+    {
+      "backend_sha256": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+      "dataset": "authoritative_corrections_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "ac-c03-a",
+          "right": "ac-c03-b"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "ac-c03-b",
+          "right": "ac-c03-a"
+        }
+      ],
+      "memory_sha256": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+      "mode": "postgres",
+      "query": "ac-q-c03"
+    },
+    {
+      "backend_sha256": "4328959df6d245166ef79f6829d9326a2dafaa84a9d125218b011b89ed33e92d",
+      "dataset": "source_aware_metamemory_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "sm-conflict-pipeline-1",
+          "right": "sm-conflict-pipeline-0"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "sm-conflict-pipeline-0",
+          "right": "sm-conflict-pipeline-1"
+        }
+      ],
+      "memory_sha256": "7f976eddd0553b427da953fb82adc574d575c2643789ea40b93ecc299acc56b1",
+      "mode": "sqlite",
+      "query": "sm-contested"
+    },
+    {
+      "backend_sha256": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f",
+      "dataset": "source_aware_metamemory_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "sm-conflict-pipeline-1",
+          "right": "sm-conflict-pipeline-0"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "sm-conflict-pipeline-0",
+          "right": "sm-conflict-pipeline-1"
+        }
+      ],
+      "memory_sha256": "72ff95dfde7f15c1b12ebb8ce20c828f837d54bd69157df09324202c0fa6eb17",
+      "mode": "sqlite",
+      "query": "sm-evidence-cap"
+    },
+    {
+      "backend_sha256": "4328959df6d245166ef79f6829d9326a2dafaa84a9d125218b011b89ed33e92d",
+      "dataset": "source_aware_metamemory_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "sm-conflict-pipeline-1",
+          "right": "sm-conflict-pipeline-0"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "sm-conflict-pipeline-0",
+          "right": "sm-conflict-pipeline-1"
+        }
+      ],
+      "memory_sha256": "7f976eddd0553b427da953fb82adc574d575c2643789ea40b93ecc299acc56b1",
+      "mode": "sqlite_reopen",
+      "query": "sm-contested"
+    },
+    {
+      "backend_sha256": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f",
+      "dataset": "source_aware_metamemory_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "sm-conflict-pipeline-1",
+          "right": "sm-conflict-pipeline-0"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "sm-conflict-pipeline-0",
+          "right": "sm-conflict-pipeline-1"
+        }
+      ],
+      "memory_sha256": "72ff95dfde7f15c1b12ebb8ce20c828f837d54bd69157df09324202c0fa6eb17",
+      "mode": "sqlite_reopen",
+      "query": "sm-evidence-cap"
+    },
+    {
+      "backend_sha256": "4328959df6d245166ef79f6829d9326a2dafaa84a9d125218b011b89ed33e92d",
+      "dataset": "source_aware_metamemory_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "sm-conflict-pipeline-1",
+          "right": "sm-conflict-pipeline-0"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "sm-conflict-pipeline-0",
+          "right": "sm-conflict-pipeline-1"
+        }
+      ],
+      "memory_sha256": "7f976eddd0553b427da953fb82adc574d575c2643789ea40b93ecc299acc56b1",
+      "mode": "postgres",
+      "query": "sm-contested"
+    },
+    {
+      "backend_sha256": "86791d7e5fd468ae0486d422efd09aae22c8f663b6fba7eadecc45faf249009f",
+      "dataset": "source_aware_metamemory_v1",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[0]",
+          "left": "sm-conflict-pipeline-1",
+          "right": "sm-conflict-pipeline-0"
+        },
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].supporting_event_ids[1]",
+          "left": "sm-conflict-pipeline-0",
+          "right": "sm-conflict-pipeline-1"
+        }
+      ],
+      "memory_sha256": "72ff95dfde7f15c1b12ebb8ce20c828f837d54bd69157df09324202c0fa6eb17",
+      "mode": "postgres",
+      "query": "sm-evidence-cap"
+    }
+  ],
+  "baseline_weights_counterfactual_differences": {
+    "ac-q-c17": [],
+    "ac-q-hist-at-withdraw": [],
+    "ac-q-hist-before-withdraw": [
+      {
+        "absolute_delta": null,
+        "field": ".authoritative_correction_observations[0].relation",
+        "left": null,
+        "right": "supersedes"
+      }
+    ]
+  },
+  "bench_commit": "f7f917f7edd945d1f8de8372b589e4311cf98ad4",
+  "candidate": {
+    "commit": "cb52362e43b43324ace7f88d4ad702cf35a998ee",
+    "distribution_version": "0.19.6",
+    "installed_module": true,
+    "url": "file:///Users/georgepaterson/GitHub/cogkura/cogkura",
+    "vcs": "git",
+    "version": "0.19.6"
+  },
+  "gold_fingerprint_differences": [
+    {
+      "candidate_sha256": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+      "gold_sha256": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+      "query": "ac-q-c17",
+      "release_sha256": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "candidate_sha256": "9521ac1807af134198dbca0dc24e5a5268c77af40ec4a6efd8183192fe3e31fe",
+      "gold_sha256": "79f22e969d0389194e19d8ba49769e741c56b9589628961b2846115416b95e80",
+      "query": "ac-q-c20",
+      "release_sha256": "9521ac1807af134198dbca0dc24e5a5268c77af40ec4a6efd8183192fe3e31fe",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "candidate_sha256": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+      "gold_sha256": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+      "query": "ac-q-hist-at-withdraw",
+      "release_sha256": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "candidate_sha256": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+      "gold_sha256": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+      "query": "ac-q-hist-before-withdraw",
+      "release_sha256": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    }
+  ],
+  "original_gold_sha256": "927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0b902755827a1c",
+  "platform": "macOS-15.8.1-x86_64-i386-64bit",
+  "postgres_v1": "PASS",
+  "postgres_v2": "PASS",
+  "python": "3.12.13 (main, Jul 23 2026, 14:48:32) [Clang 22.1.3 ]",
+  "query_count": 393,
+  "raw_backend_passed": false,
+  "raw_frozen_passed": false,
+  "release_0196_differences": [
+    {
+      "fields": [
+        {
+          "absolute_delta": 0.0709302077802112,
+          "field": ".retrieved_items[0].activation.activation",
+          "left": -0.6089767158330948,
+          "right": -0.679906923613306
+        },
+        {
+          "absolute_delta": 0.0709302077802112,
+          "field": ".retrieved_items[0].activation.activation_before_context",
+          "left": -0.6089767158330948,
+          "right": -0.679906923613306
+        },
+        {
+          "absolute_delta": 0.07093020778021131,
+          "field": ".retrieved_items[0].activation.activation_partial_match",
+          "left": -0.26240312555312206,
+          "right": -0.33333333333333337
+        },
+        {
+          "absolute_delta": 0.0709302077802112,
+          "field": ".retrieved_items[0].activation.activation_total",
+          "left": -0.6089767158330948,
+          "right": -0.679906923613306
+        },
+        {
+          "absolute_delta": 0.060654025812095336,
+          "field": ".retrieved_items[0].activation.rank_activation",
+          "left": -0.7859195644678773,
+          "right": -0.8465735902799726
+        },
+        {
+          "absolute_delta": 0.005612694141865271,
+          "field": ".retrieved_items[0].score",
+          "left": 0.916140217766221,
+          "right": 0.9105275236243557
+        }
+      ],
+      "query": "ac-q-c17",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "fields": [
+        {
+          "absolute_delta": 0.01594886456173894,
+          "field": ".retrieved_items[0].activation.activation",
+          "left": -2.0442469987792884,
+          "right": -2.0601958633410273
+        },
+        {
+          "absolute_delta": 0.01594886456173894,
+          "field": ".retrieved_items[0].activation.activation_before_context",
+          "left": -2.0442469987792884,
+          "right": -2.0601958633410273
+        },
+        {
+          "absolute_delta": 0.01594886456173912,
+          "field": ".retrieved_items[0].activation.activation_partial_match",
+          "left": -0.09833684972397513,
+          "right": -0.11428571428571425
+        },
+        {
+          "absolute_delta": 0.01594886456173894,
+          "field": ".retrieved_items[0].activation.activation_total",
+          "left": -2.0442469987792884,
+          "right": -2.0601958633410273
+        },
+        {
+          "absolute_delta": 0.0032105877317935017,
+          "field": ".retrieved_items[0].score",
+          "left": 0.7222706799682321,
+          "right": 0.7190600922364386
+        }
+      ],
+      "query": "ac-q-hist-at-withdraw",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].relation",
+          "left": null,
+          "right": "supersedes"
+        },
+        {
+          "absolute_delta": 0.008756845159270998,
+          "field": ".retrieved_items[0].activation.rank_activation",
+          "left": -2.3697156337862673,
+          "right": -2.3609587886269963
+        },
+        {
+          "absolute_delta": 0.022412400543140976,
+          "field": ".retrieved_items[1].activation.activation",
+          "left": -3.566769360585507,
+          "right": -3.544356960042366
+        },
+        {
+          "absolute_delta": 0.022412400543140976,
+          "field": ".retrieved_items[1].activation.activation_before_context",
+          "left": -3.566769360585507,
+          "right": -3.544356960042366
+        },
+        {
+          "absolute_delta": 0.022412400543141087,
+          "field": ".retrieved_items[1].activation.activation_partial_match",
+          "left": -0.4099953374469597,
+          "right": -0.3875829369038186
+        },
+        {
+          "absolute_delta": 0.022412400543140976,
+          "field": ".retrieved_items[1].activation.activation_total",
+          "left": -3.566769360585507,
+          "right": -3.544356960042366
+        },
+        {
+          "absolute_delta": 0.01748642468920636,
+          "field": ".retrieved_items[1].activation.rank_activation",
+          "left": -3.1013729833987074,
+          "right": -3.083886558709501
+        },
+        {
+          "absolute_delta": 0.005192013940072848,
+          "field": ".retrieved_items[1].score",
+          "left": 0.3619826117190307,
+          "right": 0.3671746256591035
+        }
+      ],
+      "query": "ac-q-hist-before-withdraw",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    }
+  ],
+  "source_v1": 0.9947643979057592,
+  "source_v2": 1.0,
+  "weight_diagnostics": [
+    {
+      "as_of": "2026-11-10T12:00:00+00:00",
+      "baseline_texts": [
+        "The payments-api migration strategy is withdrawn.",
+        "payments-api migrations start with the application."
+      ],
+      "baseline_weights": {
+        "api": 1.0,
+        "application": 1.4054651081081644,
+        "migration": 1.4054651081081644,
+        "migrations": 1.4054651081081644,
+        "payments": 1.0,
+        "start": 1.4054651081081644,
+        "strategy": 1.4054651081081644,
+        "withdrawn": 1.4054651081081644
+      },
+      "candidate_texts": [
+        "The payments-api migration strategy is withdrawn."
+      ],
+      "candidate_weights": {
+        "api": 1.0,
+        "migration": 1.0,
+        "payments": 1.0,
+        "strategy": 1.0,
+        "withdrawn": 1.0
+      },
+      "cue": "What is the current migration strategy?"
+    },
+    {
+      "as_of": "2026-11-12T10:00:00+00:00",
+      "baseline_texts": [
+        "payments-api migration execution strategy deployment_pipeline",
+        "payments-api migrations now run through the deployment pipeline.",
+        "payments-api migrations start with the application."
+      ],
+      "baseline_weights": {
+        "api": 1.0,
+        "application": 1.6931471805599454,
+        "deployment": 1.2876820724517808,
+        "execution": 1.6931471805599454,
+        "migration": 1.6931471805599454,
+        "migrations": 1.2876820724517808,
+        "now": 1.6931471805599454,
+        "payments": 1.0,
+        "pipeline": 1.2876820724517808,
+        "run": 1.6931471805599454,
+        "start": 1.6931471805599454,
+        "strategy": 1.6931471805599454,
+        "through": 1.6931471805599454
+      },
+      "candidate_texts": [
+        "payments-api migration execution strategy deployment_pipeline",
+        "payments-api migrations now run through the deployment pipeline."
+      ],
+      "candidate_weights": {
+        "api": 1.0,
+        "deployment": 1.0,
+        "execution": 1.4054651081081644,
+        "migration": 1.4054651081081644,
+        "migrations": 1.4054651081081644,
+        "now": 1.4054651081081644,
+        "payments": 1.0,
+        "pipeline": 1.0,
+        "run": 1.4054651081081644,
+        "strategy": 1.4054651081081644,
+        "through": 1.4054651081081644
+      },
+      "cue": "payments-api migration execution strategy"
+    },
+    {
+      "as_of": "2026-11-12T11:00:00+00:00",
+      "baseline_texts": [
+        "The payments-api migration strategy is withdrawn.",
+        "payments-api migrations start with the application."
+      ],
+      "baseline_weights": {
+        "api": 1.0,
+        "application": 1.4054651081081644,
+        "migration": 1.4054651081081644,
+        "migrations": 1.4054651081081644,
+        "payments": 1.0,
+        "start": 1.4054651081081644,
+        "strategy": 1.4054651081081644,
+        "withdrawn": 1.4054651081081644
+      },
+      "candidate_texts": [
+        "The payments-api migration strategy is withdrawn."
+      ],
+      "candidate_weights": {
+        "api": 1.0,
+        "migration": 1.0,
+        "payments": 1.0,
+        "strategy": 1.0,
+        "withdrawn": 1.0
+      },
+      "cue": "payments-api migration execution strategy"
+    }
+  ]
+}
