@@ -53,3 +53,51 @@ def test_review_rejects_tampered_raw_or_wrong_candidate() -> None:
     correction["candidate"]["commit"] = "0" * 40
     with pytest.raises(ValueError):
         module.review(gold, report, correction, exact)
+
+
+def test_v2_review_requires_explicit_selection_and_only_the_known_difference() -> None:
+    gold, report, correction, exact = fixture("12")
+    report["source_fixture"] = "source_aware_metamemory_v2"
+    report["source_metrics"] = {
+        "source_assessment_accuracy": 190 / 191,
+        "source_assessment_check_count": 191,
+        "source_assessment_match_count": 190,
+        "source_assessment_mismatch_count": 1,
+    }
+    report["source_history_v2"] = {
+        "metrics": {
+            "source_assessment_accuracy": 1,
+            "source_assessment_check_count": 191,
+            "source_assessment_match_count": 191,
+            "source_assessment_mismatch_count": 0,
+        },
+        "v1_withdrawn_metrics": {"source_assessment_mismatch_count": 1},
+        "transition_event_ids": ["sm-chain-replace", "sm-chain-withdraw"],
+        "outputs_match_v1": True,
+        "postgres": {"status": "PASS"},
+    }
+    with pytest.raises(ValueError):
+        module.review(gold, report, correction, exact)
+    reviewed = module.review(gold, report, correction, exact, allow_source_history_v2=True)
+    assert reviewed["reviewed_comparison_passed"]
+    assert reviewed["raw_source_v1_accuracy"] == 190 / 191
+    assert reviewed["source_v2_accuracy"] == 1
+    for key, value in (
+        ("outputs_match_v1", False),
+        ("transition_event_ids", ["sm-chain-withdraw"]),
+        ("postgres", {"status": "FAIL"}),
+        ("v1_withdrawn_metrics", {"source_assessment_mismatch_count": 0}),
+        ("metrics", {"source_assessment_accuracy": 1}),
+    ):
+        bad = copy.deepcopy(report)
+        bad["source_history_v2"][key] = value
+        with pytest.raises(ValueError):
+            module.review(gold, bad, correction, exact, allow_source_history_v2=True)
+    bad = copy.deepcopy(report)
+    bad["source_metrics"]["source_assessment_mismatch_count"] = 2
+    with pytest.raises(ValueError):
+        module.review(gold, bad, correction, exact, allow_source_history_v2=True)
+    bad = copy.deepcopy(report)
+    bad["runs"]["mini/cogkura"]["queries"]["q01"] = "unexpected"
+    with pytest.raises(ValueError):
+        module.review(gold, bad, correction, exact, allow_source_history_v2=True)

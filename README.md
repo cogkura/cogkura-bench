@@ -216,6 +216,8 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 | `persistent_inhibition_customer_v1` | 14 | 18 | 0 | Customer persistent-inhibition workload (8 uses) |
 | `source_authority_v1` | 27 | 19 | 0 | Controlled source-authority admission fixture |
 | `authoritative_corrections_v1` | 35 | 26 | 0 | Controlled correction and withdrawal fixture |
+| `source_aware_metamemory_v1` | 23 | 26 | 0 | Released source inspection fixture |
+| `source_aware_metamemory_v2` | 23 | 26 | 0 | Source inspection with complete known correction and withdrawal transitions |
 
 Queries tagged `core` appear as a second table in `compare` output and summary Markdown.
 

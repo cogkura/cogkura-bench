@@ -11,6 +11,21 @@ import pytest
 from cogkurabench.dataset import default_datasets_root, validate_dataset
 
 
+def test_v2_changes_only_the_declared_transition_expectation() -> None:
+    root = default_datasets_root()
+    v1, v2 = (root / f"source_aware_metamemory_v{version}" for version in (1, 2))
+    assert validate_dataset(v2.name) == []
+    assert (v1 / "events.jsonl").read_bytes() == (v2 / "events.jsonl").read_bytes()
+    assert (v1 / "feedback.jsonl").read_bytes() == (v2 / "feedback.jsonl").read_bytes()
+    old = [json.loads(line) for line in (v1 / "queries.jsonl").read_text().splitlines()]
+    new = [json.loads(line) for line in (v2 / "queries.jsonl").read_text().splitlines()]
+    target = next(row for row in new if row["id"] == "sm-withdrawn")
+    checks = target["expected_source_assessment"]["checks"]
+    assert checks["transition_event_ids"] == ["sm-chain-replace", "sm-chain-withdraw"]
+    checks["transition_event_ids"] = ["sm-chain-withdraw"]
+    assert new == old
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     (

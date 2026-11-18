@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from run_source_metamemory_validation import validate_approval
+from run_source_metamemory_validation import source_checks_pass, validate_approval
 
 
 def flatten(value: Any, prefix: str = "") -> dict[str, Any]:
@@ -22,7 +22,13 @@ def flatten(value: Any, prefix: str = "") -> dict[str, Any]:
     return {prefix: value}
 
 
-def review(gold_bytes: bytes, report: dict[str, Any], approval: dict[str, Any]) -> dict[str, Any]:
+def review(
+    gold_bytes: bytes,
+    report: dict[str, Any],
+    approval: dict[str, Any],
+    *,
+    allow_source_history_v2: bool = False,
+) -> dict[str, Any]:
     if (
         approval.get("schema_version") != 1
         or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(approval.get("approved_on", "")))
@@ -55,7 +61,7 @@ def review(gold_bytes: bytes, report: dict[str, Any], approval: dict[str, Any]) 
         or report.get("hash_seed") != 0
         or report.get("diagnostic_mismatches") != []
         or report.get("postgres", {}).get("status") != "PASS"
-        or report.get("source_metrics", {}).get("source_assessment_accuracy") != 1
+        or not source_checks_pass(report, allow_history_v2=allow_source_history_v2)
     ):
         raise ValueError("required diagnostic, PostgreSQL or source checks did not pass")
     correction = report.get("reviewed_correction_manifest")
@@ -95,6 +101,12 @@ def review(gold_bytes: bytes, report: dict[str, Any], approval: dict[str, Any]) 
         "python": version,
         "platform": report["platform"],
         "raw_frozen_comparison_passed": report["raw_frozen_comparison_passed"],
+        "source_fixture": "source_aware_metamemory_v2"
+        if allow_source_history_v2
+        else "source_aware_metamemory_v1",
+        "raw_source_v1_accuracy": report.get("source_metrics", {}).get(
+            "source_assessment_accuracy"
+        ),
         "exact_approved_field_count": len(observed),
         "reviewed_comparison_passed": True,
     }
@@ -106,12 +118,14 @@ def main() -> None:
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--approval", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-history-v2", action="store_true")
     args = parser.parse_args()
     try:
         result = review(
             args.gold.read_bytes(),
             json.loads(args.report.read_text()),
             json.loads(args.approval.read_text()),
+            allow_source_history_v2=args.source_history_v2,
         )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.error(str(exc))

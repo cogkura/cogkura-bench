@@ -32,6 +32,14 @@ Missing locators and missing exact revisions differ; episodic relation coverage
 can be not applicable; independence stays unknown. Frozen retrieval scoring and
 all earlier fixture ground truth are unchanged.
 
+`source_aware_metamemory_v2` retains the v1 scenario and requires both the known
+correction and withdrawal transition events at `sm-withdrawn`. Report the two
+versions separately: v1 remains unchanged. The frozen candidate review defaults
+to v1; `--source-history-v2` opts into a separate review requiring exact v1/v2
+results, equal observations, and PostgreSQL parity. It does not approve other
+frozen differences or replace candidate-specific manifests. See the
+[v2 findings](findings/source-history-v2.md).
+
 The independent release validator compares 393 frozen queries and explicit uses
 against 0.18.2 with controlled standard-library UUID allocation and hash seed,
 then pairs diagnostics off/on. Ordinary random-ID observations are retained as

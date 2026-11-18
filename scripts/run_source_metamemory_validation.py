@@ -232,6 +232,30 @@ def core_identity(core: Any) -> dict[str, Any]:
     }
 
 
+def source_checks_pass(report: dict[str, Any], *, allow_history_v2: bool = False) -> bool:
+    """Require v1 by default; the opt-in v2 path accounts for exactly one known check."""
+    v1 = report.get("source_metrics", {})
+    if not allow_history_v2:
+        return v1.get("source_assessment_accuracy") == 1
+    history = report.get("source_history_v2", {})
+    v2 = history.get("metrics", {})
+    withdrawn = history.get("v1_withdrawn_metrics", {})
+    return bool(
+        report.get("source_fixture") == "source_aware_metamemory_v2"
+        and v1.get("source_assessment_check_count") == 191
+        and v1.get("source_assessment_match_count") == 190
+        and v1.get("source_assessment_mismatch_count") == 1
+        and withdrawn.get("source_assessment_mismatch_count") == 1
+        and v2.get("source_assessment_check_count") == 191
+        and v2.get("source_assessment_match_count") == 191
+        and v2.get("source_assessment_mismatch_count") == 0
+        and v2.get("source_assessment_accuracy") == 1
+        and history.get("outputs_match_v1") is True
+        and history.get("transition_event_ids") == ["sm-chain-replace", "sm-chain-withdraw"]
+        and history.get("postgres", {}).get("status") == "PASS"
+    )
+
+
 def paired_signature(result: dict[str, Any]) -> dict[str, Any]:
     signature = run_signature(result)
     for query in signature["queries"].values():
@@ -296,7 +320,7 @@ def canonical_source(source: dict[str, Any]) -> dict[str, Any]:
     return source
 
 
-async def postgres_parity() -> dict[str, Any]:
+async def postgres_parity(dataset: str = "source_aware_metamemory_v1") -> dict[str, Any]:
     url = os.environ.get("COGKURA_POSTGRES_MEMORY_URL")
     if not url:
         return {"status": "NOT EXECUTED", "reason": "COGKURA_POSTGRES_MEMORY_URL unset"}
@@ -317,7 +341,6 @@ async def postgres_parity() -> dict[str, Any]:
             episode_store=PostgresEpisodeStore(engine),
             semantic_store=PostgresSemanticMemoryStore(engine),
         )
-        dataset = "source_aware_metamemory_v1"
         for tenant in {e.tenant_id for e in load_dataset(dataset).events}:
             await memory.clear(tenant_id=tenant)
         reference = await run(dataset, "cogkura-source", diagnostics=True)
@@ -358,6 +381,11 @@ async def main() -> int:
     parser.add_argument("--diagnostics-parity", action="store_true")
     parser.add_argument("--postgres", action="store_true")
     parser.add_argument("--approved-corrections", type=Path)
+    parser.add_argument(
+        "--source-history-v2",
+        action="store_true",
+        help="also run the versioned complete-transition fixture for candidate review",
+    )
     args = parser.parse_args()
     if args.write_baseline and args.approved_corrections:
         parser.error("reviewed corrections cannot be used to write a baseline")
@@ -392,6 +420,8 @@ async def main() -> int:
         "runs": {},
         "diagnostic_mismatches": [],
     }
+    if args.source_history_v2:
+        output["source_fixture"] = "source_aware_metamemory_v2"
     details: dict[str, Any] = {}
     for dataset, profile in RUNS:
         state = rng.getstate()
@@ -421,6 +451,19 @@ async def main() -> int:
         if paired_signature(control) != paired_signature(enabled):
             output["diagnostic_mismatches"].append("source_aware_metamemory_v1")
         output["source_metrics"] = enabled["capability_results"]["source_assessment"]["metrics"]
+        if args.source_history_v2:
+            rng.seed(183)
+            history = await run("source_aware_metamemory_v2", "cogkura-source", diagnostics=True)
+            old_query = next(q for q in enabled["query_results"] if q["query_id"] == "sm-withdrawn")
+            new_query = next(q for q in history["query_results"] if q["query_id"] == "sm-withdrawn")
+            output["source_history_v2"] = {
+                "metrics": history["capability_results"]["source_assessment"]["metrics"],
+                "v1_withdrawn_metrics": old_query["metrics"],
+                "transition_event_ids": new_query["source_assessment"]["transition_event_ids"],
+                "outputs_match_v1": paired_signature(enabled) == paired_signature(history)
+                and [q["source_assessment"] for q in enabled["query_results"]]
+                == [q["source_assessment"] for q in history["query_results"]],
+            }
     if args.write_baseline:
         args.baseline.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")
     baseline = json.loads(args.baseline.read_text())
@@ -429,12 +472,16 @@ async def main() -> int:
         output["reviewed_correction_manifest"] = manifest
     if args.postgres:
         output["postgres"] = await postgres_parity()
+        if args.source_history_v2 and "source_history_v2" in output:
+            output["source_history_v2"]["postgres"] = await postgres_parity(
+                "source_aware_metamemory_v2"
+            )
     output["release_gate_passed"] = (
         not output["unapproved_frozen_mismatches"]
         and not output["approval_errors"]
         and not output["diagnostic_mismatches"]
         and output.get("postgres", {}).get("status") == "PASS"
-        and output.get("source_metrics", {}).get("source_assessment_accuracy") == 1
+        and source_checks_pass(output, allow_history_v2=args.source_history_v2)
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n")

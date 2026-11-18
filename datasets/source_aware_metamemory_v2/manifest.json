@@ -1,0 +1,11 @@
+{
+  "name": "source-aware-metamemory-v2",
+  "schema_version": 1,
+  "events": 23,
+  "queries": 26,
+  "feedback": 0,
+  "description": "Source coverage, exact semantic state, temporal limits, and complete known correction and withdrawal transitions.",
+  "required_capabilities": [
+    "source_assessment"
+  ]
+}
