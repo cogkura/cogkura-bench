@@ -1,0 +1,20 @@
+{
+  "core_commit": "d5c009faae3e90d63c44196b2e91c6c77412ef9b",
+  "core_version": "0.20.1",
+  "mismatches": [],
+  "normalized_only": [
+    "authoritative_corrections_v1/sqlite/ac-q-c03",
+    "authoritative_corrections_v1/sqlite_reopen/ac-q-c03",
+    "authoritative_corrections_v1/postgres/ac-q-c03",
+    "source_aware_metamemory_v1/sqlite/sm-contested",
+    "source_aware_metamemory_v1/sqlite/sm-evidence-cap",
+    "source_aware_metamemory_v1/sqlite_reopen/sm-contested",
+    "source_aware_metamemory_v1/sqlite_reopen/sm-evidence-cap",
+    "source_aware_metamemory_v1/postgres/sm-contested",
+    "source_aware_metamemory_v1/postgres/sm-evidence-cap"
+  ],
+  "official_identity_verified": true,
+  "raw_passed": false,
+  "release_comparison_passed": true,
+  "semantic_comparison_passed": true
+}

@@ -1,0 +1,143 @@
+{
+  "approved": false,
+  "queries": [
+    {
+      "actual_hash": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+      "fields": [
+        {
+          "absolute_delta": 0.0709302077802112,
+          "field": ".retrieved_items[0].activation.activation",
+          "left": -0.6089767158330948,
+          "right": -0.679906923613306
+        },
+        {
+          "absolute_delta": 0.0709302077802112,
+          "field": ".retrieved_items[0].activation.activation_before_context",
+          "left": -0.6089767158330948,
+          "right": -0.679906923613306
+        },
+        {
+          "absolute_delta": 0.07093020778021131,
+          "field": ".retrieved_items[0].activation.activation_partial_match",
+          "left": -0.26240312555312206,
+          "right": -0.33333333333333337
+        },
+        {
+          "absolute_delta": 0.0709302077802112,
+          "field": ".retrieved_items[0].activation.activation_total",
+          "left": -0.6089767158330948,
+          "right": -0.679906923613306
+        },
+        {
+          "absolute_delta": 0.060654025812095336,
+          "field": ".retrieved_items[0].activation.rank_activation",
+          "left": -0.7859195644678773,
+          "right": -0.8465735902799726
+        },
+        {
+          "absolute_delta": 0.005612694141865271,
+          "field": ".retrieved_items[0].score",
+          "left": 0.916140217766221,
+          "right": 0.9105275236243557
+        }
+      ],
+      "gold_hash": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+      "query": "ac-q-c17",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "actual_hash": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+      "fields": [
+        {
+          "absolute_delta": 0.01594886456173894,
+          "field": ".retrieved_items[0].activation.activation",
+          "left": -2.0442469987792884,
+          "right": -2.0601958633410273
+        },
+        {
+          "absolute_delta": 0.01594886456173894,
+          "field": ".retrieved_items[0].activation.activation_before_context",
+          "left": -2.0442469987792884,
+          "right": -2.0601958633410273
+        },
+        {
+          "absolute_delta": 0.01594886456173912,
+          "field": ".retrieved_items[0].activation.activation_partial_match",
+          "left": -0.09833684972397513,
+          "right": -0.11428571428571425
+        },
+        {
+          "absolute_delta": 0.01594886456173894,
+          "field": ".retrieved_items[0].activation.activation_total",
+          "left": -2.0442469987792884,
+          "right": -2.0601958633410273
+        },
+        {
+          "absolute_delta": 0.0032105877317935017,
+          "field": ".retrieved_items[0].score",
+          "left": 0.7222706799682321,
+          "right": 0.7190600922364386
+        }
+      ],
+      "gold_hash": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+      "query": "ac-q-hist-at-withdraw",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    },
+    {
+      "actual_hash": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+      "fields": [
+        {
+          "absolute_delta": null,
+          "field": ".authoritative_correction_observations[0].relation",
+          "left": null,
+          "right": "supersedes"
+        },
+        {
+          "absolute_delta": 0.008756845159270998,
+          "field": ".retrieved_items[0].activation.rank_activation",
+          "left": -2.3697156337862673,
+          "right": -2.3609587886269963
+        },
+        {
+          "absolute_delta": 0.022412400543140976,
+          "field": ".retrieved_items[1].activation.activation",
+          "left": -3.566769360585507,
+          "right": -3.544356960042366
+        },
+        {
+          "absolute_delta": 0.022412400543140976,
+          "field": ".retrieved_items[1].activation.activation_before_context",
+          "left": -3.566769360585507,
+          "right": -3.544356960042366
+        },
+        {
+          "absolute_delta": 0.022412400543141087,
+          "field": ".retrieved_items[1].activation.activation_partial_match",
+          "left": -0.4099953374469597,
+          "right": -0.3875829369038186
+        },
+        {
+          "absolute_delta": 0.022412400543140976,
+          "field": ".retrieved_items[1].activation.activation_total",
+          "left": -3.566769360585507,
+          "right": -3.544356960042366
+        },
+        {
+          "absolute_delta": 0.01748642468920636,
+          "field": ".retrieved_items[1].activation.rank_activation",
+          "left": -3.1013729833987074,
+          "right": -3.083886558709501
+        },
+        {
+          "absolute_delta": 0.005192013940072848,
+          "field": ".retrieved_items[1].score",
+          "left": 0.3619826117190307,
+          "right": 0.3671746256591035
+        }
+      ],
+      "gold_hash": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+      "query": "ac-q-hist-before-withdraw",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    }
+  ]
+}
