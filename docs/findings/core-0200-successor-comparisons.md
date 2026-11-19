@@ -32,3 +32,27 @@ was installed from a local Git URL. They do not prove behavior on other
 platforms or fulfill the outstanding CI matrix. No tag or publication has been
 made. The old 0.19.6 ordering and frozen-correction approval manifests are not
 used for this candidate.
+
+## Official-origin rerun
+
+The exact candidate `b30433c9577fe2493072e442b0f4ea307f342fcf` was pushed to
+the user-approved `release/0.20.0` branch on the official Core repository and
+installed into the isolated Bench environment from the official Git URL. The
+[official frozen run](data/core-0200-b30433c-official-frozen.json.gz) and
+[full query details](data/core-0200-b30433c-official-frozen-details.json.gz)
+retain the original mismatch and show passing diagnostics and source/PostgreSQL
+checks. The [successor review](data/core-0200-b30433c-official-successor-review.json)
+passes with official Git identity verified.
+
+The [official backend run](data/core-0200-b30433c-official-backends.json.gz)
+retains its raw ordering mismatches. The [support-order review](data/core-0200-b30433c-official-support-review.json)
+passes, including SQLite reopen and PostgreSQL repeat, with official identity
+verified. Both raw tools exit nonzero under the original strict comparisons;
+no raw result has been rewritten. These are individual comparison checks, not
+an assertion that all release requirements or CI have passed.
+
+The Bench full suite using the official-origin candidate and a separate local
+PostgreSQL database passed **353 tests with no skips** on macOS and Python
+3.12.13. Core's [dispatched CI matrix](https://github.com/cogkura/cogkura/actions/runs/44586312144)
+had 24 successful jobs and macOS/Python 3.14 queued at the time this evidence
+was recorded; the matrix is not complete until that job passes.

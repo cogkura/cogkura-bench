@@ -1,0 +1,11 @@
+{
+  "candidate_commit": "b30433c9577fe2493072e442b0f4ea307f342fcf",
+  "official_identity_verified": true,
+  "original_mismatches": [
+    "authoritative_corrections_v1/cogkura-correction"
+  ],
+  "other_checks_passed": true,
+  "release_comparison_passed": true,
+  "successor_comparison_passed": true,
+  "successor_mismatches": []
+}
