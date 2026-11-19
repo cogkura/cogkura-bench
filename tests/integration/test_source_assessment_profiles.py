@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import importlib.util
 import os
 from dataclasses import replace
@@ -16,6 +17,21 @@ from cogkurabench.evaluation.report import _format_metric_value
 from cogkurabench.runner import BenchmarkRunner
 
 AVAILABLE = importlib.util.find_spec("cogkura") is not None
+
+
+def source_fixture_for_version(version: str) -> str:
+    """Use the explicitly versioned transition contract for Core 0.20.1."""
+    return "source_aware_metamemory_v2" if version == "0.20.1" else "source_aware_metamemory_v1"
+
+
+def current_source_fixture() -> str:
+    return source_fixture_for_version(importlib.metadata.version("cogkura"))
+
+
+def test_source_fixture_selection_is_explicit() -> None:
+    assert source_fixture_for_version("0.20.0") == "source_aware_metamemory_v1"
+    assert source_fixture_for_version("0.20.1") == "source_aware_metamemory_v2"
+    assert source_fixture_for_version("0.20.2") == "source_aware_metamemory_v1"
 
 
 def test_fixture_valid_and_all_six_states_declared_or_fault_tested() -> None:
@@ -53,7 +69,7 @@ async def test_unsupported_backend_is_na() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("name", ("cogkura-source-control", "cogkura-source"))
 async def test_source_profile_gate(name: str) -> None:
-    dataset = load_dataset("source_aware_metamemory_v1")
+    dataset = load_dataset(current_source_fixture())
     result = await BenchmarkRunner().run(
         dataset, create_backend(name, dataset), write_results=False
     )
@@ -73,6 +89,29 @@ async def test_source_profile_gate(name: str) -> None:
     contested = next(q for q in result.query_results if q.query_id == "sm-contested")
     assert len(contested.retrieved_items) <= 1
     assert set(contested.source_assessment.event_ids) > set(contested.retrieved_event_ids)
+
+
+@pytest.mark.skipif(not AVAILABLE, reason="cogkura extra not installed")
+@pytest.mark.asyncio
+async def test_0201_retains_v1_mismatch_and_reports_both_transitions() -> None:
+    if importlib.metadata.version("cogkura") != "0.20.1":
+        pytest.skip("complete transition history begins with the 0.20.1 candidate")
+    for fixture, expected_mismatches in (
+        ("source_aware_metamemory_v1", 1),
+        ("source_aware_metamemory_v2", 0),
+    ):
+        data = load_dataset(fixture)
+        result = await BenchmarkRunner().run(
+            data, create_backend("cogkura-source", data), write_results=False
+        )
+        metrics = result.capability_results["source_assessment"].metrics
+        assert metrics["source_assessment_check_count"] == 191
+        assert metrics["source_assessment_mismatch_count"] == expected_mismatches
+        withdrawn = next(q for q in result.query_results if q.query_id == "sm-withdrawn")
+        assert list(withdrawn.source_assessment.transition_event_ids) == [
+            "sm-chain-replace",
+            "sm-chain-withdraw",
+        ]
 
 
 @pytest.mark.skipif(not AVAILABLE, reason="cogkura extra not installed")
@@ -327,7 +366,7 @@ async def test_postgres_source_fixture_and_correction_replay_match_memory() -> N
     from sqlalchemy.ext.asyncio import create_async_engine
 
     url = os.environ["COGKURA_POSTGRES_MEMORY_URL"]
-    data = load_dataset("source_aware_metamemory_v1")
+    data = load_dataset(current_source_fixture())
     engine = create_async_engine(url)
     cleaner = Memory(
         observation_store=PostgresObservationStore(engine),
