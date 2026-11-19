@@ -54,5 +54,5 @@ an assertion that all release requirements or CI have passed.
 The Bench full suite using the official-origin candidate and a separate local
 PostgreSQL database passed **353 tests with no skips** on macOS and Python
 3.12.13. Core's [dispatched CI matrix](https://github.com/cogkura/cogkura/actions/runs/44586312144)
-had 24 successful jobs and macOS/Python 3.14 queued at the time this evidence
-was recorded; the matrix is not complete until that job passes.
+completed successfully: all 25 jobs passed across the Python 3.11–3.15 platform,
+PostgreSQL and wheel-restart matrices.
