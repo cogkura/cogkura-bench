@@ -78,6 +78,26 @@ MISSING_KNOWLEDGE_FLAGS: frozenset[str] = frozenset(
 )
 
 
+def _supporting_event_ids(
+    evidence: Sequence[Any], revision_to_event_id: Mapping[tuple[str, int], str]
+) -> tuple[str, ...]:
+    """Map unordered support evidence to a deterministic set of benchmark event IDs."""
+    return tuple(
+        sorted(
+            {
+                event_id
+                for item in evidence
+                if (
+                    event_id := revision_to_event_id.get(
+                        (item.observation_id, item.observation_revision)
+                    )
+                )
+                is not None
+            }
+        )
+    )
+
+
 def _indicates_missing_knowledge_from_flags(flags: Sequence[str]) -> bool:
     return any(flag in flags for flag in MISSING_KNOWLEDGE_FLAGS)
 
@@ -1093,13 +1113,6 @@ class CogKuraBackend:
         observations: list[AuthoritativeCorrectionObservation] = []
         for item in memories:
             promotion = semantic_promotion_from_metadata(item.metadata)
-            supporting: list[str] = []
-            for evidence in item.observation_evidence:
-                event_id = self._revision_to_event_id.get(
-                    (evidence.observation_id, evidence.observation_revision)
-                )
-                if event_id is not None and event_id not in supporting:
-                    supporting.append(event_id)
             snapshot = snapshots.get(item.revision_key, {})
             relation = None
             if isinstance(snapshot.get("correction"), Mapping):
@@ -1116,7 +1129,9 @@ class CogKuraBackend:
                     valid_from=item.valid_from,
                     valid_until=item.valid_until,
                     promotion_basis=None if promotion is None else promotion.basis.value,
-                    supporting_event_ids=tuple(supporting),
+                    supporting_event_ids=_supporting_event_ids(
+                        item.observation_evidence, self._revision_to_event_id
+                    ),
                     revision_count=revision_counts.get(item.memory_key, 0),
                     relation=relation,
                     recalled=any(item.object_value in text for text in recalled_objects),
@@ -1155,13 +1170,6 @@ class CogKuraBackend:
             if not item.is_active:
                 continue
             promotion = semantic_promotion_from_metadata(item.metadata)
-            supporting: list[str] = []
-            for evidence in item.observation_evidence:
-                event_id = self._revision_to_event_id.get(
-                    (evidence.observation_id, evidence.observation_revision)
-                )
-                if event_id is not None and event_id not in supporting:
-                    supporting.append(event_id)
             subject = item.subject_entity_id or item.subject_id or ""
             observations.append(
                 SourceAuthorityObservation(
@@ -1174,7 +1182,9 @@ class CogKuraBackend:
                     promotion_support_count=(
                         None if promotion is None else promotion.support_count
                     ),
-                    supporting_event_ids=tuple(supporting),
+                    supporting_event_ids=_supporting_event_ids(
+                        item.observation_evidence, self._revision_to_event_id
+                    ),
                     semantic_revision_count=revision_counts.get(item.memory_key, 0),
                     confidence=item.confidence,
                     importance=item.importance,
