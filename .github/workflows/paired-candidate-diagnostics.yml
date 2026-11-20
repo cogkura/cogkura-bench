@@ -1,0 +1,82 @@
+name: Paired candidate diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      core_commit:
+        description: Full official Core candidate commit SHA
+        required: true
+        type: string
+
+jobs:
+  paired:
+    name: Diagnostic comparison / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cogkura_bench
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PYTHONHASHSEED: "0"
+      CORE_COMMIT: ${{ inputs.core_commit }}
+      REFERENCE_COMMIT: b30433c9577fe2493072e442b0f4ea307f342fcf
+      COGKURA_POSTGRES_MEMORY_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install Bench
+        run: |
+          [[ "$CORE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || exit 2
+          uv sync --all-extras --dev --locked --python ${{ matrix.python-version }} --managed-python
+          mkdir -p results
+      - name: Capture exact reference on this runner
+        run: |
+          uv pip install --python .venv/bin/python --no-deps --reinstall \
+            "cogkura @ git+https://github.com/cogkura/cogkura.git@$REFERENCE_COMMIT"
+          set +e
+          .venv/bin/python scripts/run_source_metamemory_validation.py \
+            --baseline tests/golden/cogkura_0200_successor.json --capture-bench-provenance \
+            --diagnostics-parity --postgres --details-output results/reference-details.json \
+            --output results/reference.json
+          result=$?
+          set -e
+          [[ "$result" -eq 0 || "$result" -eq 1 ]] && test -s results/reference.json && test -s results/reference-details.json
+      - name: Capture candidate on the same runner
+        run: |
+          uv pip install --python .venv/bin/python --no-deps --reinstall \
+            "cogkura @ git+https://github.com/cogkura/cogkura.git@$CORE_COMMIT"
+          set +e
+          .venv/bin/python scripts/run_source_metamemory_validation.py \
+            --baseline tests/golden/cogkura_0200_successor.json --capture-bench-provenance \
+            --source-history-v2 --diagnostics-parity --postgres \
+            --details-output results/candidate-details.json --output results/candidate.json
+          result=$?
+          set -e
+          [[ "$result" -eq 0 || "$result" -eq 1 ]] && test -s results/candidate.json && test -s results/candidate-details.json
+      - name: Compare exact paired outputs without approval
+        run: |
+          .venv/bin/python scripts/compare_platform_controls.py \
+            --baseline results/reference.json --candidate results/candidate.json \
+            --baseline-details results/reference-details.json --candidate-details results/candidate-details.json \
+            --baseline-commit "$REFERENCE_COMMIT" --candidate-commit "$CORE_COMMIT" \
+            --require-paired-provenance --output results/paired-diagnostic.json
+      - name: Preserve diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-diagnostic-${{ matrix.python-version }}
+          path: results/*.json
+          if-no-files-found: warn

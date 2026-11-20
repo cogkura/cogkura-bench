@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 from compare_frozen_query_details import differences, digest, read_json
+from run_source_metamemory_validation import source_checks_pass
 
 
 def _validate(report: dict[str, Any], details: dict[str, Any], commit: str) -> None:
@@ -40,6 +42,7 @@ def compare(
     *,
     baseline_commit: str,
     candidate_commit: str,
+    require_paired_provenance: bool = False,
 ) -> dict[str, Any]:
     """Return exact differences; no rounding, acceptance or baseline changes."""
     _validate(baseline, baseline_details, baseline_commit)
@@ -47,6 +50,35 @@ def compare(
     for key in ("python", "sqlite_version", "seed", "hash_seed"):
         if baseline[key] != candidate[key]:
             raise ValueError(f"control and candidate differ in {key}")
+    if require_paired_provenance:
+        for report in (baseline, candidate):
+            identity = report["core_distribution"]
+            if (
+                report.get("core_version") != identity.get("version")
+                or identity.get("version") != identity.get("distribution_version")
+                or report.get("seed") != 183
+                or report.get("hash_seed") != 0
+                or report.get("diagnostic_mismatches") != []
+                or report.get("postgres", {}).get("status") != "PASS"
+                or not source_checks_pass(
+                    report,
+                    allow_history_v2=report.get("source_fixture") == "source_aware_metamemory_v2",
+                )
+            ):
+                raise ValueError(
+                    "paired reports require passing diagnostics, source and PostgreSQL checks"
+                )
+        if baseline["platform"] != candidate["platform"]:
+            raise ValueError("paired reports must use the same platform")
+        provenance = baseline.get("bench_provenance")
+        if (
+            not isinstance(provenance, dict)
+            or provenance != candidate.get("bench_provenance")
+            or provenance.get("clean") is not True
+            or provenance.get("module_in_checkout") is not True
+            or not re.fullmatch(r"[0-9a-f]{40}", str(provenance.get("commit", "")))
+        ):
+            raise ValueError("paired reports require the same clean Bench provenance")
     if set(baseline_details) != set(candidate_details):
         raise ValueError("run populations differ")
     queries = []
@@ -74,6 +106,8 @@ def compare(
         "candidate_platform": candidate["platform"],
         "seed": baseline["seed"],
         "hash_seed": baseline["hash_seed"],
+        "bench_provenance": baseline.get("bench_provenance"),
+        "paired_provenance_checked": require_paired_provenance,
         "queries": queries,
         "nonquery": nonquery,
     }
@@ -85,6 +119,7 @@ def main() -> None:
         parser.add_argument(f"--{name}", required=True, type=Path)
     parser.add_argument("--baseline-commit", required=True)
     parser.add_argument("--candidate-commit", required=True)
+    parser.add_argument("--require-paired-provenance", action="store_true")
     args = parser.parse_args()
     try:
         result = compare(
@@ -94,6 +129,7 @@ def main() -> None:
             read_json(args.candidate_details),
             baseline_commit=args.baseline_commit,
             candidate_commit=args.candidate_commit,
+            require_paired_provenance=args.require_paired_provenance,
         )
     except (ValueError, KeyError, TypeError, OSError) as exc:
         parser.error(str(exc))

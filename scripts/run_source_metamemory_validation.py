@@ -20,6 +20,7 @@ import platform
 import random
 import re
 import sqlite3
+import subprocess
 import sys
 import uuid
 from pathlib import Path
@@ -59,6 +60,25 @@ RUNS += [
     ("authoritative_corrections_v1", p)
     for p in ("cogkura-correction-control", "cogkura-correction")
 ]
+
+
+def bench_provenance() -> dict[str, Any]:
+    """Identify a clean checkout and ensure Bench was imported from that checkout."""
+    import cogkurabench
+
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "src" / "cogkurabench").resolve()
+    if not Path(cogkurabench.__file__).resolve().is_relative_to(source):
+        raise ValueError("Bench module does not come from the selected checkout")
+
+    def git(*args: str) -> str:
+        return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+
+    commit = git("rev-parse", "HEAD")
+    status = git("status", "--porcelain", "--untracked-files=all")
+    if status:
+        raise ValueError("Bench checkout must be clean for paired provenance")
+    return {"commit": commit, "clean": True, "module_in_checkout": True}
 
 
 def clean(value: Any) -> Any:
@@ -382,6 +402,9 @@ async def main() -> int:
     parser.add_argument("--postgres", action="store_true")
     parser.add_argument("--approved-corrections", type=Path)
     parser.add_argument(
+        "--capture-bench-provenance", action="store_true", help="require a clean Bench checkout"
+    )
+    parser.add_argument(
         "--source-history-v2",
         action="store_true",
         help="also run the versioned complete-transition fixture for candidate review",
@@ -420,6 +443,11 @@ async def main() -> int:
         "runs": {},
         "diagnostic_mismatches": [],
     }
+    if args.capture_bench_provenance:
+        try:
+            output["bench_provenance"] = bench_provenance()
+        except (ValueError, OSError, subprocess.CalledProcessError) as exc:
+            parser.error(str(exc))
     if args.source_history_v2:
         output["source_fixture"] = "source_aware_metamemory_v2"
     details: dict[str, Any] = {}
@@ -476,6 +504,12 @@ async def main() -> int:
             output["source_history_v2"]["postgres"] = await postgres_parity(
                 "source_aware_metamemory_v2"
             )
+    if args.capture_bench_provenance:
+        try:
+            if output["bench_provenance"] != bench_provenance():
+                parser.error("Bench provenance changed during the run")
+        except (ValueError, OSError, subprocess.CalledProcessError) as exc:
+            parser.error(str(exc))
     output["release_gate_passed"] = (
         not output["unapproved_frozen_mismatches"]
         and not output["approval_errors"]

@@ -201,43 +201,64 @@ jobs:
       - name: Run source-aware metamemory benchmark (diagnostics on)
         run: uv run cogkura-bench run --dataset source_aware_metamemory_v1 --backend cogkura-source --quiet
 
+      - name: Check out the preserved 0.19.6 Bench reference
+        uses: actions/checkout@v4
+        with:
+          ref: 7f122dd3fbfb2d731feb99484f8980e8199dd080
+          path: legacy-verified-bench
+
       - name: Validate frozen public Core release
+        working-directory: legacy-verified-bench
         env:
           PYTHONHASHSEED: "0"
+          PYTHONPATH: ${{ github.workspace }}/legacy-verified-bench/src
         run: |
           status=0
-          uv run python scripts/run_source_metamemory_validation.py \
+          ../.venv/bin/python scripts/run_source_metamemory_validation.py \
             --diagnostics-parity --postgres \
             --approved-corrections tests/reviewed_corrections/cogkura_0196_9745201.json \
-            --details-output results/embedded-frozen-details.json \
-            --output results/embedded-frozen-validation.json || status=$?
+            --details-output ../results/embedded-frozen-details.json \
+            --output ../results/embedded-frozen-validation.json || status=$?
           if [ "$status" -gt 1 ]; then exit "$status"; fi
-          uv run python scripts/review_frozen_exact_differences.py \
+          ../.venv/bin/python scripts/review_frozen_exact_differences.py \
             --gold tests/golden/cogkura_0182_frozen.json \
-            --report results/embedded-frozen-validation.json \
+            --report ../results/embedded-frozen-validation.json \
             --approval tests/reviewed_corrections/cogkura_0196_9745201_linux_exact.json \
-            --output results/embedded-frozen-exact-reviewed.json
+            --output ../results/embedded-frozen-exact-reviewed.json
 
       - name: Create isolated backend comparison database
         if: ${{ !cancelled() }}
         env:
           PGPASSWORD: postgres
-        run: createdb -h localhost -U postgres cogkura_bench_threeway
+        run: |
+          createdb -h localhost -U postgres cogkura_bench_threeway
+          createdb -h localhost -U postgres cogkura_bench_current_threeway
 
-      - name: Compare embedded storage backends
+      - name: Verify preserved historical backend review
+        if: ${{ !cancelled() }}
+        working-directory: legacy-verified-bench
+        env:
+          PYTHONHASHSEED: "0"
+          PYTHONPATH: ${{ github.workspace }}/legacy-verified-bench/src
+        run: |
+          status=0
+          ../.venv/bin/python scripts/run_embedded_freeze_validation.py \
+            --postgres-url "postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench_threeway" --verify-postgres-repeat --details \
+            --output ../results/embedded-threeway-raw.json || status=$?
+          if [ "$status" -gt 1 ]; then exit "$status"; fi
+          ../.venv/bin/python scripts/review_embedded_freeze.py \
+            --report ../results/embedded-threeway-raw.json \
+            --approval tests/reviewed_corrections/order_0196_9745201.json \
+            --output ../results/embedded-threeway-reviewed.json
+
+      - name: Compare current Bench backend outputs exactly
         if: ${{ !cancelled() }}
         env:
           PYTHONHASHSEED: "0"
         run: |
-          status=0
           uv run python scripts/run_embedded_freeze_validation.py \
-            --postgres-url "postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench_threeway" --verify-postgres-repeat --details \
-            --output results/embedded-threeway-raw.json || status=$?
-          if [ "$status" -gt 1 ]; then exit "$status"; fi
-          uv run python scripts/review_embedded_freeze.py \
-            --report results/embedded-threeway-raw.json \
-            --approval tests/reviewed_corrections/order_0196_9745201.json \
-            --output results/embedded-threeway-reviewed.json
+            --postgres-url "postgresql+asyncpg://postgres:postgres@localhost:5432/cogkura_bench_current_threeway" --verify-postgres-repeat --details \
+            --output results/current-threeway-raw.json
 
       - name: Preserve benchmark validation reports
         if: always()
@@ -252,6 +273,7 @@ jobs:
             results/embedded-frozen-python311-paired.json
             results/embedded-threeway-raw.json
             results/embedded-threeway-reviewed.json
+            results/current-threeway-raw.json
           if-no-files-found: warn
 
   linux-historical-diagnostics:

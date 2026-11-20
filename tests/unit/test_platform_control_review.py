@@ -43,7 +43,13 @@ def _inputs():
                 "url": "https://github.com/cogkura/cogkura.git",
                 "vcs": "git",
                 "installed_module": True,
+                "version": "0.20.1",
+                "distribution_version": "0.20.1",
             },
+            "core_version": "0.20.1",
+            "diagnostic_mismatches": [],
+            "postgres": {"status": "PASS"},
+            "source_metrics": {"source_assessment_accuracy": 1},
             "python": "3.12",
             "sqlite_version": "3",
             "seed": 183,
@@ -97,3 +103,31 @@ def test_platform_control_rejects_tampering_and_different_interpreter() -> None:
             baseline_commit=_BASE,
             candidate_commit=_CANDIDATE,
         )
+
+
+def test_paired_provenance_requires_matching_clean_checkout_and_platform() -> None:
+    module = _module()
+    left, right, left_details, right_details = _inputs()
+    kwargs = {
+        "baseline_commit": _BASE,
+        "candidate_commit": _CANDIDATE,
+        "require_paired_provenance": True,
+    }
+    with pytest.raises(ValueError, match="provenance"):
+        module.compare(left, right, left_details, right_details, **kwargs)
+    provenance = {"commit": "a" * 40, "clean": True, "module_in_checkout": True}
+    left["bench_provenance"] = provenance
+    right["bench_provenance"] = dict(provenance)
+    result = module.compare(left, right, left_details, right_details, **kwargs)
+    assert result["paired_provenance_checked"] and not result["approved"]
+    right["platform"] = "other-platform"
+    with pytest.raises(ValueError, match="same platform"):
+        module.compare(left, right, left_details, right_details, **kwargs)
+    right["platform"] = left["platform"]
+    right["bench_provenance"]["clean"] = False
+    with pytest.raises(ValueError, match="provenance"):
+        module.compare(left, right, left_details, right_details, **kwargs)
+    right["bench_provenance"]["clean"] = True
+    right["postgres"]["status"] = "FAIL"
+    with pytest.raises(ValueError, match="PostgreSQL"):
+        module.compare(left, right, left_details, right_details, **kwargs)
