@@ -65,3 +65,34 @@ identity; raw ordered differences remain. Source-history v2 passes 191/191 and
 PostgreSQL source parity passes. The official-origin Bench suite passed 356 tests
 with PostgreSQL; the hosted Core CI matrix passed all 25 jobs. These checks do
 not override the unapproved frozen changes.
+
+## Exact candidate performance and packaging
+
+The exact `d5c009f` checkout was measured on the selected 2018 Mac with
+CPython 3.11.15, SQLite 3.53.1, sequential uninstrumented calls and uncontrolled
+OS caches. For 100/250 base observations, each warm median uses 100 samples
+after the first. For 1,000, nearest-rank p95 includes all 100 samples; the mixed
+fixture has 1,006 actual observations and 5,006 observation revisions. Files
+`data/core-0201-d5c009f-{memory,sqlite}-{100,250,1000}.json.gz` retain each
+sample, source identity and output. The rounded outputs, counts and applied
+operations matched between memory and SQLite for every recorded query.
+
+| Base observations | Memory | SQLite | Agreed target |
+| --- | --- | --- | --- |
+| 100, warm median | 0.076 s | 0.116 s | under 1 s |
+| 250, warm median | 0.199 s | 0.300 s | under 1 s |
+| 1,000, p95 | 1.223 s | 1.848 s | under 2 s |
+
+All targets passed in this run. Host one/five/fifteen-minute load averages were
+2.32/2.15/1.64 at start and 1.75/2.06/1.85 at finish. The host was not isolated;
+these synthetic results are not a production guarantee or cold-device study.
+The previous candidate's 2.919-second SQLite p95 miss and 1.955-second repeat
+remain recorded in Core's `docs/findings/0.20.1-candidate-review.md`.
+
+The exact candidate wheel and sdist passed `twine check`. An isolated Python
+3.11 dependency-free wheel install, migration, persistence and restart check
+passed. Wheel SHA-256 is
+`34e312626340039584952c319c111c5568328a81668bffb71caf7b2200a75bf1`; sdist
+SHA-256 is `bd7c01f5d075803f8fe5c29b9ecc759a683005c736360fc681bee31e0ebc3045`.
+The [hosted Core CI](https://github.com/cogkura/cogkura/actions/runs/44640933318)
+passed all 25 jobs for the exact commit. No tag or package was published.
