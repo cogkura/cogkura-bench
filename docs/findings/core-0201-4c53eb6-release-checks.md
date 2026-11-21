@@ -31,3 +31,10 @@ provides candidate provenance and the explicit frozen approvals.
 
 These are pre-publication artifacts and checks. Any tag and published package
 must be checked against the approved commit and the actual published artifacts.
+
+The approved `4c53eb6` source's `CHANGELOG.md` still lists the 0.20.1 work
+under **Unreleased** as a candidate and does not enumerate the later history
+work. The [prepared release notes](core-0201-release-notes-draft.md) describe
+the actual release behavior. Updating the source changelog before tagging would
+create a different commit and require fresh candidate-specific frozen approval
+and validation; the approval for `4c53eb6` cannot transfer automatically.
