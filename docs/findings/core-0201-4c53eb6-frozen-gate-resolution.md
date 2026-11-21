@@ -46,3 +46,9 @@ not an exact-commit CI run for `4c53eb6`. Additional release checks, including
 any required backend-order disposition, packaging and release sequence, remain
 separate. The approval and the passing gate must not be transferred to a new
 candidate or environment.
+
+After recording the approvals, the full local Bench suite passed **364 tests**
+with PostgreSQL; Ruff, formatting and mypy passed. The earlier pushed Bench
+review-package commit `353a8daa815cce303444088c6fdc2ef6d62ac9e9` passed
+[all six hosted CI jobs](https://github.com/cogkura/cogkura-bench/actions/runs/44931544133).
+That hosted run predates the local approval and evidence commits.
