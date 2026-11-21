@@ -1,9 +1,13 @@
 # Proposed frozen-gate disposition for Core 0.20.1 `4c53eb6`
 
-**Not approved; the release gate remains open.** This is a review package for
+**Decision on 2026-11-21:** The user approved the exact candidate-specific and
+inherited differences listed here for Core `4c53eb6` on macOS/Python 3.11.15.
+The dated approvals are recorded separately in the reviewed-correction manifests;
+the raw frozen comparison remains failed. Official-origin replay and the
+reviewed gate must still pass before the gate is resolved. This review package covers
 Core `4c53eb6a5f77cb9c275c7b39529f08fac7e809b1`, not a change to the frozen
-baseline, a new approval, or official-origin evidence. The earlier user decision
-was to investigate rather than approve the score and relation differences.
+baseline, a new approval, or official-origin evidence. The earlier user decision was to investigate the score and relation differences;
+the later explicit approval applies only to the listed candidate and environment.
 
 On the selected 2018 Mac, Bench `7373d5ff2d00b10a9dd260e5fc3869b031850c34`
 compared the candidate against a locally paired Core `b30433c` source run under
@@ -25,12 +29,13 @@ the eligible inverse-document-frequency population. The relation preserves the
 correction after a later withdrawal. Restoring the old numbers by including the
 ineligible episode, or removing the correction relation, would change those
 semantics. The user's separate choice to report both source transitions is
-retained. Neither that choice nor this evidence approves the frozen changes.
+retained. That source-transition choice alone did not approve the frozen changes; the
+later, separate candidate-specific decision did.
 
 The original 0.18.2 gold has 83 differing frozen fields on this platform. Of
 these, 80 also differ identically in the paired 0.20.0 run: 61 metric fields and
 19 query fingerprints. One of the latter is the `ac-q-c20` withdrawn-readmission
-correction, which requires a separate candidate-specific decision; the other
+correction, which is included in the separate candidate-specific approval; the other
 18 are inherited query fingerprints. The remaining three fields are the query
 fingerprints above. Every before/after field is retained in the review data;
 no tolerance, normalization or changes to the gold are proposed.
@@ -57,6 +62,6 @@ The v2 source-history fixture passed 191/191 on memory and PostgreSQL, with
 both transitions, and diagnostic and PostgreSQL source parity passed. The
 candidate's Core suite and selected-Mac performance results are recorded in the
 [Core validation note](../../../cogkura/docs/findings/0.20.1-shared-history-validation.md).
-The frozen decision, an actual Git-installed candidate from official origin,
-and fresh hosted CI remain outstanding. Even explicit approval of the listed
-fields alone would not establish those other release checks.
+The reviewed gate still requires a fresh run of the exact Git-installed candidate
+from the official origin. Fresh hosted CI and the other release checks remain
+separate from that gate.
