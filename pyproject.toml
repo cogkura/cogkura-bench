@@ -32,10 +32,10 @@ dependencies = []
 
 [project.optional-dependencies]
 cogkura = [
-  "cogkura>=0.19.6,<0.20.2",
+  "cogkura>=0.19.6,<0.20.3",
 ]
 postgres = [
-  "cogkura[postgres]>=0.19.6,<0.20.2",
+  "cogkura[postgres]>=0.19.6,<0.20.3",
 ]
 
 [project.scripts]

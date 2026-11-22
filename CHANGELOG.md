@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Core 0.20.2 hardening
+
+- Permit the 0.20.2 correction profile and explicitly select the v2
+  source-history fixture. A candidate still requires its own frozen-output
+  review; no prior approval is inherited.
+- Add an [independent validation guide](docs/core-0202-independent-validation.md)
+  and preserve the released 0.20.1 four-backend baseline.
+
 ### Embedded Core validation
 
 - Pin the published Core 0.19.6 release commit `9745201`, update the optional dependency floor and run CI against its separately approved exact frozen and backend comparisons. Preserve original gold and raw reports.

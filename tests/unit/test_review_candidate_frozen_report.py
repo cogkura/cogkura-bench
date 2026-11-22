@@ -55,6 +55,23 @@ def test_review_rejects_tampered_raw_or_wrong_candidate() -> None:
         module.review(gold, report, correction, exact)
 
 
+def test_0201_approval_does_not_authorize_0202() -> None:
+    gold = (ROOT / "tests/golden/cogkura_0182_frozen.json").read_bytes()
+    manifest = json.loads(
+        (ROOT / "tests/reviewed_corrections/cogkura_0201_4c53eb6.json").read_text()
+    )
+    identity = {
+        "version": "0.20.2",
+        "distribution_version": "0.20.2",
+        "commit": manifest["candidate"]["commit"],
+        "vcs": "git",
+        "url": "https://github.com/cogkura/cogkura.git",
+        "installed_module": True,
+    }
+    with pytest.raises(ValueError, match="does not match approval"):
+        module.validate_approval(manifest, gold, identity)
+
+
 def test_v2_review_requires_explicit_selection_and_only_the_known_difference() -> None:
     gold, report, correction, exact = fixture("12")
     report["source_fixture"] = "source_aware_metamemory_v2"
