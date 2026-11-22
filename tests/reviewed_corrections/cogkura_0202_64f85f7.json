@@ -1,0 +1,18 @@
+{
+  "approved_on": "2026-11-22",
+  "baseline_sha256": "927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0b902755827a1c",
+  "candidate": {
+    "commit": "64f85f78acd2046cafe0212c84b45c1d221affd4",
+    "version": "0.20.2"
+  },
+  "corrections": [
+    {
+      "after": "9521ac1807af134198dbca0dc24e5a5268c77af40ec4a6efd8183192fe3e31fe",
+      "before": "79f22e969d0389194e19d8ba49769e741c56b9589628961b2846115416b95e80",
+      "query": "ac-q-c20",
+      "run": "authoritative_corrections_v1/cogkura-correction"
+    }
+  ],
+  "reason": "The user explicitly approved these exact 0.20.2 candidate differences for the reference Mac and Python 3.11.15 on 2026-11-22; this does not approve release.",
+  "schema_version": 1
+}

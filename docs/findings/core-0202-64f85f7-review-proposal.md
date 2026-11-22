@@ -1,8 +1,9 @@
 # Proposed frozen comparison review for Core 0.20.2 `64f85f7`
 
-**Proposed only; no 0.20.2 approval is recorded.** The strict raw frozen gate
-fails. This package provides evidence for an exact candidate-specific decision;
-it does not change the gold, approve differences, or authorize release.
+**Historical proposal.** The user subsequently approved the exact differences;
+the [reviewed gate resolution](core-0202-64f85f7-frozen-gate-resolution.md)
+records that decision and result. The strict raw frozen gate still fails, and
+the gold remains unchanged. Approval does not authorize release.
 
 Core `64f85f78acd2046cafe0212c84b45c1d221affd4` was installed from the
 official `https://github.com/cogkura/cogkura.git` Git origin. The report
@@ -34,8 +35,9 @@ unapproved frozen comparison. In each job the Bench suite and the independent
 backend comparison steps passed. The hosted raw reports use Linux and do not
 substitute for the exact macOS/Python 3.11 review proposed below.
 
-The following candidate-specific drafts contain the exact proposed fields;
-they have no approval date and are marked `PROPOSED`:
+The following preserved candidate-specific drafts contain the exact proposed
+fields; they have no approval date and remain marked `PROPOSED`. The separate
+dated approval manifests are linked from the resolution above:
 
 - [withdrawn-readmission correction draft](proposals/core-0202-64f85f7-correction-DRAFT.json)
 - [other exact macOS/Python 3.11 fields draft](proposals/core-0202-64f85f7-exact-macos311-DRAFT.json)
@@ -43,5 +45,5 @@ they have no approval date and are marked `PROPOSED`:
 Evidence: [raw frozen report](core-0202-64f85f7-official-raw.json.gz),
 [query details](core-0202-64f85f7-official-details.json.gz), and
 [four-backend and repeat report](core-0202-64f85f7-official-backends.json.gz).
-The approved review, if granted, must be limited to this commit and environment;
-the raw failure must remain visible.
+The approval is limited to this commit and environment; the raw failure remains
+visible.
