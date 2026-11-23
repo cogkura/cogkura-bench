@@ -1,6 +1,7 @@
 # Proposed frozen comparison review for Core 0.20.2 `fb72911`
 
-**Proposed only; no approval is recorded for this commit.** The changelog
+**Historical proposal.** The user subsequently approved this candidate; see the
+[review resolution](core-0202-fb72911-frozen-gate-resolution.md). The changelog
 successor is `fb72911ce58173bf3669181d0e2c25eeefeaa58d`. It differs from the
 previously approved `64f85f7` in documentation, tests and measurement tooling;
 Core package source, metadata and lockfile are unchanged. A wheel built from
@@ -29,7 +30,9 @@ The proposed scope remains one withdrawn-readmission correction and 82 other
 exact macOS/Python 3.11.15 fields. The [previous candidate review](core-0202-64f85f7-review-proposal.md)
 and its [resolution](core-0202-64f85f7-frozen-gate-resolution.md) explain the
 differences and the earlier approval. The drafts below intentionally contain
-no approval date and remain marked `PROPOSED`:
+no approval date and remain marked `PROPOSED`. The second draft inherited the
+previous candidate's macOS 15.8.1 prefix; the actual run was on macOS 15.8.3,
+and the dated approval records the observed platform:
 
 - [correction draft](proposals/core-0202-fb72911-correction-DRAFT.json)
 - [exact-field draft](proposals/core-0202-fb72911-exact-macos311-DRAFT.json)
