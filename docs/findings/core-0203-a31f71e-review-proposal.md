@@ -1,6 +1,6 @@
 # Proposed Core 0.20.3 `a31f71e` frozen comparison review
 
-**Proposed; not approved.** The fixed candidate is Core
+**Historical proposal; subsequently approved.** See the [reviewed resolution](core-0203-a31f71e-frozen-gate-resolution.md). The fixed candidate is Core
 `a31f71e222dd231ed9643bc1d1cc109e3e8153dd`, installed from the official Git
 origin. The raw run used the confirmed reference Mac, Python 3.11.15, macOS
 15.8.3, SQLite 3.53.1 and clean Bench commit

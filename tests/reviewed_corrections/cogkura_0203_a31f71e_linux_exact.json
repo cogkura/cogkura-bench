@@ -1,0 +1,953 @@
+{
+  "approved_on": "2026-11-25",
+  "baseline_sha256": "927c69031e7d41019ee27a7a7529c2e9fbaa4d91d1f8a44ace0b902755827a1c",
+  "candidate": {
+    "commit": "a31f71e222dd231ed9643bc1d1cc109e3e8153dd",
+    "version": "0.20.3"
+  },
+  "environments": {
+    "3.11.18": [
+      {
+        "after": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+        "before": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+        "field": "queries.ac-q-c03",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+        "before": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+        "field": "queries.ac-q-c17",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+        "before": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+        "field": "queries.ac-q-hist-at-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+        "before": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+        "field": "queries.ac-q-hist-before-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction-control"
+      },
+      {
+        "after": 0.4446457118071148,
+        "before": 0.44464571180711493,
+        "field": "metrics.associative_recall.ndcg@10",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.4446457118071148,
+        "before": 0.44464571180711493,
+        "field": "metrics.associative_recall.ndcg@5",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.2333333333333333,
+        "before": 0.23333333333333336,
+        "field": "metrics.associative_recall.precision@10",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.2333333333333333,
+        "before": 0.23333333333333336,
+        "field": "metrics.associative_recall.precision@5",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.5002786622851745,
+        "before": 0.5002786622851744,
+        "field": "metrics.episodic_recall.ndcg@3",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.24166666666666667,
+        "before": 0.2416666666666667,
+        "field": "metrics.episodic_recall.precision@10",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.24166666666666667,
+        "before": 0.2416666666666667,
+        "field": "metrics.episodic_recall.precision@5",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.27999999999999997,
+        "before": 0.28,
+        "field": "metrics.forgetting.precision@10",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.27999999999999997,
+        "before": 0.28,
+        "field": "metrics.forgetting.precision@5",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.22499999999999998,
+        "before": 0.225,
+        "field": "metrics.temporal_recall.precision@10",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.22499999999999998,
+        "before": 0.225,
+        "field": "metrics.temporal_recall.precision@5",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.10942746180597844,
+        "before": 0.10942746180597843,
+        "field": "metrics.working_memory.token_efficiency",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": "8e62255dfda0a4f73625ffbb03317e7101ad1f3c3ddcf35b9720b267618f38f7",
+        "before": "c16fab48e41f5e35ac470ec0d64c4aa2c95a70a11043e593ded451f02fca28c7",
+        "field": "queries.helios-meta-002",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": "0b1018cbe29adc257020a7acd9537f5f948771a1671ecfdb078bf6c57defa149",
+        "before": "d0ed5fccdb37ed01de81a1dd801290730787a26c3caa478f02b4993ac47bb103",
+        "field": "queries.helios-meta-004",
+        "run": "helios_v1/cogkura"
+      },
+      {
+        "after": 0.8677216739715661,
+        "before": 0.867721673971566,
+        "field": "metrics.interference.ndcg@10",
+        "run": "interference_v1/cogkura"
+      },
+      {
+        "after": 0.2375,
+        "before": 0.23750000000000002,
+        "field": "metrics.interference.precision@10",
+        "run": "interference_v1/cogkura"
+      },
+      {
+        "after": 0.44999999999999996,
+        "before": 0.45,
+        "field": "metrics.interference.precision@5",
+        "run": "interference_v1/cogkura"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@10",
+        "run": "persistent_inhibition_customer_v1/cogkura"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@3",
+        "run": "persistent_inhibition_customer_v1/cogkura"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@5",
+        "run": "persistent_inhibition_customer_v1/cogkura"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@10",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@3",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@5",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": "00f7982c4044810226c4bc63a21bce83e80219b3ed5cb018db0ee2e1b5cb0ff7",
+        "before": "80b0a02bdef0ef7c4506d120d39edf2b2fc133ae0a3743d12b5f7ef0d66d1cdc",
+        "field": "queries.cu-colour-later",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@10",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@3",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.7708333333333333,
+        "before": 0.7708333333333334,
+        "field": "metrics.direct_recall.precision@5",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@10",
+        "run": "persistent_inhibition_software_v1/cogkura"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@3",
+        "run": "persistent_inhibition_software_v1/cogkura"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@5",
+        "run": "persistent_inhibition_software_v1/cogkura"
+      },
+      {
+        "after": 0.7121212121212122,
+        "before": 0.712121212121212,
+        "field": "metrics.direct_recall.precision@3",
+        "run": "persistent_inhibition_software_v1/cogkura"
+      },
+      {
+        "after": "a3af3d511772f3dc7a4806f334929ad280ccda22e5bc3a83420f996537a6e54b",
+        "before": "2f652c7bcf142daa9fd1d4e587e38c8b1331507da4706f41593dfb2824859ae6",
+        "field": "queries.sw-note-src",
+        "run": "persistent_inhibition_software_v1/cogkura"
+      },
+      {
+        "after": "6611f210cbe794735f1fb4ba6229dffe98b07fda0661088e320d37331d66b568",
+        "before": "0f717dcc549b4e1b603509c853c5fc5f88dc12245132c88f1a4892759fd79c3b",
+        "field": "queries.sw-obs-src-2",
+        "run": "persistent_inhibition_software_v1/cogkura"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@10",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@3",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@5",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.7121212121212122,
+        "before": 0.712121212121212,
+        "field": "metrics.direct_recall.precision@3",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "24e3b36d79c1b9e6d185e76a52096c54f13f883b21fd96820f0d8f79e0f77ef8",
+        "before": "04f2510a163a140dba5d1d0a6509f5ed03f26f11f254b31487108f48dc335c0a",
+        "field": "queries.sw-deploy-later",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "6d91fe6f723a73004add3288585e7188e1380ee67ea94fe2bc0b648743ab57af",
+        "before": "d16d54f50de9e9aa00b8a0219112a261ca89335cf5a48794647b6064ae479534",
+        "field": "queries.sw-note-src",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "317c28c2c0fbb2d23e9d35b930edaca6499b8dbb0e1c3d4362208c3e3f04dd05",
+        "before": "06e5e1aa87fd87964e2d27bd846f56b0b1b5a2f59d50271a3e6360a06a10516a",
+        "field": "queries.sw-obs-src-2",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@10",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@3",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.8840749991607637,
+        "before": 0.8840749991607635,
+        "field": "metrics.direct_recall.ndcg@5",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.7121212121212122,
+        "before": 0.712121212121212,
+        "field": "metrics.direct_recall.precision@3",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": "a3af3d511772f3dc7a4806f334929ad280ccda22e5bc3a83420f996537a6e54b",
+        "before": "2f652c7bcf142daa9fd1d4e587e38c8b1331507da4706f41593dfb2824859ae6",
+        "field": "queries.sw-note-src",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": "6611f210cbe794735f1fb4ba6229dffe98b07fda0661088e320d37331d66b568",
+        "before": "0f717dcc549b4e1b603509c853c5fc5f88dc12245132c88f1a4892759fd79c3b",
+        "field": "queries.sw-obs-src-2",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.821855046721501,
+        "before": 0.8218550467215009,
+        "field": "metrics.persistent_inhibition.ndcg@10",
+        "run": "persistent_inhibition_v1/cogkura"
+      },
+      {
+        "after": 0.7292536480301218,
+        "before": 0.7292536480301219,
+        "field": "metrics.persistent_inhibition.ndcg@5",
+        "run": "persistent_inhibition_v1/cogkura"
+      },
+      {
+        "after": 0.3275510204081633,
+        "before": 0.32755102040816325,
+        "field": "metrics.persistent_inhibition.precision@10",
+        "run": "persistent_inhibition_v1/cogkura"
+      },
+      {
+        "after": 0.3785714285714286,
+        "before": 0.37857142857142856,
+        "field": "metrics.persistent_inhibition.precision@5",
+        "run": "persistent_inhibition_v1/cogkura"
+      },
+      {
+        "after": 0.8161208173749429,
+        "before": 0.8161208173749428,
+        "field": "metrics.persistent_inhibition.ndcg@10",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.3275510204081633,
+        "before": 0.32755102040816325,
+        "field": "metrics.persistent_inhibition.precision@10",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.3785714285714286,
+        "before": 0.37857142857142856,
+        "field": "metrics.persistent_inhibition.precision@5",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": "3962995598e553785ab9f4fc4ca17091257f2b84d659eb83600713f0b3d6ae51",
+        "before": "d09fd382727875080e7add6d024311e8b30842e9907c4d5656dbca918217e12c",
+        "field": "queries.pi-later",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": 0.821855046721501,
+        "before": 0.8218550467215009,
+        "field": "metrics.persistent_inhibition.ndcg@10",
+        "run": "persistent_inhibition_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.7292536480301218,
+        "before": 0.7292536480301219,
+        "field": "metrics.persistent_inhibition.ndcg@5",
+        "run": "persistent_inhibition_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.3275510204081633,
+        "before": 0.32755102040816325,
+        "field": "metrics.persistent_inhibition.precision@10",
+        "run": "persistent_inhibition_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.3785714285714286,
+        "before": 0.37857142857142856,
+        "field": "metrics.persistent_inhibition.precision@5",
+        "run": "persistent_inhibition_v1/cogkura-inhibition-recording"
+      },
+      {
+        "after": 0.649468892397522,
+        "before": 0.6494688923975221,
+        "field": "metrics.direct_recall.ndcg@10",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": 0.649468892397522,
+        "before": 0.6494688923975221,
+        "field": "metrics.direct_recall.ndcg@5",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": 0.7221311952363971,
+        "before": 0.722131195236397,
+        "field": "metrics.temporal_recall.ndcg@10",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": 0.6853711100697946,
+        "before": 0.6853711100697945,
+        "field": "metrics.temporal_recall.ndcg@3",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": 0.7221311952363971,
+        "before": 0.722131195236397,
+        "field": "metrics.temporal_recall.ndcg@5",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": 0.37499999999999994,
+        "before": 0.375,
+        "field": "metrics.temporal_recall.precision@3",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": "56812d4b6b5f8fc3df1735b3ebffb4f5f60f6ca9576337cf4dd4af7d76265cd7",
+        "before": "f04761b1add1cadc61b6e117c71f2ccb17dcbdee900b4a85a719e7a5083f1cbf",
+        "field": "queries.atlas-meta-002",
+        "run": "software_project_v1/cogkura"
+      },
+      {
+        "after": "e0b75df6a8cad38d1408b92c122064af50fb8d5e6dd4eac279edf396dbdeb407",
+        "before": "3f0cb3e329250902a2ff250a3e211403a9614073a9ba50b622ea874a606b53b2",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "d259720cdd3cd5ea810eeb8637b2a4fb7c245138a2717d8343859a508417f3b3",
+        "before": "36f610ec890ccbacdee16f05854c29f1e6080c0c71e4b8ae2ee28440e467abce",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "de8aabb8f7168251c4b10e659697f2fe71add37ea2d9b72efd258f602dc1611c",
+        "before": "6630043ece6034614619d5d840d5a72ed97d18d7afcf8a036a5abe92c7185d6e",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "7cc5819c247c8cdebd578dc6b2b39d5177fe3fa53cf7c40ecf345c59f3543641",
+        "before": "fac7e4cf954af9f142eca09e773b8d33025f90cbda17be64e8657b9c13789570",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "69025da0234d32bf2efa7340a2f3b79b89653fbee239dc57955ee2da96ec1a87",
+        "before": "63f045f2377777f5ad22e021c2681b322f3d05ca2782511374ab9bfdaba476d1",
+        "field": "queries.sa-q-a15",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "d74cf33b2b1562e9aa80370d857dfa147c56180f4e4275f25f0efcb3a0c46b71",
+        "before": "aef5b3f9d5b81cf8ee27a8a48ff31e56dfb03667766af4b7a82d06af3a6a55f3",
+        "field": "queries.sa-q-a2",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": 0.8333333333333333,
+        "before": 0.8333333333333334,
+        "field": "metrics.transient_interference.mrr",
+        "run": "transient_interference_v1/cogkura"
+      },
+      {
+        "after": 0.33999999999999997,
+        "before": 0.34,
+        "field": "metrics.transient_interference.precision@5",
+        "run": "transient_interference_v1/cogkura"
+      },
+      {
+        "after": 0.8333333333333333,
+        "before": 0.8333333333333334,
+        "field": "metrics.transient_interference.mrr",
+        "run": "transient_interference_v1/cogkura-interference"
+      },
+      {
+        "after": 0.33999999999999997,
+        "before": 0.34,
+        "field": "metrics.transient_interference.precision@5",
+        "run": "transient_interference_v1/cogkura-interference"
+      },
+      {
+        "after": 0.6527777777777777,
+        "before": 0.6527777777777778,
+        "field": "metrics.transient_interference.precision@3",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": 0.4749999999999999,
+        "before": 0.47500000000000003,
+        "field": "metrics.transient_interference.precision@5",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": "c855ed7aafafc0c937bd66b15b47bb8a94eceef3aa2ad1673e7ac9b3deae51e0",
+        "before": "97142cc7b2549977e0419af5cb3db599ae0b45715ee2f49547e43463e1af2678",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": 0.6527777777777777,
+        "before": 0.6527777777777778,
+        "field": "metrics.transient_interference.precision@3",
+        "run": "transient_interference_v2/cogkura-interference"
+      },
+      {
+        "after": 0.4749999999999999,
+        "before": 0.47500000000000003,
+        "field": "metrics.transient_interference.precision@5",
+        "run": "transient_interference_v2/cogkura-interference"
+      },
+      {
+        "after": "c2e23000df1c08dcbde4cb9a1809fcc97329c9bc7f9152386cd9e10a05448826",
+        "before": "75015514cecc872211cc1f6116b3b21e62b41cec14702e6f123fe163d05e2d95",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura-interference"
+      }
+    ],
+    "3.12.16": [
+      {
+        "after": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+        "before": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+        "field": "queries.ac-q-c03",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+        "before": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+        "field": "queries.ac-q-c17",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+        "before": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+        "field": "queries.ac-q-hist-at-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+        "before": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+        "field": "queries.ac-q-hist-before-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction-control"
+      },
+      {
+        "after": "00f7982c4044810226c4bc63a21bce83e80219b3ed5cb018db0ee2e1b5cb0ff7",
+        "before": "80b0a02bdef0ef7c4506d120d39edf2b2fc133ae0a3743d12b5f7ef0d66d1cdc",
+        "field": "queries.cu-colour-later",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": "24e3b36d79c1b9e6d185e76a52096c54f13f883b21fd96820f0d8f79e0f77ef8",
+        "before": "04f2510a163a140dba5d1d0a6509f5ed03f26f11f254b31487108f48dc335c0a",
+        "field": "queries.sw-deploy-later",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "3962995598e553785ab9f4fc4ca17091257f2b84d659eb83600713f0b3d6ae51",
+        "before": "d09fd382727875080e7add6d024311e8b30842e9907c4d5656dbca918217e12c",
+        "field": "queries.pi-later",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": "e0b75df6a8cad38d1408b92c122064af50fb8d5e6dd4eac279edf396dbdeb407",
+        "before": "3f0cb3e329250902a2ff250a3e211403a9614073a9ba50b622ea874a606b53b2",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "d259720cdd3cd5ea810eeb8637b2a4fb7c245138a2717d8343859a508417f3b3",
+        "before": "36f610ec890ccbacdee16f05854c29f1e6080c0c71e4b8ae2ee28440e467abce",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "de8aabb8f7168251c4b10e659697f2fe71add37ea2d9b72efd258f602dc1611c",
+        "before": "6630043ece6034614619d5d840d5a72ed97d18d7afcf8a036a5abe92c7185d6e",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "7cc5819c247c8cdebd578dc6b2b39d5177fe3fa53cf7c40ecf345c59f3543641",
+        "before": "fac7e4cf954af9f142eca09e773b8d33025f90cbda17be64e8657b9c13789570",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "69025da0234d32bf2efa7340a2f3b79b89653fbee239dc57955ee2da96ec1a87",
+        "before": "63f045f2377777f5ad22e021c2681b322f3d05ca2782511374ab9bfdaba476d1",
+        "field": "queries.sa-q-a15",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "d74cf33b2b1562e9aa80370d857dfa147c56180f4e4275f25f0efcb3a0c46b71",
+        "before": "aef5b3f9d5b81cf8ee27a8a48ff31e56dfb03667766af4b7a82d06af3a6a55f3",
+        "field": "queries.sa-q-a2",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "c855ed7aafafc0c937bd66b15b47bb8a94eceef3aa2ad1673e7ac9b3deae51e0",
+        "before": "97142cc7b2549977e0419af5cb3db599ae0b45715ee2f49547e43463e1af2678",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": "c2e23000df1c08dcbde4cb9a1809fcc97329c9bc7f9152386cd9e10a05448826",
+        "before": "75015514cecc872211cc1f6116b3b21e62b41cec14702e6f123fe163d05e2d95",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura-interference"
+      }
+    ],
+    "3.13.18": [
+      {
+        "after": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+        "before": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+        "field": "queries.ac-q-c03",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+        "before": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+        "field": "queries.ac-q-c17",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+        "before": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+        "field": "queries.ac-q-hist-at-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+        "before": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+        "field": "queries.ac-q-hist-before-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction-control"
+      },
+      {
+        "after": "00f7982c4044810226c4bc63a21bce83e80219b3ed5cb018db0ee2e1b5cb0ff7",
+        "before": "80b0a02bdef0ef7c4506d120d39edf2b2fc133ae0a3743d12b5f7ef0d66d1cdc",
+        "field": "queries.cu-colour-later",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": "24e3b36d79c1b9e6d185e76a52096c54f13f883b21fd96820f0d8f79e0f77ef8",
+        "before": "04f2510a163a140dba5d1d0a6509f5ed03f26f11f254b31487108f48dc335c0a",
+        "field": "queries.sw-deploy-later",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "3962995598e553785ab9f4fc4ca17091257f2b84d659eb83600713f0b3d6ae51",
+        "before": "d09fd382727875080e7add6d024311e8b30842e9907c4d5656dbca918217e12c",
+        "field": "queries.pi-later",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": "e0b75df6a8cad38d1408b92c122064af50fb8d5e6dd4eac279edf396dbdeb407",
+        "before": "3f0cb3e329250902a2ff250a3e211403a9614073a9ba50b622ea874a606b53b2",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "d259720cdd3cd5ea810eeb8637b2a4fb7c245138a2717d8343859a508417f3b3",
+        "before": "36f610ec890ccbacdee16f05854c29f1e6080c0c71e4b8ae2ee28440e467abce",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "de8aabb8f7168251c4b10e659697f2fe71add37ea2d9b72efd258f602dc1611c",
+        "before": "6630043ece6034614619d5d840d5a72ed97d18d7afcf8a036a5abe92c7185d6e",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "7cc5819c247c8cdebd578dc6b2b39d5177fe3fa53cf7c40ecf345c59f3543641",
+        "before": "fac7e4cf954af9f142eca09e773b8d33025f90cbda17be64e8657b9c13789570",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "69025da0234d32bf2efa7340a2f3b79b89653fbee239dc57955ee2da96ec1a87",
+        "before": "63f045f2377777f5ad22e021c2681b322f3d05ca2782511374ab9bfdaba476d1",
+        "field": "queries.sa-q-a15",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "d74cf33b2b1562e9aa80370d857dfa147c56180f4e4275f25f0efcb3a0c46b71",
+        "before": "aef5b3f9d5b81cf8ee27a8a48ff31e56dfb03667766af4b7a82d06af3a6a55f3",
+        "field": "queries.sa-q-a2",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "c855ed7aafafc0c937bd66b15b47bb8a94eceef3aa2ad1673e7ac9b3deae51e0",
+        "before": "97142cc7b2549977e0419af5cb3db599ae0b45715ee2f49547e43463e1af2678",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": "c2e23000df1c08dcbde4cb9a1809fcc97329c9bc7f9152386cd9e10a05448826",
+        "before": "75015514cecc872211cc1f6116b3b21e62b41cec14702e6f123fe163d05e2d95",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura-interference"
+      }
+    ],
+    "3.14.10": [
+      {
+        "after": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+        "before": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+        "field": "queries.ac-q-c03",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+        "before": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+        "field": "queries.ac-q-c17",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+        "before": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+        "field": "queries.ac-q-hist-at-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+        "before": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+        "field": "queries.ac-q-hist-before-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction-control"
+      },
+      {
+        "after": "00f7982c4044810226c4bc63a21bce83e80219b3ed5cb018db0ee2e1b5cb0ff7",
+        "before": "80b0a02bdef0ef7c4506d120d39edf2b2fc133ae0a3743d12b5f7ef0d66d1cdc",
+        "field": "queries.cu-colour-later",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": "24e3b36d79c1b9e6d185e76a52096c54f13f883b21fd96820f0d8f79e0f77ef8",
+        "before": "04f2510a163a140dba5d1d0a6509f5ed03f26f11f254b31487108f48dc335c0a",
+        "field": "queries.sw-deploy-later",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "3962995598e553785ab9f4fc4ca17091257f2b84d659eb83600713f0b3d6ae51",
+        "before": "d09fd382727875080e7add6d024311e8b30842e9907c4d5656dbca918217e12c",
+        "field": "queries.pi-later",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": "e0b75df6a8cad38d1408b92c122064af50fb8d5e6dd4eac279edf396dbdeb407",
+        "before": "3f0cb3e329250902a2ff250a3e211403a9614073a9ba50b622ea874a606b53b2",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "d259720cdd3cd5ea810eeb8637b2a4fb7c245138a2717d8343859a508417f3b3",
+        "before": "36f610ec890ccbacdee16f05854c29f1e6080c0c71e4b8ae2ee28440e467abce",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "de8aabb8f7168251c4b10e659697f2fe71add37ea2d9b72efd258f602dc1611c",
+        "before": "6630043ece6034614619d5d840d5a72ed97d18d7afcf8a036a5abe92c7185d6e",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "7cc5819c247c8cdebd578dc6b2b39d5177fe3fa53cf7c40ecf345c59f3543641",
+        "before": "fac7e4cf954af9f142eca09e773b8d33025f90cbda17be64e8657b9c13789570",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "69025da0234d32bf2efa7340a2f3b79b89653fbee239dc57955ee2da96ec1a87",
+        "before": "63f045f2377777f5ad22e021c2681b322f3d05ca2782511374ab9bfdaba476d1",
+        "field": "queries.sa-q-a15",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "d74cf33b2b1562e9aa80370d857dfa147c56180f4e4275f25f0efcb3a0c46b71",
+        "before": "aef5b3f9d5b81cf8ee27a8a48ff31e56dfb03667766af4b7a82d06af3a6a55f3",
+        "field": "queries.sa-q-a2",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "c855ed7aafafc0c937bd66b15b47bb8a94eceef3aa2ad1673e7ac9b3deae51e0",
+        "before": "97142cc7b2549977e0419af5cb3db599ae0b45715ee2f49547e43463e1af2678",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": "c2e23000df1c08dcbde4cb9a1809fcc97329c9bc7f9152386cd9e10a05448826",
+        "before": "75015514cecc872211cc1f6116b3b21e62b41cec14702e6f123fe163d05e2d95",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura-interference"
+      }
+    ],
+    "3.15.2": [
+      {
+        "after": "f26ece38d2f516803afaf27a3c65c5172654afc6c8abd6f58e588f668a5b694c",
+        "before": "4076ac84415f60563b231265892658eab9e5ab1781745208cb32d0133149684a",
+        "field": "queries.ac-q-c03",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "5df1146c95fcefaf71d9477ee9bc29fe672673babf612a0c2ef003b5888f5659",
+        "before": "ef0093352eea7c1e0b4c78890063924541a4a6947f51256f0689928b83a651eb",
+        "field": "queries.ac-q-c17",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "62c484b4b3a5a7b81d3c78e67cc05017e10727e9bac890635c7858957a29efc5",
+        "before": "3333905210c63e5fe7e77bbecb88b7353d91ebbe7155857041062fee61b22fea",
+        "field": "queries.ac-q-hist-at-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "bc9e0cf1a25ccdb1681bdb41f29e55fd8a5a7442955717f2d14e76d1546fb432",
+        "before": "57393aeb252eba91e6f162fd4c5fe48791af0e79e40b041e294cc07a46bd9e36",
+        "field": "queries.ac-q-hist-before-withdraw",
+        "run": "authoritative_corrections_v1/cogkura-correction"
+      },
+      {
+        "after": "3d8e701e89fa49e4b9263aa70d4f28a4b15d7157ad90f9724a43e78e88b2fbd9",
+        "before": "42456b7bad448c68d0a979b79ba9d9838b629c46abb30a29df088751cb0244b3",
+        "field": "queries.ac-q-c14",
+        "run": "authoritative_corrections_v1/cogkura-correction-control"
+      },
+      {
+        "after": "00f7982c4044810226c4bc63a21bce83e80219b3ed5cb018db0ee2e1b5cb0ff7",
+        "before": "80b0a02bdef0ef7c4506d120d39edf2b2fc133ae0a3743d12b5f7ef0d66d1cdc",
+        "field": "queries.cu-colour-later",
+        "run": "persistent_inhibition_customer_v1/cogkura-inhibition"
+      },
+      {
+        "after": "24e3b36d79c1b9e6d185e76a52096c54f13f883b21fd96820f0d8f79e0f77ef8",
+        "before": "04f2510a163a140dba5d1d0a6509f5ed03f26f11f254b31487108f48dc335c0a",
+        "field": "queries.sw-deploy-later",
+        "run": "persistent_inhibition_software_v1/cogkura-inhibition"
+      },
+      {
+        "after": "3962995598e553785ab9f4fc4ca17091257f2b84d659eb83600713f0b3d6ae51",
+        "before": "d09fd382727875080e7add6d024311e8b30842e9907c4d5656dbca918217e12c",
+        "field": "queries.pi-later",
+        "run": "persistent_inhibition_v1/cogkura-inhibition"
+      },
+      {
+        "after": "e0b75df6a8cad38d1408b92c122064af50fb8d5e6dd4eac279edf396dbdeb407",
+        "before": "3f0cb3e329250902a2ff250a3e211403a9614073a9ba50b622ea874a606b53b2",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "d259720cdd3cd5ea810eeb8637b2a4fb7c245138a2717d8343859a508417f3b3",
+        "before": "36f610ec890ccbacdee16f05854c29f1e6080c0c71e4b8ae2ee28440e467abce",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority"
+      },
+      {
+        "after": "de8aabb8f7168251c4b10e659697f2fe71add37ea2d9b72efd258f602dc1611c",
+        "before": "6630043ece6034614619d5d840d5a72ed97d18d7afcf8a036a5abe92c7185d6e",
+        "field": "queries.sa-q-a11",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "7cc5819c247c8cdebd578dc6b2b39d5177fe3fa53cf7c40ecf345c59f3543641",
+        "before": "fac7e4cf954af9f142eca09e773b8d33025f90cbda17be64e8657b9c13789570",
+        "field": "queries.sa-q-a14",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "69025da0234d32bf2efa7340a2f3b79b89653fbee239dc57955ee2da96ec1a87",
+        "before": "63f045f2377777f5ad22e021c2681b322f3d05ca2782511374ab9bfdaba476d1",
+        "field": "queries.sa-q-a15",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "d74cf33b2b1562e9aa80370d857dfa147c56180f4e4275f25f0efcb3a0c46b71",
+        "before": "aef5b3f9d5b81cf8ee27a8a48ff31e56dfb03667766af4b7a82d06af3a6a55f3",
+        "field": "queries.sa-q-a2",
+        "run": "source_authority_v1/cogkura-authority-control"
+      },
+      {
+        "after": "c855ed7aafafc0c937bd66b15b47bb8a94eceef3aa2ad1673e7ac9b3deae51e0",
+        "before": "97142cc7b2549977e0419af5cb3db599ae0b45715ee2f49547e43463e1af2678",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura"
+      },
+      {
+        "after": "c2e23000df1c08dcbde4cb9a1809fcc97329c9bc7f9152386cd9e10a05448826",
+        "before": "75015514cecc872211cc1f6116b3b21e62b41cec14702e6f123fe163d05e2d95",
+        "field": "queries.ti2-pair",
+        "run": "transient_interference_v2/cogkura-interference"
+      }
+    ]
+  },
+  "platform_prefix": "Linux-7.0.0-1020-azure-x86_64-with-glibc2.43",
+  "reason": "The user approved the exact hosted Linux candidate differences for the specified platform and Python versions on 2026-11-25; this does not authorize release.",
+  "schema_version": 1
+}

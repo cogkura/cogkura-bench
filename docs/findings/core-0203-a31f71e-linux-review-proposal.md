@@ -1,6 +1,6 @@
 # Proposed Core 0.20.3 `a31f71e` hosted Linux frozen review
 
-**Proposed; no Linux frozen differences are approved.** The hosted
+**Historical proposal; the specified Linux differences were subsequently approved.** See the [reviewed resolution](core-0203-a31f71e-frozen-gate-resolution.md). The hosted
 [raw candidate matrix](https://github.com/cogkura/cogkura-bench/actions/runs/45702415539)
 ran the fixed candidate on Linux
 `Linux-7.0.0-1020-azure-x86_64-with-glibc2.43`. Each Python job passed its

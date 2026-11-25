@@ -118,3 +118,42 @@ def test_v2_review_requires_explicit_selection_and_only_the_known_difference() -
     bad["runs"]["mini/cogkura"]["queries"]["q01"] = "unexpected"
     with pytest.raises(ValueError):
         module.review(gold, bad, correction, exact, allow_source_history_v2=True)
+
+
+@pytest.mark.parametrize(
+    ("name", "raw", "manifest", "field_count"),
+    [
+        (
+            "macos",
+            "docs/findings/core-0203-a31f71e-frozen-raw.json.gz",
+            "cogkura_0203_a31f71e_macos311_exact.json",
+            82,
+        ),
+        *(
+            (
+                f"linux-{version}",
+                f"docs/findings/data/core-0203-a31f71e-linux-v2/python-{version}-frozen-raw.json.gz",
+                "cogkura_0203_a31f71e_linux_exact.json",
+                87 if version == "3.11" else 17,
+            )
+            for version in ("3.11", "3.12", "3.13", "3.14", "3.15")
+        ),
+    ],
+)
+def test_0203_review_is_exact_and_preserves_raw(
+    name: str, raw: str, manifest: str, field_count: int
+) -> None:
+    gold = (ROOT / "tests/golden/cogkura_0182_frozen.json").read_bytes()
+    report = json.loads(gzip.decompress((ROOT / raw).read_bytes()))
+    original = copy.deepcopy(report)
+    directory = ROOT / "tests/reviewed_corrections"
+    correction = json.loads((directory / "cogkura_0203_a31f71e.json").read_text())
+    exact = json.loads((directory / manifest).read_text())
+    result = module.review(gold, report, correction, exact, allow_source_history_v2=True)
+    assert result["reviewed_comparison_passed"], name
+    assert result["raw_frozen_comparison_passed"] is False
+    assert result["exact_review"]["exact_approved_field_count"] == field_count
+    assert report == original
+    report["core_distribution"]["commit"] = "0" * 40
+    with pytest.raises(ValueError):
+        module.review(gold, report, correction, exact, allow_source_history_v2=True)
