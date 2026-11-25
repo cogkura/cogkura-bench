@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Core 0.20.3 architecture-freeze validation
+
+- Permit the 0.20.3 correction profiles and optional dependency range, and
+  explicitly test the v2 source-history contract. The exact candidate still
+  requires its own independent frozen-output review; prior approvals do not
+  transfer.
+
 ### Core 0.20.2 hardening
 
 - Permit the 0.20.2 correction profile and explicitly select the v2
