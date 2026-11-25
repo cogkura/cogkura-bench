@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir -p results
           .venv/bin/python scripts/run_source_metamemory_validation.py \
-            --diagnostics-parity --postgres \
+            --source-history-v2 --diagnostics-parity --postgres \
             --details-output results/candidate-frozen-details.json \
             --output results/candidate-frozen-raw.json
       - name: Create isolated backend database
