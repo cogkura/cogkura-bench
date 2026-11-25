@@ -23,7 +23,7 @@ def source_fixture_for_version(version: str) -> str:
     """Use the explicitly versioned transition contract for tested Core versions."""
     return (
         "source_aware_metamemory_v2"
-        if version in {"0.20.1", "0.20.2"}
+        if version in {"0.20.1", "0.20.2", "0.20.3"}
         else "source_aware_metamemory_v1"
     )
 
@@ -36,7 +36,8 @@ def test_source_fixture_selection_is_explicit() -> None:
     assert source_fixture_for_version("0.20.0") == "source_aware_metamemory_v1"
     assert source_fixture_for_version("0.20.1") == "source_aware_metamemory_v2"
     assert source_fixture_for_version("0.20.2") == "source_aware_metamemory_v2"
-    assert source_fixture_for_version("0.20.3") == "source_aware_metamemory_v1"
+    assert source_fixture_for_version("0.20.3") == "source_aware_metamemory_v2"
+    assert source_fixture_for_version("0.20.4") == "source_aware_metamemory_v1"
 
 
 def test_fixture_valid_and_all_six_states_declared_or_fault_tested() -> None:
@@ -99,8 +100,8 @@ async def test_source_profile_gate(name: str) -> None:
 @pytest.mark.skipif(not AVAILABLE, reason="cogkura extra not installed")
 @pytest.mark.asyncio
 async def test_0201_retains_v1_mismatch_and_reports_both_transitions() -> None:
-    if importlib.metadata.version("cogkura") not in {"0.20.1", "0.20.2"}:
-        pytest.skip("complete transition history applies to the 0.20.1 and 0.20.2 candidates")
+    if importlib.metadata.version("cogkura") not in {"0.20.1", "0.20.2", "0.20.3"}:
+        pytest.skip("complete transition history applies to the 0.20.1–0.20.3 candidates")
     for fixture, expected_mismatches in (
         ("source_aware_metamemory_v1", 1),
         ("source_aware_metamemory_v2", 0),

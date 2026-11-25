@@ -328,10 +328,11 @@ class CogKuraBackend:
             "0.20.0",
             "0.20.1",
             "0.20.2",
+            "0.20.3",
         }:
             raise ValidationError(
                 "correction profiles require CogKura 0.18.2, 0.18.3, 0.18.4, 0.19.5, "
-                "0.19.6, 0.20.0, 0.20.1 or 0.20.2, "
+                "0.19.6, 0.20.0, 0.20.1, 0.20.2 or 0.20.3, "
                 f"found {self._version}"
             )
         if self._memory is not None:
