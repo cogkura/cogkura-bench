@@ -32,10 +32,10 @@ dependencies = []
 
 [project.optional-dependencies]
 cogkura = [
-  "cogkura>=0.19.6,<0.20.4",
+  "cogkura>=0.20.3,<0.20.4",
 ]
 postgres = [
-  "cogkura[postgres]>=0.19.6,<0.20.4",
+  "cogkura[postgres]>=0.20.3,<0.20.4",
 ]
 
 [project.scripts]
@@ -79,7 +79,7 @@ include = [
 ]
 
 [tool.uv.sources]
-cogkura = { git = "https://github.com/cogkura/cogkura.git", rev = "9745201bfcc5410d678a07737a4c935dd294e5b4" }
+cogkura = { git = "https://github.com/cogkura/cogkura.git", rev = "a31f71e222dd231ed9643bc1d1cc109e3e8153dd" }
 
 [tool.ruff]
 line-length = 100

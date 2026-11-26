@@ -2,7 +2,7 @@
 
 CogKuraBench is a deterministic benchmark for long-term AI memory systems. It replays a versioned project history against a memory backend, asks queries at simulated times, and scores whether the backend retrieved the right evidence, updated after changes, forgot stale facts, and selected a usable working-memory context.
 
-The current development version is 0.3.11, validating Core 0.18.3. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
+The current development version is 0.3.12, validating released Core 0.20.3. Layer A scoring does not use an LLM, and a deterministic run does not call external APIs.
 
 This repository owns datasets, ground truth, the backend contract, execution, metrics, and reports. It does not own CogKura's algorithms or any other memory implementation.
 
@@ -49,10 +49,10 @@ To evaluate CogKura as well:
 uv sync --extra cogkura --dev --locked
 ```
 
-The CogKura extra requires `cogkura>=0.19.6,<0.20.1`. The development lock
-selects the published Core 0.19.6 commit `9745201`. Embedded validation requires
+The CogKura extra requires `cogkura>=0.20.3,<0.20.4`. The development lock
+selects the published Core 0.20.3 commit `a31f71e`. Embedded validation requires
 a Python build linked to a SQLite version accepted by Core; see the
-[0.19.6 validation guide](docs/embedded-validation-0.19.6.md). Frozen comparison
+[SQLite validation guidance](docs/embedded-validation-0.19.6.md). Frozen comparison
 exceptions apply only to the exact version, commit, gold and values approved.
 
 For PostgreSQL validation, install all extras and provide a disposable database:

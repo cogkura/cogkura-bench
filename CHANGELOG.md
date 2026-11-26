@@ -10,9 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Core 0.20.3 architecture-freeze validation
 
 - Permit the 0.20.3 correction profiles and optional dependency range, and
-  explicitly test the v2 source-history contract. The exact candidate still
-  requires its own independent frozen-output review; prior approvals do not
-  transfer.
+  explicitly test the v2 source-history contract. The released commit has its
+  own approved, environment-scoped frozen review; prior approvals do not transfer.
+- Pin the released Core 0.20.3 commit for development and retain the isolated
+  0.19.6 historical checks and original frozen-gold comparisons.
 
 ### Core 0.20.2 hardening
 
