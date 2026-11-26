@@ -211,12 +211,12 @@ jobs:
         env:
           PYTHONHASHSEED: "0"
         run: |
-          status=0
+          benchmark_exit=0
           uv run python scripts/run_source_metamemory_validation.py \
             --source-history-v2 --diagnostics-parity --postgres \
             --details-output results/core-0203-frozen-details.json \
-            --output results/core-0203-frozen-raw.json || status=$?
-          if [ "$status" -gt 1 ]; then exit "$status"; fi
+            --output results/core-0203-frozen-raw.json || benchmark_exit=$?
+          if [ "$benchmark_exit" -gt 1 ]; then exit "$benchmark_exit"; fi
           uv run python scripts/review_candidate_frozen_report.py \
             --gold tests/golden/cogkura_0182_frozen.json \
             --raw results/core-0203-frozen-raw.json \
